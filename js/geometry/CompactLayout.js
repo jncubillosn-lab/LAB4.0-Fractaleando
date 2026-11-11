@@ -31,6 +31,57 @@ export class CompactLayout {
    return sum+(a&&b?Math.hypot(a.x-b.x,a.y-b.y):0);
   },0);
  }
+ static miniTree(rootId,allowed,byId,mm,source){
+  const children=new Map();
+  for(const id of allowed){
+   const n=byId.get(id);
+   if(n?.parent&&allowed.has(n.parent)){
+    if(!children.has(n.parent))children.set(n.parent,[]);
+    children.get(n.parent).push(id);
+   }
+  }
+  for(const group of children.values())group.sort((a,b)=>
+   (source.get(a)?.y??0)-(source.get(b)?.y??0)||a.localeCompare(b));
+  const seen=new Set();
+  function place(id){
+   if(seen.has(id))return null;
+   seen.add(id);
+   const measure=mm.get(id);if(!measure)return null;
+   const pieces=(children.get(id)||[]).map(place).filter(Boolean);
+   if(!pieces.length){
+    return {w:measure.w,h:measure.h,
+     positions:new Map([[id,{x:measure.w/2,y:measure.h/2}]])};
+   }
+   const pad=72,spaceY=105;
+   const area=pieces.reduce((sum,p)=>sum+(p.w+pad)*(p.h+pad),0);
+   const target=Math.max(measure.w+pad,Math.sqrt(area)*1.22,
+    Math.max(...pieces.map(p=>p.w)));
+   let x=0,y=0,rowH=0,maxW=0;
+   const positions=new Map(),childrenOffsets=[];
+   for(const child of pieces){
+    if(x>0&&x+child.w>target){x=0;y+=rowH+pad;rowH=0;}
+    childrenOffsets.push({child,x,y});
+    x+=child.w+pad;maxW=Math.max(maxW,x-pad);
+    rowH=Math.max(rowH,child.h);
+   }
+   const width=Math.max(maxW,measure.w),height=measure.h+spaceY+y+rowH;
+   const dx=(width-maxW)/2;
+   positions.set(id,{x:width/2,y:measure.h/2});
+   for(const {child,x,y} of childrenOffsets)
+    for(const [key,p] of child.positions)
+     positions.set(key,{x:dx+x+p.x,y:measure.h+spaceY+y+p.y});
+   return {w:width,h:height,positions};
+  }
+  const first=place(rootId);
+  // Nodos sin jerarquía de parentesco recuperable conservan lugar propio.
+  const local=new Map(first?.positions||[]);
+  let cursor=first?.w||0;
+  for(const id of allowed)if(!local.has(id)){
+   const m=mm.get(id);if(!m)continue;
+   local.set(id,{x:cursor+m.w/2,y:m.h/2});cursor+=m.w+72;
+  }
+  return local;
+ }
  static groups(nodes,source){
   const byId=new Map(nodes.map(n=>[n.id,n]));
   const roots=nodes.filter(n=>n.parent==='p1')
@@ -65,6 +116,7 @@ export class CompactLayout {
   const root=original.get('p1')||{x:0,y:0};
   if(mm.has('p1'))positions.set('p1',{x:0,y:0});
   const {branches,roots,moduleByNode}=CompactLayout.groups(nodes,original);
+  const byId=new Map(nodes.map(n=>[n.id,n]));
   const branchBlocks=[];
   let modules=0;
   let innerFactorSum=0;
@@ -75,22 +127,11 @@ export class CompactLayout {
    const blocks=[];
    for(const [moduleId,members] of moduleMap){
     if(moduleId===branchId&&branchId!=='orphan')continue; // J1 se coloca como puerto del bloque mayor.
-    const originalBounds=CompactLayout.bounds(members,original,mm);
-    const center={x:(originalBounds.l+originalBounds.r)/2,y:(originalBounds.t+originalBounds.b)/2};
-    let scale=0.72;
-    const valid=f=>{
-     const tmp=new Map(members.map(id=>[id,{
-      x:(original.get(id)?.x-center.x)*f,y:(original.get(id)?.y-center.y)*f
-     }]));
-     return CompactLayout.overlaps(tmp,mm,24)===0;
-    };
-    while(scale<1&&!valid(scale))scale=Math.min(1,scale+.035);
-    const local=new Map(members.map(id=>[id,{
-     x:(original.get(id)?.x-center.x)*scale,y:(original.get(id)?.y-center.y)*scale
-    }]));
+    const local=CompactLayout.miniTree(moduleId,new Set(members),byId,mm,original);
     const bounds=CompactLayout.bounds(members,local,mm);
+    const scale=1;const center={y:original.get(moduleId)?.y??0};
     blocks.push({id:moduleId,members,local,bounds,w:bounds.w,h:bounds.h,
-     sourceY:original.get(moduleId)?.y??center.y,scale});
+     sourceY:center.y,scale});
     innerFactorSum+=scale;modules++;
    }
    // A falta de descendientes J2, J1 forma un bloque independiente.
@@ -110,51 +151,59 @@ export class CompactLayout {
    const gridH=y+rowH,gridW=Math.max(largestX,mm.get(branchId)?.w||0);
    branchBlocks.push({id:branchId,localPositions,gridW,gridH});
   }
-  // Fase 2: ensamblaje macroscópico. Los subárboles dejan de ocupar
-  // tres columnas infinitas y forman regiones 2D alrededor del núcleo.
-  // El orden de ramas alrededor de P1 sigue el orden J1 del plano fuente.
-  const result=new Map(),branchBounds=[];
-  const count=branchBlocks.length;
-  for(let i=0;i<branchBlocks.length;i++){
-   const block=branchBlocks[i];
-   const angle=-Math.PI/2+(2*Math.PI*i/Math.max(1,count));
-   const vx=Math.cos(angle),vy=Math.sin(angle);
-   // Colocar J1 en la cara de su conjunto que mira al núcleo.
-   const rootMetric=mm.get(block.id)||{w:160,h:70};
+  // Fase 2: empaquetado de regiones J1 alrededor del núcleo. Para tres
+  // brazos se forma un triángulo de bloques, no tres columnas verticales.
+  // El nodo J1 se ubica en el borde orientado hacia P1.
+  const branchBounds=[],branchCount=branchBlocks.length;
+  for(let i=0;i<branchCount;i++){
+   const block=branchBlocks[i],metric=mm.get(block.id)||{w:180,h:75};
    let anchor;
-   if(Math.abs(vx)>Math.abs(vy)){
-    anchor={x:vx>0?-rootMetric.w/2-115:block.gridW+rootMetric.w/2+115,
-     y:block.gridH/2};
+   if(branchCount===3){
+    anchor=i===0?{x:block.gridW+metric.w/2+90,y:block.gridH+35}:
+     i===1?{x:-metric.w/2-90,y:block.gridH+35}:
+     {x:block.gridW/2,y:-metric.h/2-95};
+   }else if(branchCount===2){
+    anchor=i===0?{x:block.gridW+metric.w/2+100,y:block.gridH/2}:
+     {x:-metric.w/2-100,y:block.gridH/2};
    }else{
-    anchor={x:block.gridW/2,
-     y:vy>0?-rootMetric.h/2-115:block.gridH+rootMetric.h/2+115};
+    anchor={x:block.gridW/2,y:-metric.h/2-115};
    }
    if(block.id!=='orphan')block.localPositions.set(block.id,anchor);
    const bounds=CompactLayout.bounds([...block.localPositions.keys()],block.localPositions,mm);
-   const centered=new Map([...block.localPositions].map(([id,p])=>
-    [id,{x:p.x-(bounds.l+bounds.r)/2,y:p.y-(bounds.t+bounds.b)/2}]));
-   const bodyRadius=Math.max(bounds.w,bounds.h)/2;
-   const originRadius=bodyRadius+300;
-   branchBounds.push({id:block.id,local:centered,width:bounds.w,height:bounds.h,
-    vx,vy,base:originRadius});
+   branchBounds.push({id:block.id,
+    local:new Map([...block.localPositions].map(([id,p])=>[id,{x:p.x-bounds.l,y:p.y-bounds.t}])),
+    width:bounds.w,height:bounds.h});
   }
-  let expansion=1;
-  const place=()=>{
-   result.clear();
-   if(mm.has('p1'))result.set('p1',{x:0,y:0});
-   for(const b of branchBounds){
-    const d=b.base*expansion;
-    for(const [id,p] of b.local)result.set(id,{
-     x:p.x+b.vx*d,y:p.y+b.vy*d
-    });
-   }
-  };
-  // La expansión solo afecta las distancias entre los bloques grandes.
-  for(let k=0;k<24;k++){
-   place();
-   if(CompactLayout.overlaps(result,mm,36)===0)break;
-   expansion+=.12;
+  const result=new Map(),offsets=[];
+  const gap=345;
+  if(branchCount===3){
+   const [a,b,c]=branchBounds;
+   const topHeight=Math.max(a.height,b.height);
+   offsets.push({x:0,y:0},{x:a.width+gap,y:0},{
+    x:(a.width+b.width+gap-c.width)/2,
+    y:topHeight+gap
+   });
+   result.set('p1',{x:a.width+gap/2,y:topHeight+gap/2});
+  }else if(branchCount===2){
+   const [a]=branchBounds;
+   offsets.push({x:0,y:0},{x:a.width+gap,y:0});
+   result.set('p1',{x:a.width+gap/2,
+    y:Math.max(...branchBounds.map(b=>b.height))/2});
+  }else{
+   const cols=Math.max(1,Math.ceil(Math.sqrt(branchCount)));
+   const cellW=Math.max(0,...branchBounds.map(b=>b.width))+gap;
+   const cellH=Math.max(0,...branchBounds.map(b=>b.height))+gap;
+   for(let i=0;i<branchCount;i++)offsets.push({x:(i%cols)*cellW,y:Math.floor(i/cols)*cellH});
+   result.set('p1',{x:(cols-.5)*cellW/2,y:cellH/2});
   }
+  for(let i=0;i<branchBounds.length;i++){
+   const block=branchBounds[i],offset=offsets[i];
+   for(const [id,p] of block.local)result.set(id,{x:p.x+offset.x,y:p.y+offset.y});
+  }
+  // La posición central es un punto de vista; no se inventan vínculos.
+  // Desplazar el conjunto al origen mantiene intactas todas las relaciones.
+  const core=result.get('p1')||{x:0,y:0};
+  for(const [id,p] of result)result.set(id,{x:p.x-core.x,y:p.y-core.y});
   // Fase 3: refinamiento micro de nodos individuales. Solo modificar dentro
   // de su bloque J2, sin alterar el orden de sus hermanos alrededor del padre.
   // El redibujo PCB y la firma topológica serán validaciones posteriores.
