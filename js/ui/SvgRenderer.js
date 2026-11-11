@@ -9,7 +9,7 @@ export class SvgRenderer {
    const jumps=this.router.intersections(rt.points,occupied);
    const d=this.router.linePath(rt.points,jumps); // computes individual jump radii
    for(const point of jumps)group.append(this.sEl('circle',{cx:point.x,cy:point.y,
-    r:Math.max(1.2,(point.radius||7)*.78),fill:'#f7f6f1','pointer-events':'none'}));
+    r:Math.max(1.2,(point.radius||7)*.78),fill:'var(--paper)','pointer-events':'none'}));
    group.append(this.sEl('path',{d,class:'svgline'+(e.kind==='transversal'?' transverse':''),
     'data-link-from':e.from,'data-link-to':e.to}));
    this.linesEl.append(group);elements.set(key,group);
