@@ -246,3 +246,29 @@ La auditoría debe registrar **qué se probó, con qué datos y qué quedó pend
 ---
 
 **Síntesis:** P1 utiliza una interfaz fija para construir diagramas conceptuales y un motor geométrico incremental que ubica conceptos, busca rutas exclusivas y valida su claridad. La geometría ya resuelta debe permanecer estable; cada intervención debe ser local, verificable y fiel a las normas **R01–R08**.
+
+---
+
+## 10. Implementación modular vigente (intervenciones I–VI)
+
+La implementación modular se entrega primero en la rama `refactor/p1-modular-estable`. **La versión original** `P1_Plano_R01_brazos_variables.html` se mantiene sin modificar para comparación y recuperación. La interfaz conserva sus controles y estética; `index.html` ahora carga `css/interfaz.css` y `js/app.js` mediante módulos ES nativos compatibles con alojamiento estático.
+
+- `js/data/seeds.js`: datos ilustrativos que ya existían, sin crear datos conceptuales nuevos.
+- `js/core/GraphDocument.js`: modelo de nodos, jerarquías y visibilidad de componentes desconectados.
+- `js/core/PlaneCheckpoint.js`: geometría incremental y serialización del punto de control vigente.
+- `js/geometry/PcbRouter.js`: enrutamiento de plano recuperado de la versión vigente aprobada, encapsulado en una instancia por documento.
+- `js/geometry/GeometryValidator.js`: verificación independiente de continuidad, puertos, separaciones y colisiones al importar el estado geométrico.
+- `js/ui/SvgRenderer.js`: representación SVG de rutas previamente calculadas y sus cruces individualizados.
+- `js/workers/initial-route.worker.js`: cálculo inicial de recorridos en un hilo del navegador (con alternativa síncrona cuando no sea posible crear un Worker).
+- `js/app.js`: integración de la interfaz vigente, edición, cambios locales, exportación y coordinación de estos componentes.
+
+### Resultados y límites comprobados
+
+1. **H01:** las 71 intersecciones detectadas en el ejemplo PPR generan 71 marcas de salto, frente a las 61 anteriores. Su tamaño se adapta para evitar agrupar intersecciones distintas. Esto comprueba cobertura del caso ensayado, no optimalidad global.
+2. **H02:** un punto de control con extremos de rutas desconectados, puertos fuera del perímetro o puertos repetidos deja de aceptarse y se reconstruye la geometría usando los datos conceptuales válidos. No se eliminan conceptos ni vínculos por una geometría mal importada.
+3. **H03:** las cadenas de descendientes desconectadas se conservan en «Todas las capas» al eliminar un antecesor, sin inventar vínculos nuevos.
+4. **H04:** se diversificó la elección de puertos de entrada y salida durante un cálculo incremental, sin redistribuir elementos ya validados. En un caso reproducible de desplazamiento de una rama principal se redujeron las rutas pendientes de ocho a tres; **no se declara completamente resuelto el enrutamiento de todos los desplazamientos**. Los vínculos sin recorrido válido permanecen en los datos y se informan.
+5. **Rendimiento:** el cálculo inicial de rutas puede ejecutarse en un Worker en GitHub Pages sin bloquear el hilo de interacción. La geometría y el texto se miden en el navegador principal y se envían al Worker como datos. Los cambios locales mantienen el cálculo incremental de la versión de referencia; no se ha implementado un Worker para cada modificación, porque no es necesario adelantar componentes no justificados.
+6. **Pruebas:** `npm test` ejecuta comprobaciones sin dependencias de ejecución del sitio. GitHub Actions incluye una prueba de navegador con módulos reales y la lectura del estado geométrico. Véase `docs/ARQUITECTURA_01.md`.
+
+**No se implementan las etapas de representación 02, 03 ni 04.** El esquema conceptual JSON `p1.graph.v1` y su campo opcional `planeCheckpoint` se conservan.
