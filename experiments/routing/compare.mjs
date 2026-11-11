@@ -114,7 +114,8 @@ const candidates=conns.map(({e,from,to,conn})=>{
   const accessor=poly.get_ps??poly.getPs??poly.getPoint??poly.at;
   if(typeof accessor!=='function')throw Error('No existe método público de lectura de puntos');
   for(let i=0;i<poly.size();i++){const p=accessor.call(poly,i);inner.push({x:p.x,y:p.y});}
-  points=profile==='pins'?pcb.simplify(inner):mergeRoute(from,to,inner);
+  if(profile==='pins'&&!globalThis.pinsReported){console.log('PINS_GEOMETRY',JSON.stringify({edge:key(e),portFrom:from,portTo:to,innerStart:inner[0],innerEnd:inner.at(-1)}));globalThis.pinsReported=true;}
+   points=profile==='pins'?pcb.simplify(inner):mergeRoute(from,to,inner);
  }
  return [key(e),{edge:e,points,fromPort:from||null,toPort:to||null}];
 });
