@@ -3,12 +3,12 @@
 **Documento inicial de referencia · Requerimientos, normas y arquitectura del motor gráfico**  
 **Corte de referencia:** 10 de noviembre de 2026  
 **Versión del documento:** 0.1  
-**Etapa de trabajo:** `01 · Plano`  
+**Etapas de trabajo:** `01 · Plano` y vistas derivadas `02 · Compactación`, `03 · Órbitas`, `04 · Espiral`  
 **Implementación de referencia al momento del corte:** `P1_Plano_R01_brazos_variables.html`
 
 > **Principio rector:** El sistema debe representar fielmente la estructura conceptual con el mínimo ruido gráfico posible y conservar los resultados geométricos ya validados para no repetir cálculos innecesarios.
 
-Este archivo documenta **lo acordado para P1**. Distingue las reglas normativas del proyecto, el funcionamiento acordado para el motor y las decisiones que siguen abiertas. **No autoriza a modificar funciones, estética o etapas adicionales por iniciativa del implementador.**
+Este archivo documenta **lo acordado para P1**. Distingue las reglas normativas del proyecto, el funcionamiento acordado para el motor y las decisiones que siguen abiertas. **La habilitación de 02–04 y del modo oscuro procede de la solicitud expresa posterior al corte inicial. No autoriza otras funciones o etapas adicionales.**
 
 ---
 
@@ -36,16 +36,16 @@ El diagrama contiene un **núcleo único** (`J0`). Los términos directamente as
 
 ---
 
-## 2. Etapas de representación previstas
+## 2. Etapas de representación
 
 Las etapas trabajan sobre **el mismo grafo conceptual**. Cambia la representación espacial, **no se inventan relaciones ni se modifica su significado para mejorar una imagen**.
 
 | Etapa | Función | Alcance / estado |
 |---|---|---|
-| **01 · Plano** | Crear y fractalear conceptos en 2D, conectar términos y visualizar progresivamente la estructura. | **Única etapa sometida actualmente a implementación y evaluación.** |
-| **02 · Reorganización** | Recolocar conceptos para disminuir las distancias entre términos vinculados y reducir ruido visual. | Requerimiento conceptual; no intervenir todavía. |
-| **03 · Órbitas** | Representar la jerarquía mediante radios iguales para conceptos del mismo nivel; ordenar angularmente según cercanía relacional. | Requerimiento conceptual; no intervenir todavía. |
-| **04 · Espiral** | Transformar la organización previa en un sistema espiral de tantos brazos como términos `J1`, conservando la progresión jerárquica y la cercanía entre relacionados. | Requerimiento conceptual; no intervenir todavía. |
+| **01 · Plano** | Crear y fractalear conceptos en 2D, conectar términos y visualizar progresivamente la estructura. | Editor de referencia; se conserva su geometría persistente. |
+| **02 · Reorganización** | Recolocar conceptos para disminuir las distancias entre términos vinculados y reducir ruido visual. | Implementación de compactación conservadora, con DRC y caché propios. |
+| **03 · Órbitas** | Representar la jerarquía mediante radios iguales para conceptos del mismo nivel; ordenar angularmente según cercanía relacional. | Implementación orbital con jerarquía de distancia mínima en vínculos, validación radial y DRC. |
+| **04 · Espiral** | Transformar la organización previa en un sistema espiral de tantos brazos como términos `J1`, conservando la progresión jerárquica y la cercanía entre relacionados. | Implementación espiral plana de brazos variables, bandas estrictas y DRC. |
 
 En la representación orbital, los términos de una misma jerarquía tienen la **misma distancia radial**. En la espiral, los radios pueden **variar dentro del rango de cada jerarquía**, pero todos los radios de `J(n+1)` deben superar a los de `Jn`:
 
@@ -282,3 +282,11 @@ El programa mantiene ahora un registro relacional **paralelo** a las coordenadas
 El registro se conserva en el campo opcional `topologyRegister` (`p1.topology.v1`) del JSON `p1.graph.v1`, sin modificar el esquema conceptual. Los JSON antiguos continúan siendo legibles. La referencia topológica solo se sustituye cuando la geometría actual respeta las relaciones anteriores; si no, se conservan la referencia y un informe de discrepancias accesible en `P1_PLANO_DIAGNOSTICO.topology()`.
 
 **Alcance actual:** validación observacional, sin bloqueo automático ni reajuste de rutas. No se ha definido una nueva norma ni se han implementado funciones de otras etapas. Detalles, semántica y limitaciones: [Registro topológico 01](TOPOLOGIA_01.md).
+
+---
+
+## Extensión de implementación · 11 de noviembre de 2026
+
+Las representaciones 02–04 y el modo oscuro se documentan en [VISTAS_02_04.md](VISTAS_02_04.md). El mismo grafo conceptual se utiliza en las cuatro vistas; cada representación derivada conserva su geometría y registro topológico propios. Los arrastres manuales de 01 se someten a validación transaccional: los cambios que alteran relaciones fijadas o crean rutas inválidas se revierten.
+
+**Estado de validación:** la existencia de una vista no implica su aprobación. La pantalla marca explícitamente «En revisión» si aparecen conexiones pendientes o infracciones geométricas. No se declara terminada una vista hasta cumplir las comprobaciones de DRC, radios, topología y pruebas en navegador.
