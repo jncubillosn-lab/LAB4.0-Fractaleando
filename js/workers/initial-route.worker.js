@@ -1,7 +1,7 @@
 import {PcbRouter} from '../geometry/PcbRouter.js';
 
 // All inputs are plain structured-clone data. No DOM, CSS, or canvas in workers.
-export function computeInitialRoutes({nodes,edges,positions,rects,levels,mode='01'}){
+export function computeInitialRoutes({nodes,edges,positions,rects,levels,mode='01',portPlan=null}){
  const state={nodes,edges},byId=new Map(nodes.map(n=>[n.id,n]));
  const router=new PcbRouter({state,nodeById:id=>byId.get(id),mode,clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});
  const positionMap=new Map(positions),rectMap=new Map(rects);
@@ -9,6 +9,32 @@ export function computeInitialRoutes({nodes,edges,positions,rects,levels,mode='0
   (e.kind==='transversal'?5:0)+(Math.abs((levels[e.from]??1000)-(levels[e.to]??1000))>1?2:0);
  const ordered=edges.map((e,i)=>({...e,__index:i})).sort((a,b)=>priority(a)-priority(b)||a.__index-b.__index);
  const ports=router.assignPorts(ordered,positionMap,rectMap),occupied=[],routes=[];
+ // 02 conserva por defecto los puertos de 01 proyectados sobre el nuevo
+ // perímetro. No intercambia extremos ni utiliza puntos fantasma.
+ if(mode==='02'&&Array.isArray(portPlan)){
+  const templates=new Map(portPlan);
+  const keyFor=e=>[e.from,e.to].sort().map(encodeURIComponent).join('|');
+  const stub=router.portStub;
+  const mapPort=(id,record)=>{
+   const r=rectMap.get(id);
+   if(!r||!record||!['top','right','bottom','left'].includes(record.side)||
+      !Number.isFinite(record.fraction))return null;
+   const f=Math.max(.06,Math.min(.94,record.fraction)),side=record.side;
+   if(side==='top'||side==='bottom'){
+    const x=r.l+r.w*f,y=side==='top'?r.t:r.b;
+    return {side,x,y,sx:x,sy:y+(side==='top'?-stub:stub)};
+   }
+   const x=side==='left'?r.l:r.r,y=r.t+r.h*f;
+   return {side,x,y,sx:x+(side==='left'?-stub:stub),sy:y};
+  };
+  ordered.forEach((e,i)=>{
+   const plan=templates.get(keyFor(e));
+   if(!plan)return;
+   const from=mapPort(e.from,plan.fromPort),to=mapPort(e.to,plan.toPort);
+   if(from)ports.set(i+':'+e.from,from);
+   if(to)ports.set(i+':'+e.to,to);
+  });
+ }
  const key=e=>[e.from,e.to].sort().map(encodeURIComponent).join('|');
  for(const [i,e] of ordered.entries()){
   const from=ports.get(i+':'+e.from),to=ports.get(i+':'+e.to);
@@ -26,7 +52,7 @@ export function computeInitialRoutes({nodes,edges,positions,rects,levels,mode='0
  // Retry *only* unresolved edges using vacant independent ports. Existing
  // successful paths are immutable: this is Walk Around, not global relayout.
  let attempts=ordered.length;
- const missing=routes.filter(([key,r])=>!r.points);
+ const missing=mode==='02'&&Array.isArray(portPlan)?[]:routes.filter(([key,r])=>!r.points);
  const retryBudget=mode==='01'?120:Math.min(1400,Math.max(180,missing.length*18));
  const routeBudgetMs=mode==='01'?2900:mode==='02'?6800:mode==='03'?2500:4700;
  const retryDeadline=performance.now()+(mode==='01'?12000:24000);
