@@ -2,6 +2,7 @@ import {ViewLayouts} from '../geometry/ViewLayouts.js';
 import {SvgRenderer} from '../ui/SvgRenderer.js';
 import {TopologyRegister} from '../core/TopologyRegister.js';
 import {computeInitialRoutes} from '../workers/initial-route.worker.js';
+import {computeCompact02} from '../workers/compact02.worker.js';
 
 // Vistas derivadas read-only: conservan el grafo y el plano 01.
 // Cada vista tiene su propio punto de control y registro topológico.
@@ -12,7 +13,7 @@ export class DerivedViews {
   this.cache=new Map();this.mode='01';this.version=0;
   this.pending=null;this.staged={};
   this.names={'01':['Plano conceptual / 01','Construcción y fractaleo','Núcleo · trayectorias editables'],
-   '02':['Proximidad / 02','Reorganización compacta','Geometría conservadora · relaciones intactas'],
+   '02':['Compacto / 02','Isotopía desde el plano 01','Primero topología · luego zonas J1 · finalmente longitud'],
    '03':['Órbitas / 03','Jerarquías y cercanía','Mismo radio para cada jerarquía'],
    '04':['Espiral / 04','Crecimiento espiral','Un brazo por cada término J1 · T = 0']};
   this.derivedLines=sEl('g',{id:'derivedLines'});
@@ -21,6 +22,8 @@ export class DerivedViews {
   this.renderer=new SvgRenderer({linesEl:this.derivedLines,sEl,router,edgeKey});
   this.current=null;
   this.graphIdentity=null;
+  this.sourceRevision=null;
+  this.planeTopology=()=>null;
  }
  sourceKey(){return JSON.stringify([...this.plane.positions].sort(([a],[b])=>a.localeCompare(b)).map(([id,p])=>[id,Math.round(p.x*100)/100,Math.round(p.y*100)/100]));}
  graphKey(){
@@ -30,7 +33,7 @@ export class DerivedViews {
  reset(){
   this.version++;
   if(this.pending){this.pending.terminate?.();this.pending=null;}
-  this.cache.clear();this.current=null;this.staged={};this.graphIdentity=null;
+  this.cache.clear();this.current=null;this.staged={};this.graphIdentity=null;this.sourceRevision=null;
   this.derivedLines.replaceChildren();this.derivedNodes.replaceChildren();
   this.switchVisibility('01');this.updateLabels('01');
  }
@@ -61,6 +64,75 @@ export class DerivedViews {
  }
  metrics(){
   return new Map(this.state.nodes.map(n=>[n.id,this.geometry(n)]));
+ }
+ // 02 recibe el plano completo y su firma oficial; no genera rutas nuevas.
+ // El Worker devuelve las rutas de 01 transformadas y un certificado DRC/topología.
+ async compact02(token){
+  const levelData=ViewLayouts.graphLevels(this.state.nodes,this.state.edges);
+  const payload={
+   token,nodes:this.state.nodes.map(n=>({...n})),
+   edges:this.state.edges.map(e=>({...e})),
+   positions:[...this.plane.positions],rects:[...this.plane.rects],
+   routes:[...this.plane.routes],levels:Object.fromEntries(levelData.levels),
+   reference:this.planeTopology()
+  };
+  if(typeof Worker==='undefined')return computeCompact02(payload);
+  return new Promise((resolve,reject)=>{
+   const worker=new Worker('./js/workers/compact02.worker.js',{type:'module'});
+   this.pending=worker;
+   let finished=false;
+   const complete=(error,data)=>{
+    if(finished)return;finished=true;clearTimeout(timeout);worker.terminate();
+    if(this.pending===worker)this.pending=null;
+    if(error)reject(error);else resolve(data);
+   };
+   const timeout=setTimeout(()=>complete(new Error('02: validación excedió 60 s')),60000);
+   worker.onmessage=e=>e.data?.error?
+    complete(new Error(e.data.error)):complete(null,e.data.result);
+   worker.onerror=e=>complete(new Error(e.message||'Fallo del Worker 02'));
+   worker.postMessage(payload);
+  });
+ }
+ async selectCompact02(token){
+  this.current=null;
+  this.derivedLines.replaceChildren();this.derivedNodes.replaceChildren();
+  this.status('02 · verificando topología de 01 antes de transformar…');
+  try{
+   const r=await this.compact02(token);
+   if(token!==this.version)return;
+   if(!r.positions||!r.rects||!r.routes){
+    this.status('02 · en revisión: '+(r.reason||'No existe referencia válida de 01'),true);
+    return;
+   }
+   const layout={mode:'02',positions:new Map(r.positions),rects:new Map(r.rects),
+    levels:r.levels,stats:r.stats};
+   const routes=new Map(r.routes);
+   const levels=layout.levels;
+   const ordered=this.state.edges.map((e,i)=>({...e,__index:i})).sort((a,b)=>{
+    const priority=x=>Math.min(levels[x.from]??1000,levels[x.to]??1000)*10+
+     (x.kind==='transversal'?5:0)+
+     (Math.abs((levels[x.from]??1000)-(levels[x.to]??1000))>1?2:0);
+    return priority(a)-priority(b)||a.__index-b.__index;
+   });
+   const topology=new TopologyRegister({edgeKey:this.edgeKey});
+   topology.restore(this.planeTopology());
+   topology.latest=r.topology;topology.report=r.report;
+   const snapshot={mode:'02',layout,routes,ordered,topology,audit:r.audit,report:r.report,
+    unfinished:r.topology.pending.length,valid:r.valid,restored:false,
+    calculations:r.attempted,certification:r};
+   // Sólo se almacena una topología 01-protegida. Nunca se confunde un
+   // candidato geométrico incompleto con una vista aprobada.
+   if(!r.topologyValid){
+    this.status('02 · rechazado: la topología no coincide con 01.',true);
+    return;
+   }
+   this.cache.set('02',snapshot);
+   this.current=snapshot;this.draw(snapshot);this.fit();
+  }catch(error){
+   if(token!==this.version)return;
+   console.warn('02 · certificación:',error);
+   this.status('02 · error verificando norma 01: '+error.message,true);
+  }
  }
  async route(layout,nodes,edges,token){
   const payload={
@@ -119,8 +191,13 @@ export class DerivedViews {
    return;
   }
   const key=this.graphKey();
-  if(this.graphIdentity!==key){
-   this.cache.clear();this.graphIdentity=key;
+  if(this.graphIdentity!==key||this.sourceRevision!==this.plane.revision){
+   this.cache.clear();this.graphIdentity=key;this.sourceRevision=this.plane.revision;
+  }
+  if(mode==='02'){
+   const old=this.cache.get('02');
+   if(old){this.current=old;this.draw(old);this.fit();return;}
+   return this.selectCompact02(this.version);
   }
   let cached=this.cache.get(mode);
   if(!cached)cached=this.tryRestore(mode,key);
@@ -210,8 +287,17 @@ export class DerivedViews {
   const s=current.layout.stats,problems=current.audit.invalid+current.audit.boxes+current.audit.portsRepeated+
    (current.report.issueCount||0)+current.unfinished;
   const prefix='Vista '+this.mode+' · '+shown.size+' conceptos · '+drawn+' vínculos';
-  const warning=problems>0;
-  this.status(prefix+' · '+(warning?
+  const warning=this.mode==='02'?!current.valid:problems>0;
+  if(this.mode==='02'){
+   const certified=current.certification;
+   const topo=s.topologyValid?'conservada':'NO demostrada';
+   const zones=s.zoneValid?'válidas':'pendientes';
+   const length=s.reductionPercent>=0?'-'+s.reductionPercent.toFixed(2)+' %':
+    '+'+Math.abs(s.reductionPercent).toFixed(2)+' %';
+   this.status(prefix+' · norma 1: '+topo+' ('+s.crossings+'/'+s.sourceCrossings+
+    ' cruces) · norma 2: '+zones+' · norma 3: '+length+' longitud · '+
+    (current.valid?'Validada':certified.reason+' · En revisión'),warning);
+  }else this.status(prefix+' · '+(warning?
     ('En revisión: '+current.unfinished+' pendientes, '+current.audit.invalid+
      ' rutas inválidas, '+(current.report.issueCount||0)+' diferencias topológicas.'):
     ('Rutas completas · '+current.audit.crossings+' cruces registrados · '+s.arms+' brazos J1')),warning);
@@ -222,6 +308,8 @@ export class DerivedViews {
  // geometría de 01, mismas posiciones deterministas, DRC independiente y
  // firma de relaciones intacta. No acepta archivos que inventan caminos.
  tryRestore(mode,graphKey){
+  // La versión anterior de 02 generaba geometría independiente: inválida aquí.
+  if(mode==='02')return null;
   const stored=this.staged[mode];
   if(!stored||stored.graphKey!==graphKey||stored.sourceKey!==this.sourceKey()||
      !Array.isArray(stored.positions)||!Array.isArray(stored.routes)||
