@@ -214,7 +214,9 @@ export class DerivedViews {
   this.status(prefix+' · '+(warning?
     ('En revisión: '+current.unfinished+' pendientes, '+current.audit.invalid+
      ' rutas inválidas, '+(current.report.issueCount||0)+' diferencias topológicas.'):
-    ('Geometría verificada · '+s.arms+' brazos J1')),warning);
+    ('Rutas completas · '+current.audit.crossings+' cruces registrados · '+s.arms+' brazos J1')),warning);
+  const footer=document.getElementById('footHint');
+  if(footer)footer.textContent='Vista '+this.mode+' · '+drawn+' conexiones visibles · control propio';
  }
  // Recuperación segura de una vista previamente calculada: mismos datos y
  // geometría de 01, mismas posiciones deterministas, DRC independiente y
