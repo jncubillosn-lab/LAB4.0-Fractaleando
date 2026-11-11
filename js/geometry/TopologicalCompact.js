@@ -39,6 +39,14 @@ export function computeCompact02(input){
   }
   return sum;
  };
+ // Cota inferior para CUALQUIER ruta ortogonal que use los mismos
+ // extremos. Si supera la longitud de 01, ningún reenrutamiento local
+ // puede salvar la norma 03 sin cambiar la geometría sectorial.
+ const manhattanBound=rs=>ordered.reduce((sum,e)=>{
+  const p=rs.get(edgeKey(e))?.points;
+  return sum+(!p?.length?Infinity:
+   Math.abs(p[0].x-p.at(-1).x)+Math.abs(p[0].y-p.at(-1).y));
+ },0);
  const snapshot=(ps,rs,rr)=>{
   if(!topology.restore(reference))return {ok:false,reason:'registro original inválido'};
   const audit=validator.audit([...rr.values()],ordered.map(e=>rs.get(edgeKey(e))).filter(Boolean));
@@ -272,13 +280,16 @@ export function computeCompact02(input){
   zoneValid:best.zone.valid,lengthValid:lengthOK,
   reason:!best.geometry?.ok?'Sin topología válida':
    !best.zone.valid?'Topología conservada; no se encontró distribución sectorial válida':
-   !lengthOK?'Zonas válidas sin reducción de longitud real':'Todas las normas verificadas',
+   !lengthOK?(manhattanBound(best.rs)>=originalLength?
+    'Zonas conservadas, pero la distancia Manhattan mínima ya supera toda la longitud de 01; requiere otra deformación geométrica':
+    'Zonas válidas sin reducción de longitud real'):'Todas las normas verificadas',
   positions:[...best.ps],rects:[...best.rr],routes:[...best.rs],
   topology:best.geometry.signature,report:best.geometry.report,audit:best.geometry.audit,
   stats:{mode:'02',nodes:best.ps.size,arms:roots.length,overlaps:best.geometry.audit.boxes,
    zoneValid:best.zone.valid,sectorOverlap:best.zone.overlapCount,
    sectors:best.zone.sectors,unassigned:best.zone.unassigned,
    sourceRouteLength:originalLength,routeLength:best.length,
+   sourceManhattanBound:manhattanBound(routes),manhattanBound:manhattanBound(best.rs),
    reductionPercent:100*(1-best.length/originalLength),
    sourceArea,area:area(best.rr),sourceCrossings:original.signature.crossings.reduce((n,c)=>n+c.count,0),
    crossings:best.geometry.signature.crossings.reduce((n,c)=>n+c.count,0),
