@@ -49,7 +49,19 @@ export function computeCompact02(input){
    audit.drawn===edges.length&&report.valid&&signature.pending.length===0,
    report,audit,signature};
  };
- const ready=TopologyRegister.validShape(reference)&&positions.size===nodes.length&&
+ // Identidad EXACTA: compare() permite incorporaciones en 01, pero 02 no.
+ // Si el grafo o una sola ruta no pertenecen al mismo documento, bloquear.
+ const nodeIds=nodes.map(n=>n.id),edgeIds=edges.map(edgeKey);
+ const sameSet=(a,b)=>a.length===b.length&&new Set(a).size===a.length&&
+  new Set(b).size===b.length&&a.every(id=>b.includes(id));
+ const referenceNodes=TopologyRegister.validShape(reference)?
+  reference.nodeOrders.x.flat():[];
+ const identitiesOK=TopologyRegister.validShape(reference)&&
+  sameSet(reference.edges,edgeIds)&&sameSet(referenceNodes,nodeIds)&&
+  reference.pending.length===0&&
+  edges.every(e=>routes.get(edgeKey(e))?.edge?.from===e.from&&
+   routes.get(edgeKey(e))?.edge?.to===e.to);
+ const ready=identitiesOK&&positions.size===nodes.length&&
   rects.size===nodes.length&&routes.size===edges.length&&byId.has('p1');
  const original=ready?snapshot(positions,routes,rects):null;
  if(!original?.ok) {
