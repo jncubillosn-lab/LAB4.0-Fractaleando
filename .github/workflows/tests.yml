@@ -31,3 +31,4 @@ jobs:
         run: |
           python tests/pages_e2e.py
           python tests/views_e2e.py
+          python tests/topology_guard_e2e.py
