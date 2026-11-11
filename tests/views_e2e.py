@@ -31,6 +31,8 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
    if mode in ('03','04'):assert result['radialOrder'],result
    assert result['audit']['boxes']==0,result
    assert result['audit']['invalid']==0,result
+   assert result['valid'] and result['pending']==0,result
+   assert page.locator('#derivedLines circle').count()==result['audit']['crossings'],result
    assert result['topology']['hasReference'],result
    # El filtro de profundidad no vuelve a calcular el enrutamiento.
    before=page.evaluate('window.P1_PLANO_DIAGNOSTICO.routeCalculations')
@@ -39,6 +41,10 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
    page.locator('#showAllBtn').click()
   page.locator('#themeBtn').click()
   assert page.locator('#themeBtn').get_attribute('aria-pressed')=='true'
+  with page.expect_download() as exp_svg:page.locator('#svgBtn').click()
+  svg=Path(exp_svg.value.path()).read_text(encoding='utf8')
+  assert '#171917' in svg and '#e9e9e4' in svg
+
   bg=page.locator('body').evaluate('(el)=>getComputedStyle(el).backgroundColor')
   assert bg=='rgb(23, 25, 23)',bg
   page.locator('#themeBtn').click()
@@ -55,7 +61,20 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
   page.locator('[data-view="04"]').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().current!==null',timeout=60000)
   four=page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current')
-  assert four['arms']==4 and four['nodes']==5 and four['radialOrder'] and four['overlaps']==0,four
+  assert four['arms']==4 and four['nodes']==5 and four['radialOrder'] and four['overlaps']==0 and four['valid'],four
+  # Persistencia completa: recuperar vista válida sin computar rutas nuevas.
+  page.locator('[data-view="01"]').click()
+  with page.expect_download() as dl:page.locator('#jsonBtn').click()
+  filename=dl.value.path()
+  saved=json.loads(Path(filename).read_text(encoding='utf8'))
+  assert saved['derivedViews']['04']['topology']['schema']=='p1.topology.v1'
+  page.locator('#fileInput').set_input_files(filename)
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===4',timeout=60000)
+  page.locator('[data-view="04"]').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().current?.mode==="04"',timeout=60000)
+  restored=page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current')
+  assert restored['valid'] and restored['restored'] and restored['calculations']==0,restored
+
   print('VISTA_CUATRO_BRAZOS',json.dumps(four,ensure_ascii=False)[:1500],flush=True)
   page.locator('[data-view="01"]').click()
   assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.pending')==0
