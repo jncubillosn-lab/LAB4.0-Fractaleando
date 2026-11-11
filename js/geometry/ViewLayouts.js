@@ -1,7 +1,7 @@
 import {CompactLayout} from './CompactLayout.js';
 // Vistas derivadas y deterministas del mismo grafo conceptual P1.
 // Nunca modifica los nodos, los vínculos ni el punto de control de 01.
-// 02: compactación conservadora; 03: radio idéntico por jerarquía;
+// 02: sectores J1 centrados en J0; 03: radio idéntico por jerarquía;
 // 04: N brazos espirales (N=#J1), T=0 y bandas radiales estrictas.
 export class ViewLayouts {
  static MODES=['01','02','03','04'];
