@@ -31,9 +31,21 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
    if mode in ('03','04'):assert result['radialOrder'],result
    assert result['audit']['boxes']==0,result
    assert result['audit']['invalid']==0,result
-   assert result['valid'] and result['pending']==0,result
+   if mode=='02':
+    assert result['zoneValid'] and result['arms']==3,result
+    assert result['topology']['hasReference'],result
+    # 02 solo se admite si coincide con 01 y reduce la longitud REAL.
+    # Una disposición provisional no se aprueba a fuerza de cambiar 71 cruces.
+    if result['valid']:
+     assert result['topology']['valid'] and result['pending']==0,result
+     assert result['reductionPercent']>0,result
+    else:
+     assert result['topology']['issueCount']>0 or result['pending']>0 or (result['reductionPercent'] or 0)<=0,result
+     assert 'En revisión' in page.locator('#derivedStatus').inner_text()
+   else:
+    assert result['valid'] and result['pending']==0,result
+    assert result['topology']['hasReference'],result
    assert page.locator('#derivedLines circle').count()==result['audit']['crossings'],result
-   assert result['topology']['hasReference'],result
    # El filtro de profundidad no vuelve a calcular el enrutamiento.
    before=page.evaluate('window.P1_PLANO_DIAGNOSTICO.routeCalculations')
    page.locator('#depth').evaluate('(el)=>{el.value="1";el.dispatchEvent(new Event("input",{bubbles:true}))}')
