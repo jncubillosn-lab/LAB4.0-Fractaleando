@@ -188,7 +188,7 @@ export class PcbRouter {
    // Canal individual para ramas paralelas del mismo progenitor.
    // Se reserva por orden espacial: los hijos más alejados usan los carriles interiores.
    const parent=nodeById(src.id),child=nodeById(dst.id);
-   if(mode==='01'&&child?.parent===src.id&&src.side==='right'&&dst.side==='left'&&t.x-s.x>30){
+   if((mode==='01'||mode==='02')&&child?.parent===src.id&&src.side==='right'&&dst.side==='left'&&t.x-s.x>30){
     const py=parent.y,above=t.y<py;
     const siblings=state.nodes.filter(n=>n.parent===src.id&&((n.y<py)===above))
      .sort((a,b)=>above?a.y-b.y:b.y-a.y);
