@@ -7,19 +7,8 @@ const metrics=new Map(fixture.rects.map(([id,r])=>[id,{w:r.w,h:r.h}]));
 const positions=new Map(fixture.positions);
 const runner=new ViewLayouts();
 const args={nodes:fixture.nodes,edges:fixture.edges,metrics,sourcePositions:positions};
-test('02: compacta PPR sin cambiar el orden de centros ni solapar cajas',()=>{
- const result=runner.compute({mode:'02',...args});
- assert.equal(result.positions.size,210);
- assert.ok(result.stats.factor<1,'debe reducirse al menos alguna distancia');
- assert.ok(result.stats.relativeMoves>0,'debe aproximar al menos algunos términos vinculados');
- assert.ok(result.stats.linkLength<result.stats.uniformLinkLength,'debe mejorar la escala uniforme');
- assert.equal(result.stats.overlaps,0);
- for(let i=0;i<fixture.nodes.length;i++)for(let j=0;j<i;j++){
-  const id=fixture.nodes[i].id,other=fixture.nodes[j].id;
-  const p=positions.get(id),q=positions.get(other),a=result.positions.get(id),b=result.positions.get(other);
-  if(Math.abs(p.x-q.x)>.05)assert.equal(Math.sign(a.x-b.x),Math.sign(p.x-q.x));
-  if(Math.abs(p.y-q.y)>.05)assert.equal(Math.sign(a.y-b.y),Math.sign(p.y-q.y));
- }
+test('02 no puede obtenerse sin rutas ni firma de 01',()=>{
+ assert.throws(()=>runner.compute({mode:'02',...args}),/rutas certificadas de 01/);
 });
 test('03: radio idéntico por distancia mínima de vínculos y cero colisiones',()=>{
  const result=runner.compute({mode:'03',...args});
@@ -50,10 +39,10 @@ test('R01: cuatro hijos directos de P1 producen cuatro brazos',()=>{
  const edges=nodes.slice(1).map(n=>({from:'p1',to:n.id}));
  const metrics=new Map(nodes.map(n=>[n.id,{w:140,h:56}]));
  const sourcePositions=new Map(nodes.map((n,i)=>[n.id,{x:200*i,y:20*i}]));
- for(const mode of ['02','03','04']){
+ for(const mode of ['03','04']){
   const result=runner.compute({mode,nodes,edges,metrics,sourcePositions});
   assert.equal(result.stats.arms,4);assert.equal(result.positions.size,5);
-  if(mode!=='02')assert.equal(result.stats.overlaps,0);
+  assert.equal(result.stats.overlaps,0);
  }
 });
 test('03 emplea distancia de enlaces al origen, sin inventar conexiones',()=>{
