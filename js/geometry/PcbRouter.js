@@ -264,7 +264,7 @@ export class PcbRouter {
     if(search){const full=simplify([start,...search,end]),crossings=routeShapeValid(full,obstacles,own,occupied,true);
      if(crossings!==null){best={points:search,crossings};break;}}
    }}
-   if(!best&&mode==='03'){
+   if(!best&&(mode==='02'||mode==='03')){
     const wide=wideCandidates(start,s,t,end,obstacles,occupied,own);
     if(wide)return {points:wide.points,crosses:wide.crosses};
    }
