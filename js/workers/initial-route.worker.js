@@ -1,7 +1,11 @@
+import {computeCompactRoutes} from '../geometry/CompactRouteEngine.js';
 import {PcbRouter} from '../geometry/PcbRouter.js';
 
 // All inputs are plain structured-clone data. No DOM, CSS, or canvas in workers.
-export function computeInitialRoutes({nodes,edges,positions,rects,levels,mode='01'}){
+export function computeInitialRoutes({nodes,edges,positions,rects,levels,mode='01',
+ sourcePositions=null,sourceRoutes=null}){
+ if(mode==='02'&&sourcePositions&&sourceRoutes)
+  return computeCompactRoutes({nodes,edges,positions,rects,levels,sourcePositions,sourceRoutes});
  const state={nodes,edges},byId=new Map(nodes.map(n=>[n.id,n]));
  const router=new PcbRouter({state,nodeById:id=>byId.get(id),mode,clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});
  const positionMap=new Map(positions),rectMap=new Map(rects);

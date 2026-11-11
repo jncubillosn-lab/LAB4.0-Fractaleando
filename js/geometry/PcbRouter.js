@@ -5,7 +5,7 @@ export class PcbRouter {
  constructor({state,nodeById,clamp,mode='01'}){
   const ROUTE_CLEAR=9, ROUTE_SEPARATION=6, PORT_STUB=19;
   function prefSide(node,other,edge){
-   if(mode==='03'||mode==='04'){
+   if(mode==='02'||mode==='03'||mode==='04'){
     const dx=other.x-node.x,dy=other.y-node.y;
     return Math.abs(dx)>Math.abs(dy)*.72?
      (dx>0?'right':'left'):(dy>0?'bottom':'top');
@@ -236,7 +236,7 @@ export class PcbRouter {
    // Canal individual para ramas paralelas del mismo progenitor.
    // Se reserva por orden espacial: los hijos más alejados usan los carriles interiores.
    const parent=nodeById(src.id),child=nodeById(dst.id);
-   if((mode==='01'||mode==='02')&&child?.parent===src.id&&src.side==='right'&&dst.side==='left'&&t.x-s.x>30){
+   if(mode==='01'&&child?.parent===src.id&&src.side==='right'&&dst.side==='left'&&t.x-s.x>30){
     const py=parent.y,above=t.y<py;
     const siblings=state.nodes.filter(n=>n.parent===src.id&&((n.y<py)===above))
      .sort((a,b)=>above?a.y-b.y:b.y-a.y);
