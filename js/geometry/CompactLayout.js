@@ -78,12 +78,12 @@ export class CompactLayout {
     if(moduleId===branchId&&branchId!=='orphan')continue;
     const bb=CompactLayout.bounds(members,original,mm);
     const center={x:(bb.l+bb.r)/2,y:(bb.t+bb.b)/2};
-    let scale=.84;
+    // Traslación rígida: las 174 rutas interiores se pueden preservar.
+    const scale=1;
     const make=f=>new Map(members.map(id=>[id,{
      x:(original.get(id).x-center.x)*f,
      y:(original.get(id).y-center.y)*f
     }]));
-    while(scale<1&&CompactLayout.overlaps(make(scale),mm,25)>0)scale=Math.min(1,scale+.04);
     const local=make(scale),bounds=CompactLayout.bounds(members,local,mm);
     blocks.push({id:moduleId,members,local,bounds,w:bounds.w,h:bounds.h,
      sourceY:original.get(moduleId)?.y??center.y,scale});
