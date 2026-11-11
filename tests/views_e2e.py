@@ -31,7 +31,19 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
    if mode in ('03','04'):assert result['radialOrder'],result
    assert result['audit']['boxes']==0,result
    assert result['audit']['invalid']==0,result
-   assert result['valid'] and result['pending']==0,result
+   if mode=='02':
+    # El candidato solo se muestra si pasa el control topológico exacto de 01.
+    assert result['topologyValid'],result
+    assert result['audit']['drawn']==217 and result['pending']==0,result
+    assert result['sourceCrossings']==71 and result['crossings']==71,result
+    assert result['topology']['valid'] and result['topology']['issueCount']==0,result
+    assert result['audit']['invalid']==0 and result['audit']['portsRepeated']==0,result
+    assert result['arms']==3,result
+    assert result['valid']==(result['zoneValid'] and result['reductionPercent']>0),result
+    if not result['valid']:
+     assert 'En revisión' in page.locator('#derivedStatus').inner_text(),result
+   else:
+    assert result['valid'] and result['pending']==0,result
    assert page.locator('#derivedLines circle').count()==result['audit']['crossings'],result
    assert result['topology']['hasReference'],result
    # El filtro de profundidad no vuelve a calcular el enrutamiento.
