@@ -31,57 +31,6 @@ export class CompactLayout {
    return sum+(a&&b?Math.hypot(a.x-b.x,a.y-b.y):0);
   },0);
  }
- static miniTree(rootId,allowed,byId,mm,source){
-  const children=new Map();
-  for(const id of allowed){
-   const n=byId.get(id);
-   if(n?.parent&&allowed.has(n.parent)){
-    if(!children.has(n.parent))children.set(n.parent,[]);
-    children.get(n.parent).push(id);
-   }
-  }
-  for(const group of children.values())group.sort((a,b)=>
-   (source.get(a)?.y??0)-(source.get(b)?.y??0)||a.localeCompare(b));
-  const seen=new Set();
-  function place(id){
-   if(seen.has(id))return null;
-   seen.add(id);
-   const measure=mm.get(id);if(!measure)return null;
-   const pieces=(children.get(id)||[]).map(place).filter(Boolean);
-   if(!pieces.length){
-    return {w:measure.w,h:measure.h,
-     positions:new Map([[id,{x:measure.w/2,y:measure.h/2}]])};
-   }
-   const pad=72,spaceY=105;
-   const area=pieces.reduce((sum,p)=>sum+(p.w+pad)*(p.h+pad),0);
-   const target=Math.max(measure.w+pad,Math.sqrt(area)*1.22,
-    Math.max(...pieces.map(p=>p.w)));
-   let x=0,y=0,rowH=0,maxW=0;
-   const positions=new Map(),childrenOffsets=[];
-   for(const child of pieces){
-    if(x>0&&x+child.w>target){x=0;y+=rowH+pad;rowH=0;}
-    childrenOffsets.push({child,x,y});
-    x+=child.w+pad;maxW=Math.max(maxW,x-pad);
-    rowH=Math.max(rowH,child.h);
-   }
-   const width=Math.max(maxW,measure.w),height=measure.h+spaceY+y+rowH;
-   const dx=(width-maxW)/2;
-   positions.set(id,{x:width/2,y:measure.h/2});
-   for(const {child,x,y} of childrenOffsets)
-    for(const [key,p] of child.positions)
-     positions.set(key,{x:dx+x+p.x,y:measure.h+spaceY+y+p.y});
-   return {w:width,h:height,positions};
-  }
-  const first=place(rootId);
-  // Nodos sin jerarquía de parentesco recuperable conservan lugar propio.
-  const local=new Map(first?.positions||[]);
-  let cursor=first?.w||0;
-  for(const id of allowed)if(!local.has(id)){
-   const m=mm.get(id);if(!m)continue;
-   local.set(id,{x:cursor+m.w/2,y:m.h/2});cursor+=m.w+72;
-  }
-  return local;
- }
  static groups(nodes,source){
   const byId=new Map(nodes.map(n=>[n.id,n]));
   const roots=nodes.filter(n=>n.parent==='p1')
@@ -120,88 +69,80 @@ export class CompactLayout {
   const branchBlocks=[];
   let modules=0;
   let innerFactorSum=0;
-  const padding=68; // espacio para rutas y puertos exclusivos
-  // Fase 1: conservar cada subárbol J2 como unidad geométrica y compactar
-  // su tamaño interno mediante escalado homogéneo SIN reorganizar sus nodos.
+  // Fase 1: los subárboles J2 son unidades rígidas. La disposición
+  // interna del plano validado se conserva, solo se reducen distancias
+  // homogéneamente donde haya separación real entre cuadros.
   for(const [branchId,moduleMap] of branches){
    const blocks=[];
    for(const [moduleId,members] of moduleMap){
-    if(moduleId===branchId&&branchId!=='orphan')continue; // J1 se coloca como puerto del bloque mayor.
-    const local=CompactLayout.miniTree(moduleId,new Set(members),byId,mm,original);
-    const bounds=CompactLayout.bounds(members,local,mm);
-    const scale=1;const center={y:original.get(moduleId)?.y??0};
+    if(moduleId===branchId&&branchId!=='orphan')continue;
+    const bb=CompactLayout.bounds(members,original,mm);
+    const center={x:(bb.l+bb.r)/2,y:(bb.t+bb.b)/2};
+    let scale=.84;
+    const make=f=>new Map(members.map(id=>[id,{
+     x:(original.get(id).x-center.x)*f,
+     y:(original.get(id).y-center.y)*f
+    }]));
+    while(scale<1&&CompactLayout.overlaps(make(scale),mm,25)>0)scale=Math.min(1,scale+.04);
+    const local=make(scale),bounds=CompactLayout.bounds(members,local,mm);
     blocks.push({id:moduleId,members,local,bounds,w:bounds.w,h:bounds.h,
-     sourceY:center.y,scale});
+     sourceY:original.get(moduleId)?.y??center.y,scale});
     innerFactorSum+=scale;modules++;
    }
-   // A falta de descendientes J2, J1 forma un bloque independiente.
+   // Los J2 se distribuyen alrededor de su J1 en dos zonas, no en
+   // trece filas. El orden por Y del plano se conserva dentro de cada
+   // lado para preservar la lectura de sus hijos.
    blocks.sort((a,b)=>a.sourceY-b.sourceY||a.id.localeCompare(b.id));
-   const total=blocks.reduce((s,b)=>s+(b.w+padding)*(b.h+padding),0);
-   const maxWidth=blocks.reduce((m,b)=>Math.max(m,b.w),0);
-   const target=Math.max(maxWidth,Math.sqrt(total)*1.12);
+   const split=Math.ceil(blocks.length/2);
+   const left=blocks.slice(0,split),right=blocks.slice(split);
+   const space=90,corridor=340;
+   const leftW=Math.max(0,...left.map(b=>b.w));
+   const rightW=Math.max(0,...right.map(b=>b.w));
+   const totalW=leftW+corridor+rightW;
+   const heights=groups=>groups.reduce((sum,b,i)=>sum+b.h+(i?space:0),0);
+   const leftH=heights(left),rightH=heights(right);
+   const totalH=Math.max(leftH,rightH,mm.get(branchId)?.h||0);
    const localPositions=new Map();
-   let x=0,y=0,rowH=0,largestX=0;
-   for(const block of blocks){
-    if(x>0&&x+block.w>target){x=0;y+=rowH+padding;rowH=0;}
-    const offset={x:x-block.bounds.l,y:y-block.bounds.t};
-    for(const [id,p] of block.local)localPositions.set(id,{x:p.x+offset.x,y:p.y+offset.y});
-    x+=block.w+padding;largestX=Math.max(largestX,x-padding);
-    rowH=Math.max(rowH,block.h);
+   function column(items,x){
+    let cursor=(totalH-heights(items))/2;
+    for(const block of items){
+     const ox=x-block.bounds.l;
+     const oy=cursor-block.bounds.t;
+     for(const [id,p] of block.local)localPositions.set(id,{x:p.x+ox,y:p.y+oy});
+     cursor+=block.h+space;
+    }
    }
-   const gridH=y+rowH,gridW=Math.max(largestX,mm.get(branchId)?.w||0);
-   branchBlocks.push({id:branchId,localPositions,gridW,gridH});
-  }
-  // Fase 2: empaquetado de regiones J1 alrededor del núcleo. Para tres
-  // brazos se forma un triángulo de bloques, no tres columnas verticales.
-  // El nodo J1 se ubica en el borde orientado hacia P1.
-  const branchBounds=[],branchCount=branchBlocks.length;
-  for(let i=0;i<branchCount;i++){
-   const block=branchBlocks[i],metric=mm.get(block.id)||{w:180,h:75};
-   let anchor;
-   if(branchCount===3){
-    anchor=i===0?{x:block.gridW+metric.w/2+90,y:block.gridH+35}:
-     i===1?{x:-metric.w/2-90,y:block.gridH+35}:
-     {x:block.gridW/2,y:-metric.h/2-95};
-   }else if(branchCount===2){
-    anchor=i===0?{x:block.gridW+metric.w/2+100,y:block.gridH/2}:
-     {x:-metric.w/2-100,y:block.gridH/2};
-   }else{
-    anchor={x:block.gridW/2,y:-metric.h/2-115};
-   }
-   if(block.id!=='orphan')block.localPositions.set(block.id,anchor);
-   const bounds=CompactLayout.bounds([...block.localPositions.keys()],block.localPositions,mm);
-   branchBounds.push({id:block.id,
-    local:new Map([...block.localPositions].map(([id,p])=>[id,{x:p.x-bounds.l,y:p.y-bounds.t}])),
+   column(left,0);column(right,leftW+corridor);
+   if(branchId!=='orphan')localPositions.set(branchId,{x:leftW+corridor/2,y:totalH/2});
+   const bounds=CompactLayout.bounds([...localPositions.keys()],localPositions,mm);
+   branchBlocks.push({id:branchId,
+    local:new Map([...localPositions].map(([id,p])=>[id,{x:p.x-bounds.l,y:p.y-bounds.t}])),
     width:bounds.w,height:bounds.h});
   }
-  const result=new Map(),offsets=[];
-  const gap=345;
-  if(branchCount===3){
-   const [a,b,c]=branchBounds;
-   const topHeight=Math.max(a.height,b.height);
+  // Fase 2: triangulación de los bloques J1 con P1 cerca de su punto
+  // de encuentro. Cada bloque se desplaza sin invertir la topología
+  // interna de sus subárboles; no se fijan las columnas de 01.
+  const result=new Map(),count=branchBlocks.length;
+  const gap=360,offsets=[];
+  if(count===3){
+   const [a,b,c]=branchBlocks,topH=Math.max(a.height,b.height);
    offsets.push({x:0,y:0},{x:a.width+gap,y:0},{
-    x:(a.width+b.width+gap-c.width)/2,
-    y:topHeight+gap
-   });
-   result.set('p1',{x:a.width+gap/2,y:topHeight+gap/2});
-  }else if(branchCount===2){
-   const [a]=branchBounds;
+    x:(a.width+b.width+gap-c.width)/2,y:topH+gap});
+   result.set('p1',{x:a.width+gap/2,y:topH+gap/2});
+  }else if(count===2){
+   const [a]=branchBlocks;
    offsets.push({x:0,y:0},{x:a.width+gap,y:0});
-   result.set('p1',{x:a.width+gap/2,
-    y:Math.max(...branchBounds.map(b=>b.height))/2});
+   result.set('p1',{x:a.width+gap/2,y:Math.max(...branchBlocks.map(b=>b.height))/2});
   }else{
-   const cols=Math.max(1,Math.ceil(Math.sqrt(branchCount)));
-   const cellW=Math.max(0,...branchBounds.map(b=>b.width))+gap;
-   const cellH=Math.max(0,...branchBounds.map(b=>b.height))+gap;
-   for(let i=0;i<branchCount;i++)offsets.push({x:(i%cols)*cellW,y:Math.floor(i/cols)*cellH});
-   result.set('p1',{x:(cols-.5)*cellW/2,y:cellH/2});
+   const cols=Math.max(1,Math.ceil(Math.sqrt(count)));
+   const cellW=Math.max(0,...branchBlocks.map(b=>b.width))+gap;
+   const cellH=Math.max(0,...branchBlocks.map(b=>b.height))+gap;
+   for(let i=0;i<count;i++)offsets.push({x:(i%cols)*cellW,y:Math.floor(i/cols)*cellH});
+   result.set('p1',{x:cellW/2,y:cellH/2});
   }
-  for(let i=0;i<branchBounds.length;i++){
-   const block=branchBounds[i],offset=offsets[i];
-   for(const [id,p] of block.local)result.set(id,{x:p.x+offset.x,y:p.y+offset.y});
-  }
-  // La posición central es un punto de vista; no se inventan vínculos.
-  // Desplazar el conjunto al origen mantiene intactas todas las relaciones.
+  for(let i=0;i<branchBlocks.length;i++)
+   for(const [id,p] of branchBlocks[i].local)result.set(id,{
+    x:p.x+offsets[i].x,y:p.y+offsets[i].y});
   const core=result.get('p1')||{x:0,y:0};
   for(const [id,p] of result)result.set(id,{x:p.x-core.x,y:p.y-core.y});
   // Fase 3: refinamiento micro de nodos individuales. Solo modificar dentro
@@ -246,7 +187,7 @@ export class CompactLayout {
    width:afterBounds.w,height:afterBounds.h,
    sourceLinkLength:CompactLayout.length(edges,original),
    linkLength:CompactLayout.length(edges,result),
-   macroBlocks:branchBounds.length,subtreeBlocks:modules,
+   macroBlocks:branchBlocks.length,subtreeBlocks:modules,
    microMoves,meanSubtreeScale:modules?innerFactorSum/modules:1,
    metric:'empaquetado jerárquico de subárboles J2 con refinamiento local',
    bounds:afterBounds};
