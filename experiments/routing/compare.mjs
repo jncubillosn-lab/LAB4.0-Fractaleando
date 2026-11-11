@@ -61,13 +61,14 @@ await AvoidLib.load();
 const Avoid=AvoidLib.getInstance();
 console.log('LIBAVOID_LOADED',JSON.stringify({ms:+(performance.now()-loadStart).toFixed(1),flags:{OrthogonalRouting:Avoid.OrthogonalRouting,ConnType_Orthogonal:Avoid.ConnType_Orthogonal}}));
 const trials=[];
-for(const profile of ['default','strict']) {
+for(const profile of ['default','strict','pins']) {
+try {
 const start=performance.now();
 // Los valores son los enums oficiales de libavoid: RouterFlag.OrthogonalRouting=2, ConnType_Orthogonal=2.
 // La versión WASM no exporta esas constantes como propiedades de JS.
 const ORTHOGONAL=2;
 const engine=new Avoid.Router(ORTHOGONAL);
-if(profile==='strict'){
+if(profile==='strict'||profile==='pins'){
  // Libavoid: segmentPenalty 0, crossingPenalty 2, fixedSharedPathPenalty 4,
  // idealNudgingDistance 7. Mantener intactos los puertos del experimento.
  engine.setRoutingParameter(0,25);
@@ -78,8 +79,20 @@ if(profile==='strict'){
 }
 const shapes=[];
 for(const r of rects){
- const rectangle=new Avoid.Rectangle(new Avoid.Point(r.l-9,r.t-9),new Avoid.Point(r.r+9,r.b+9));
+ const pad=profile==='pins'?0:9;
+  const rectangle=new Avoid.Rectangle(new Avoid.Point(r.l-pad,r.t-pad),new Avoid.Point(r.r+pad,r.b+pad));
  shapes.push(new Avoid.ShapeRef(engine,rectangle));
+}
+const byShape=new Map(rects.map((r,i)=>[r.id,shapes[i]]));
+const byRect=new Map(rects.map(r=>[r.id,r]));
+if(profile==='pins')engine.setRoutingParameter(6,9); // distancia reservada a cuadros
+function shapePin(id,port,pinId){
+ const r=byRect.get(id),shape=byShape.get(id);
+ const ux=(port.x-r.l)/r.w,uy=(port.y-r.t)/r.h;
+ const dir=({top:1,bottom:2,left:4,right:8})[port.side];
+ const pin=new Avoid.ShapeConnectionPin(shape,pinId,ux,uy,true,0,dir);
+ pin.setExclusive(true);
+ return new Avoid.ConnEnd(shape,pinId);
 }
 const conns=[];
 for(const [i,e] of ordered.entries()){
@@ -101,7 +114,7 @@ const candidates=conns.map(({e,from,to,conn})=>{
   const accessor=poly.get_ps??poly.getPs??poly.getPoint??poly.at;
   if(typeof accessor!=='function')throw Error('No existe método público de lectura de puntos');
   for(let i=0;i<poly.size();i++){const p=accessor.call(poly,i);inner.push({x:p.x,y:p.y});}
-  points=mergeRoute(from,to,inner);
+  points=profile==='pins'?pcb.simplify(inner):mergeRoute(from,to,inner);
  }
  return [key(e),{edge:e,points,fromPort:from||null,toPort:to||null}];
 });
@@ -114,6 +127,7 @@ for(const [,rt] of candidates){
 const result={name:profile,...compare,ms:+ms.toFixed(1),brokenWithoutOtherRoutes};
 trials.push(result);
 console.log('PROFILE',JSON.stringify(result));
+} catch(error){const item={name:profile,error:String(error?.message||error)};trials.push(item);console.error('PROFILE_ERROR',JSON.stringify(item));}
 }
 const summary={baseline:{...evaluate(baseline.routes,'PcbRouter'),ms:+baseTime.toFixed(1)},trials,library:'libavoid-js@0.5.0-beta.5'};
 console.log('COMPARISON',JSON.stringify(summary));
