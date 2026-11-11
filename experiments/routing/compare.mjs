@@ -48,11 +48,22 @@ const loadStart=performance.now();
 await AvoidLib.load();
 const Avoid=AvoidLib.getInstance();
 console.log('LIBAVOID_LOADED',JSON.stringify({ms:+(performance.now()-loadStart).toFixed(1),flags:{OrthogonalRouting:Avoid.OrthogonalRouting,ConnType_Orthogonal:Avoid.ConnType_Orthogonal}}));
+const trials=[];
+for(const profile of ['default','strict']) {
 const start=performance.now();
 // Los valores son los enums oficiales de libavoid: RouterFlag.OrthogonalRouting=2, ConnType_Orthogonal=2.
 // La versión WASM no exporta esas constantes como propiedades de JS.
 const ORTHOGONAL=2;
 const engine=new Avoid.Router(ORTHOGONAL);
+if(profile==='strict'){
+ // Libavoid: segmentPenalty 0, crossingPenalty 2, fixedSharedPathPenalty 4,
+ // idealNudgingDistance 7. Mantener intactos los puertos del experimento.
+ engine.setRoutingParameter(0,25);
+ engine.setRoutingParameter(2,250000);
+ engine.setRoutingParameter(4,250000);
+ engine.setRoutingParameter(7,12);
+ engine.setRoutingOption(0,true);
+}
 const shapes=[];
 for(const r of rects){
  const rectangle=new Avoid.Rectangle(new Avoid.Point(r.l-9,r.t-9),new Avoid.Point(r.r+9,r.b+9));
@@ -83,12 +94,15 @@ const candidates=conns.map(({e,from,to,conn})=>{
  return [key(e),{edge:e,points,fromPort:from||null,toPort:to||null}];
 });
 const compare=evaluate(candidates,'Libavoid Orthogonal');
-const changed=[];
-const baseMap=new Map(baseline.routes);
-for(const [k,r] of candidates){
- const old=baseMap.get(k);
- if(JSON.stringify(r.points)!==JSON.stringify(old?.points))changed.push(k);
+
+let brokenWithoutOtherRoutes=0;
+for(const [,rt] of candidates){
+ if(rt.points&&pcb.routeShapeValid(rt.points,rects,[rt.edge.from,rt.edge.to],[],true)===null)brokenWithoutOtherRoutes++;
 }
-const summary={baseline:{...evaluate(baseline.routes,'PcbRouter'),ms:+baseTime.toFixed(1)},candidate:{...compare,ms:+ms.toFixed(1)},differentRoutes:changed.length,exampleChanges:changed.slice(0,12),library:'libavoid-js@0.5.0-beta.5'};
+const result={name:profile,...compare,ms:+ms.toFixed(1),brokenWithoutOtherRoutes};
+trials.push(result);
+console.log('PROFILE',JSON.stringify(result));
+}
+const summary={baseline:{...evaluate(baseline.routes,'PcbRouter'),ms:+baseTime.toFixed(1)},trials,library:'libavoid-js@0.5.0-beta.5'};
 console.log('COMPARISON',JSON.stringify(summary));
 writeFileSync(new URL('./resultado.json',import.meta.url),JSON.stringify(summary,null,2)+'\n');
