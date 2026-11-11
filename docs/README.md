@@ -272,3 +272,13 @@ La implementación modular se entrega primero en la rama `refactor/p1-modular-es
 6. **Pruebas:** `npm test` ejecuta comprobaciones sin dependencias de ejecución del sitio. GitHub Actions incluye una prueba de navegador con módulos reales y la lectura del estado geométrico. Véase `docs/ARQUITECTURA_01.md`.
 
 **No se implementan las etapas de representación 02, 03 ni 04.** El esquema conceptual JSON `p1.graph.v1` y su campo opcional `planeCheckpoint` se conservan.
+
+---
+
+## Registro topológico independiente del punto de control
+
+El programa mantiene ahora un registro relacional **paralelo** a las coordenadas y las rutas. Identifica el orden relativo de conceptos, el orden de puertos sobre cada término, los pares y secuencias de cruces y qué vínculos ocupan lados consecutivos en un corredor de enrutamiento. Un cambio de distancia o de proporción, por sí mismo, no altera esas identidades.
+
+El registro se conserva en el campo opcional `topologyRegister` (`p1.topology.v1`) del JSON `p1.graph.v1`, sin modificar el esquema conceptual. Los JSON antiguos continúan siendo legibles. La referencia topológica solo se sustituye cuando la geometría actual respeta las relaciones anteriores; si no, se conservan la referencia y un informe de discrepancias accesible en `P1_PLANO_DIAGNOSTICO.topology()`.
+
+**Alcance actual:** validación observacional, sin bloqueo automático ni reajuste de rutas. No se ha definido una nueva norma ni se han implementado funciones de otras etapas. Detalles, semántica y limitaciones: [Registro topológico 01](TOPOLOGIA_01.md).
