@@ -1,0 +1,88 @@
+// Experimento aislado: compara rutas sobre EXACTAMENTE las mismas posiciones y puertos.
+// No cambia P1 ni se incorpora al sitio. Requiere: npm i --no-save libavoid-js@0.5.0-beta.5
+import {readFileSync,writeFileSync} from 'node:fs';
+import {performance} from 'node:perf_hooks';
+import {AvoidLib} from 'libavoid-js';
+import {computeInitialRoutes} from '../../js/workers/initial-route.worker.js';
+import {PcbRouter} from '../../js/geometry/PcbRouter.js';
+import {GeometryValidator} from '../../js/geometry/GeometryValidator.js';
+
+const fixture=JSON.parse(readFileSync(new URL('../../tests/route-fixture.json',import.meta.url),'utf8'));
+const state={nodes:fixture.nodes,edges:fixture.edges};
+const byId=new Map(state.nodes.map(n=>[n.id,n]));
+const pcb=new PcbRouter({state,nodeById:id=>byId.get(id),clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});
+const overlap=(a,b,gap=0)=>a.l<b.r+gap&&a.r>b.l-gap&&a.t<b.b+gap&&a.b>b.t-gap;
+const validate=new GeometryValidator({router:pcb,rectOverlap:overlap});
+const key=e=>[e.from,e.to].sort().map(encodeURIComponent).join('|');
+const priority=e=>Math.min(fixture.levels[e.from]??1000,fixture.levels[e.to]??1000)*10+
+ (e.kind==='transversal'?5:0)+(Math.abs((fixture.levels[e.from]??1000)-(fixture.levels[e.to]??1000))>1?2:0);
+const ordered=fixture.edges.map((e,i)=>({...e,__index:i})).sort((a,b)=>priority(a)-priority(b)||a.__index-b.__index);
+const ports=pcb.assignPorts(ordered,new Map(fixture.positions),new Map(fixture.rects));
+const rects=fixture.rects.map(([,r])=>r);
+const add=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y)<.01;
+function mergeRoute(from,to,path){
+ if(!path.length)return null;
+ const raw=[{x:from.x,y:from.y},{x:from.sx,y:from.sy},...path,{x:to.sx,y:to.sy},{x:to.x,y:to.y}];
+ const dedup=raw.filter((p,i)=>i===0||!add(raw[i-1],p));
+ return pcb.simplify(dedup);
+}
+function routeLength(points){return points?.slice(1).reduce((n,p,i)=>n+Math.abs(points[i].x-p.x)+Math.abs(points[i].y-p.y),0)||0;}
+function evaluate(routes,mode){
+ const occupied=[],used=new Map(),status={mode,complete:0,pending:0,invalid:0,crosses:0,length:0,points:0,reasons:{},examples:[]};
+ for(const [,rt] of routes){
+  if(!rt.points){status.pending++;continue;}
+  status.complete++;status.length+=routeLength(rt.points);status.points+=rt.points.length;
+  const out=validate.validateRoute(rt,rects,occupied,used);
+  if(!out.ok){status.invalid++;status.reasons[out.reason]=(status.reasons[out.reason]||0)+1;if(status.examples.length<8)status.examples.push({edge:key(rt.edge),reason:out.reason});}
+  else status.crosses+=out.crossings;
+  occupied.push(...pcb.allSegments(rt.points));
+  for(const [id,p] of [[rt.edge.from,rt.fromPort],[rt.edge.to,rt.toPort]])if(p){if(!used.has(id))used.set(id,[]);used.get(id).push(p);}
+ }
+ return status;
+}
+const started=performance.now();
+const baseline=computeInitialRoutes(fixture);
+const baseTime=performance.now()-started;
+console.log('BASELINE',JSON.stringify({...evaluate(baseline.routes,'PcbRouter'),ms:+baseTime.toFixed(1),calculations:baseline.calculations}));
+const loadStart=performance.now();
+await AvoidLib.load();
+const Avoid=AvoidLib.getInstance();
+console.log('LIBAVOID_LOADED',JSON.stringify({ms:+(performance.now()-loadStart).toFixed(1),flags:{OrthogonalRouting:Avoid.OrthogonalRouting,ConnType_Orthogonal:Avoid.ConnType_Orthogonal}}));
+const start=performance.now();
+const engine=new Avoid.Router(Avoid.OrthogonalRouting);
+const shapes=[];
+for(const r of rects){
+ const rectangle=new Avoid.Rectangle(new Avoid.Point(r.l-9,r.t-9),new Avoid.Point(r.r+9,r.b+9));
+ shapes.push(new Avoid.ShapeRef(engine,rectangle));
+}
+const conns=[];
+for(const [i,e] of ordered.entries()){
+ const from=ports.get(i+':'+e.from),to=ports.get(i+':'+e.to);
+ if(!from||!to){conns.push({e,from,to,conn:null});continue;}
+ const c=new Avoid.ConnRef(engine,
+  new Avoid.ConnEnd(new Avoid.Point(from.sx,from.sy)),
+  new Avoid.ConnEnd(new Avoid.Point(to.sx,to.sy)));
+ c.setRoutingType(Avoid.OrthogonalRouting);
+ conns.push({e,from,to,conn:c});
+}
+engine.processTransaction();
+const ms=performance.now()-start;
+const candidates=conns.map(({e,from,to,conn})=>{
+ let points=null;
+ if(conn){
+  const poly=conn.displayRoute(),inner=[];
+  for(let i=0;i<poly.size();i++){const p=poly.get_ps(i);inner.push({x:p.x,y:p.y});}
+  points=mergeRoute(from,to,inner);
+ }
+ return [key(e),{edge:e,points,fromPort:from||null,toPort:to||null}];
+});
+const compare=evaluate(candidates,'Libavoid Orthogonal');
+const changed=[];
+const baseMap=new Map(baseline.routes);
+for(const [k,r] of candidates){
+ const old=baseMap.get(k);
+ if(JSON.stringify(r.points)!==JSON.stringify(old?.points))changed.push(k);
+}
+const summary={baseline:{...evaluate(baseline.routes,'PcbRouter'),ms:+baseTime.toFixed(1)},candidate:{...compare,ms:+ms.toFixed(1)},differentRoutes:changed.length,exampleChanges:changed.slice(0,12),library:'libavoid-js@0.5.0-beta.5'};
+console.log('COMPARISON',JSON.stringify(summary));
+writeFileSync(new URL('./resultado.json',import.meta.url),JSON.stringify(summary,null,2)+'\n');
