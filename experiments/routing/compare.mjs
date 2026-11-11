@@ -28,12 +28,24 @@ function mergeRoute(from,to,path){
 }
 function routeLength(points){return points?.slice(1).reduce((n,p,i)=>n+Math.abs(points[i].x-p.x)+Math.abs(points[i].y-p.y),0)||0;}
 function evaluate(routes,mode){
- const occupied=[],used=new Map(),status={mode,complete:0,pending:0,invalid:0,crosses:0,length:0,points:0,reasons:{},examples:[]};
+ const occupied=[],used=new Map(),status={mode,complete:0,pending:0,invalid:0,crosses:0,length:0,points:0,reasons:{},examples:[],invalidParallel:0,invalidNearCross:0};
  for(const [,rt] of routes){
   if(!rt.points){status.pending++;continue;}
   status.complete++;status.length+=routeLength(rt.points);status.points+=rt.points.length;
   const out=validate.validateRoute(rt,rects,occupied,used);
-  if(!out.ok){status.invalid++;status.reasons[out.reason]=(status.reasons[out.reason]||0)+1;if(status.examples.length<8)status.examples.push({edge:key(rt.edge),reason:out.reason});}
+  if(!out.ok){
+   status.invalid++;status.reasons[out.reason]=(status.reasons[out.reason]||0)+1;
+   if(status.examples.length<8)status.examples.push({edge:key(rt.edge),reason:out.reason});
+   let parallel=false,nearCross=false;
+   for(const s of pcb.allSegments(rt.points))for(const old of occupied){
+    const rel=pcb.segmentRelation(s.a,s.b,old.a,old.b);
+    if(!rel.overlap)continue;
+    const same=(Math.abs(s.a.y-s.b.y)<.001)===(Math.abs(old.a.y-old.b.y)<.001);
+    if(same)parallel=true;else nearCross=true;
+   }
+   if(parallel)status.invalidParallel++;
+   if(nearCross)status.invalidNearCross++;
+  }
   else status.crosses+=out.crossings;
   occupied.push(...pcb.allSegments(rt.points));
   for(const [id,p] of [[rt.edge.from,rt.fromPort],[rt.edge.to,rt.toPort]])if(p){if(!used.has(id))used.set(id,[]);used.get(id).push(p);}
