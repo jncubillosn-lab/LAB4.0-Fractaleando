@@ -188,8 +188,17 @@ export function computeCompact02(input){
   return (Math.max(...a.map(r=>r.r))-Math.min(...a.map(r=>r.l)))*
    (Math.max(...a.map(r=>r.b))-Math.min(...a.map(r=>r.t)));
  };
- let best={ps:positions,rr:rects,rs:routes};
- best={...best,source:true,geometry:original,zone:angles(best),length:originalLength};
+ // La traslación de J0 al origen también es una isotopía certificada.
+ const centered=transform(1,1,0);
+ const centeredCheck=centered?snapshot(centered.ps,centered.rs,centered.rr):null;
+ if(!centeredCheck?.ok){
+  result.reason='No se puede centralizar J0 conservando la referencia de 01';
+  result.report=centeredCheck?.report||original.report;
+  result.audit=centeredCheck?.audit||original.audit;
+  return result;
+ }
+ let best={...centered,geometry:centeredCheck,zone:angles(centered),
+  length:originalLength,extra:0};
  // Norma 01: sólo se adoptan candidatos que superen el control independiente.
  const certify=(draft)=>{
   if(!draft)return null;result.attempted++;
@@ -202,7 +211,7 @@ export function computeCompact02(input){
  // vacíos y conservar exactamente sus rutas. El núcleo queda en (0,0).
  for(const factor of [.90,.75,.6,.45]){
   const trial=certify(transform(factor,factor,0));
-  if(trial&&trial.length<best.length-1e-5)best=trial;
+  if(trial&&trial.length<best.length-1e-5)best={...trial,extra:0};
  }
  // Norma 02: el intento sectorial parte de una inmersión ya certificada.
  // Se ensanchan solamente franjas vacías entre ramas para separarlas,
@@ -214,14 +223,14 @@ export function computeCompact02(input){
    const zoned=angles(draft);
    if(!zoned.valid)continue;
    const trial=certify(draft);
-   if(trial?.zone.valid&&(!best.zone.valid||trial.length<best.length))best=trial;
+   if(trial?.zone.valid&&(!best.zone.valid||trial.length<best.length))best={...trial,extra};
   }
  }
  // Regla 03: solo cuando 01 y 02 están aprobadas.
  if(best.zone.valid){
   for(const factor of [.8,.65,.5,.35]){
-   const trial=certify(transform(factor,factor,0));
-   if(trial?.zone.valid&&trial.length<best.length)best=trial;
+   const trial=certify(transform(factor,factor,best.extra));
+   if(trial?.zone.valid&&trial.length<best.length)best={...trial,extra:best.extra};
   }
  }
  const lengthOK=best.zone.valid&&best.length<originalLength-1e-5;
