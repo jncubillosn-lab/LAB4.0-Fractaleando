@@ -13,8 +13,10 @@ test('02 · diagnóstico de rutas después de ensamblar los bloques',()=>{
  const layout=new ViewLayouts().compute({mode:'02',nodes:fixture.nodes,edges:fixture.edges,
   metrics:m,sourcePositions:new Map(fixture.positions)});
  const started=performance.now();
+ const original=computeInitialRoutes(fixture);
  const result=computeInitialRoutes({...fixture,positions:[...layout.positions],
-  rects:[...layout.rects],mode:'02',levels:layout.levels});
+  rects:[...layout.rects],mode:'02',levels:layout.levels,
+  sourcePositions:fixture.positions,sourceRoutes:original.routes});
  const byId=new Map(fixture.nodes.map(n=>[n.id,n]));
  const router=new PcbRouter({state:{nodes:fixture.nodes,edges:fixture.edges},mode:'02',
   nodeById:id=>byId.get(id),clamp:(x,a,b)=>Math.max(a,Math.min(b,x))});
@@ -24,7 +26,7 @@ test('02 · diagnóstico de rutas después de ensamblar los bloques',()=>{
  const pending=result.routes.filter(([,r])=>!r.points).map(([k])=>k);
  console.log('COMPACT_ROUTE_RESULT',JSON.stringify({stats:layout.stats,
   pending,valid:audit.invalid,boxes:audit.boxes,crosses:audit.crossings,
-  durationsMs:Math.round(performance.now()-started),calculations:result.calculations}));
+  durationsMs:Math.round(performance.now()-started),calculations:result.calculations,preserved:result.preserved}));
  assert.equal(pending.length,0,JSON.stringify(pending));
  assert.equal(audit.invalid,0);
 });
