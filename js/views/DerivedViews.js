@@ -22,7 +22,7 @@ export class DerivedViews {
   this.current=null;
   this.graphIdentity=null;
  }
- sourceKey(){return JSON.stringify([...this.plane.positions].map(([id,p])=>[id,Math.round(p.x*100)/100,Math.round(p.y*100)/100]));}
+ sourceKey(){return JSON.stringify([...this.plane.positions].sort(([a],[b])=>a.localeCompare(b)).map(([id,p])=>[id,Math.round(p.x*100)/100,Math.round(p.y*100)/100]));}
  graphKey(){
   return JSON.stringify({nodes:this.state.nodes.map(n=>[n.id,n.text,n.width,n.branch,n.parent]),
    edges:this.state.edges.map(e=>[e.from,e.to,e.kind||''])});
