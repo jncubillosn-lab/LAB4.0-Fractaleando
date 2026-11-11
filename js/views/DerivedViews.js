@@ -12,7 +12,7 @@ export class DerivedViews {
   this.cache=new Map();this.mode='01';this.version=0;
   this.pending=null;this.staged={};
   this.names={'01':['Plano conceptual / 01','Construcción y fractaleo','Núcleo · trayectorias editables'],
-   '02':['Proximidad / 02','Reorganización compacta','Geometría conservadora · relaciones intactas'],
+   '02':['Compacto / 02','Zonas alrededor de J0','Topología de 01 protegida · zonas J1'],
    '03':['Órbitas / 03','Jerarquías y cercanía','Mismo radio para cada jerarquía'],
    '04':['Espiral / 04','Crecimiento espiral','Un brazo por cada término J1 · T = 0']};
   this.derivedLines=sEl('g',{id:'derivedLines'});
@@ -21,6 +21,8 @@ export class DerivedViews {
   this.renderer=new SvgRenderer({linesEl:this.derivedLines,sEl,router,edgeKey});
   this.current=null;
   this.graphIdentity=null;
+  this.sourceRevision=null;
+  this.planeTopology=()=>null;
  }
  sourceKey(){return JSON.stringify([...this.plane.positions].sort(([a],[b])=>a.localeCompare(b)).map(([id,p])=>[id,Math.round(p.x*100)/100,Math.round(p.y*100)/100]));}
  graphKey(){
@@ -30,7 +32,7 @@ export class DerivedViews {
  reset(){
   this.version++;
   if(this.pending){this.pending.terminate?.();this.pending=null;}
-  this.cache.clear();this.current=null;this.staged={};this.graphIdentity=null;
+  this.cache.clear();this.current=null;this.staged={};this.graphIdentity=null;this.sourceRevision=null;
   this.derivedLines.replaceChildren();this.derivedNodes.replaceChildren();
   this.switchVisibility('01');this.updateLabels('01');
  }
@@ -62,6 +64,42 @@ export class DerivedViews {
  metrics(){
   return new Map(this.state.nodes.map(n=>[n.id,this.geometry(n)]));
  }
+ // Longitud ortogonal de la ruta realmente dibujada, no de la distancia entre centros.
+ routeLength(routes){
+  let total=0;
+  for(const r of routes.values()){
+   if(!Array.isArray(r?.points)||r.points.length<2)return NaN;
+   for(let i=1;i<r.points.length;i++){
+    const a=r.points[i-1],b=r.points[i];
+    total+=Math.hypot(b.x-a.x,b.y-a.y);
+   }
+  }
+  return total;
+ }
+ sourceArea(){
+  const all=[...this.plane.rects.values()];
+  if(!all.length)return 0;
+  return (Math.max(...all.map(r=>r.r))-Math.min(...all.map(r=>r.l)))*
+   (Math.max(...all.map(r=>r.b))-Math.min(...all.map(r=>r.t)));
+ }
+ // Cada puerto conserva su cara y fracción perimetral de 01. El registro
+ // paralelo continúa siendo la autoridad de aceptación, no este mapeo.
+ sourcePortPlan(){
+  const plan=[];
+  for(const edge of this.state.edges){
+   const key=this.edgeKey(edge),route=this.plane.routes.get(key);
+   if(!route?.points||!route.fromPort||!route.toPort)continue;
+   const normalize=(id,p)=>{
+    const r=this.plane.rects.get(id);
+    if(!r)return null;
+    return {side:p.side,fraction:p.side==='top'||p.side==='bottom'?
+     (p.x-r.l)/r.w:(p.y-r.t)/r.h};
+   };
+   plan.push([key,{fromPort:normalize(edge.from,route.fromPort),
+    toPort:normalize(edge.to,route.toPort)}]);
+  }
+  return plan;
+ }
  async route(layout,nodes,edges,token){
   const payload={
    nodes:nodes.map(n=>({...n,...layout.positions.get(n.id)})),
@@ -69,7 +107,8 @@ export class DerivedViews {
    positions:[...layout.positions],
    rects:[...layout.rects],
    levels:layout.levels,
-   mode:layout.mode
+   mode:layout.mode,
+   portPlan:layout.mode==='02'?this.sourcePortPlan():null
   };
   // Workers de módulo son archivos ordinarios de GitHub Pages.
   // Al abandonar la vista se cancela el cálculo anterior.
@@ -119,8 +158,8 @@ export class DerivedViews {
    return;
   }
   const key=this.graphKey();
-  if(this.graphIdentity!==key){
-   this.cache.clear();this.graphIdentity=key;
+  if(this.graphIdentity!==key||this.sourceRevision!==this.plane.revision){
+   this.cache.clear();this.graphIdentity=key;this.sourceRevision=this.plane.revision;
   }
   let cached=this.cache.get(mode);
   if(!cached)cached=this.tryRestore(mode,key);
@@ -150,15 +189,29 @@ export class DerivedViews {
     });
    const audit=this.validator.audit([...layout.rects.values()],[...routes.values()]);
    const topology=new TopologyRegister({edgeKey:this.edgeKey});
+   const reference=mode==='02'?this.planeTopology():null;
+   if(mode==='02'&&TopologyRegister.validShape(reference))topology.restore(reference);
    const signature=topology.capture({positions:layout.positions,rects:layout.rects,routes,edges:ordered});
-   const stored=this.staged[mode]?.topology;
+   const stored=mode==='02'?null:this.staged[mode]?.topology;
    if(stored&&TopologyRegister.validShape(stored)&&stored.edges.join('|')===signature.edges.join('|')){
     topology.restore(stored);
    }
-   const report=topology.observe(signature);
-   const unfinished=[...routes.values()].filter(r=>!r?.points).length;
+   const report=mode==='02'?topology.compareCompact(reference,signature):topology.observe(signature);
+   if(mode==='02'){topology.latest=signature;topology.report=report;}
+   const unfinished=[...routes.values()].filter(r=>!r?.points).length+
+    Math.max(0,this.state.edges.length-routes.size);
+   const routeLength=this.routeLength(routes),sourceLength=this.routeLength(this.plane.routes);
+   const reduction=Number.isFinite(routeLength)&&Number.isFinite(sourceLength)&&sourceLength>0?
+    100*(1-routeLength/sourceLength):null;
+   const shorter=mode!=='02'||reduction!==null&&reduction>0;
+   layout.stats.routeLength=routeLength;
+   layout.stats.sourceRouteLength=sourceLength;
+   layout.stats.reductionPercent=reduction;
+   if(mode==='02')layout.stats.sourceArea=this.sourceArea();
    const valid=audit.boxes===0&&audit.invalid===0&&audit.portsRepeated===0&&
-     layout.stats.overlaps===0&&layout.stats.radialOrder!==false&&report.valid&&unfinished===0;
+     layout.stats.overlaps===0&&layout.stats.radialOrder!==false&&report.valid&&
+     unfinished===0&&routes.size===this.state.edges.length&&
+     (mode!=='02'||layout.stats.zoneValid&&shorter&&TopologyRegister.validShape(reference));
    const snapshot={mode,layout,routes,ordered,topology,audit,report,unfinished,valid,calculations:result.calculations};
    this.cache.set(mode,snapshot);this.current=snapshot;
    this.draw(snapshot);
@@ -207,14 +260,18 @@ export class DerivedViews {
    if(el)el.style.display=show?'':'none';
    if(show){if(rt.points)drawn++;else pending++;}
   }
-  const s=current.layout.stats,problems=current.audit.invalid+current.audit.boxes+current.audit.portsRepeated+
-   (current.report.issueCount||0)+current.unfinished;
+  const s=current.layout.stats;
   const prefix='Vista '+this.mode+' · '+shown.size+' conceptos · '+drawn+' vínculos';
-  const warning=problems>0;
-  this.status(prefix+' · '+(warning?
+  const warning=!current.valid;
+  const compact=this.mode==='02'?
+   ' · '+s.arms+' zonas J1 · longitud real '+
+   (s.reductionPercent===null?'no comparable':
+    (s.reductionPercent>=0?'-':'+')+Math.abs(s.reductionPercent).toFixed(1)+' %'):'';
+  this.status(prefix+compact+' · '+(warning?
     ('En revisión: '+current.unfinished+' pendientes, '+current.audit.invalid+
-     ' rutas inválidas, '+(current.report.issueCount||0)+' diferencias topológicas.'):
-    ('Rutas completas · '+current.audit.crossings+' cruces registrados · '+s.arms+' brazos J1')),warning);
+     ' rutas inválidas, '+(current.report.issueCount||0)+' diferencias topológicas'+
+     (this.mode==='02'&&!s.zoneValid?', distribución incompleta':'')+'.'):
+    ('Validada · '+current.audit.crossings+' cruces registrados · '+s.arms+' brazos J1')),warning);
   const footer=document.getElementById('footHint');
   if(footer)footer.textContent='Vista '+this.mode+' · '+drawn+' conexiones visibles · control propio';
  }
@@ -223,7 +280,8 @@ export class DerivedViews {
  // firma de relaciones intacta. No acepta archivos que inventan caminos.
  tryRestore(mode,graphKey){
   const stored=this.staged[mode];
-  if(!stored||stored.graphKey!==graphKey||stored.sourceKey!==this.sourceKey()||
+  if(!stored||(mode==='02'&&stored.layoutVersion!=='P1-ET-02-v1')||
+     stored.graphKey!==graphKey||stored.sourceKey!==this.sourceKey()||
      !Array.isArray(stored.positions)||!Array.isArray(stored.routes)||
      !TopologyRegister.validShape(stored.topology))return null;
   const layout=this.layoutEngine.compute({mode,nodes:this.state.nodes,edges:this.state.edges,
@@ -255,9 +313,20 @@ export class DerivedViews {
   const audit=this.validator.audit([...layout.rects.values()],[...routes.values()]);
   if(audit.invalid||audit.boxes||audit.portsRepeated||audit.drawn!==edges.size)return null;
   const topology=new TopologyRegister({edgeKey:this.edgeKey});
-  if(!topology.restore(stored.topology))return null;
+  const reference=mode==='02'?this.planeTopology():stored.topology;
+  if(!topology.restore(reference))return null;
   const now=topology.capture({positions:layout.positions,rects:layout.rects,routes,edges:ordered});
-  const report=topology.observe(now);
+  const report=mode==='02'?topology.compareCompact(reference,now):topology.observe(now);
+  topology.latest=now;topology.report=report;
+  const routeLength=this.routeLength(routes),sourceLength=this.routeLength(this.plane.routes);
+  const reduction=Number.isFinite(routeLength)&&Number.isFinite(sourceLength)&&sourceLength>0?
+   100*(1-routeLength/sourceLength):null;
+  layout.stats.routeLength=routeLength;
+  layout.stats.sourceRouteLength=sourceLength;
+  layout.stats.reductionPercent=reduction;
+  if(mode==='02'){layout.stats.sourceArea=this.sourceArea();
+   if(!layout.stats.zoneValid||reduction===null||reduction<=0)return null;
+  }
   if(!report.valid)return null;
   return {mode,layout,routes,ordered,topology,audit,report,
    unfinished:0,valid:true,calculations:0,restored:true};
@@ -265,7 +334,8 @@ export class DerivedViews {
  exportData(){
   const output={};
   for(const [mode,c] of this.cache)if(c.valid)
-   output[mode]={graphKey:this.graphKey(),sourceKey:this.sourceKey(),
+   output[mode]={layoutVersion:mode==='02'?'P1-ET-02-v1':undefined,
+    graphKey:this.graphKey(),sourceKey:this.sourceKey(),
     topology:c.topology.reference,
     positions:[...c.layout.positions].map(([id,p])=>({id,x:p.x,y:p.y})),
     routes:[...c.routes].map(([key,r])=>({key,points:r.points,fromPort:r.fromPort,toPort:r.toPort}))};
@@ -274,7 +344,8 @@ export class DerivedViews {
  restoreData(data){
   this.staged={};
   if(!data||typeof data!=='object')return;
-  for(const mode of ['02','03','04'])if(TopologyRegister.validShape(data[mode]?.topology))
+  for(const mode of ['02','03','04'])if((mode!=='02'||data[mode]?.layoutVersion==='P1-ET-02-v1')&&
+    TopologyRegister.validShape(data[mode]?.topology))
    this.staged[mode]=data[mode];
  }
  diagnostic(){
