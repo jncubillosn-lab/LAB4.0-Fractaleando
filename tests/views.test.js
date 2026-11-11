@@ -11,6 +11,8 @@ test('02: compacta PPR sin cambiar el orden de centros ni solapar cajas',()=>{
  const result=runner.compute({mode:'02',...args});
  assert.equal(result.positions.size,210);
  assert.ok(result.stats.factor<1,'debe reducirse al menos alguna distancia');
+ assert.ok(result.stats.relativeMoves>0,'debe aproximar al menos algunos términos vinculados');
+ assert.ok(result.stats.linkLength<result.stats.uniformLinkLength,'debe mejorar la escala uniforme');
  assert.equal(result.stats.overlaps,0);
  for(let i=0;i<fixture.nodes.length;i++)for(let j=0;j<i;j++){
   const id=fixture.nodes[i].id,other=fixture.nodes[j].id;
