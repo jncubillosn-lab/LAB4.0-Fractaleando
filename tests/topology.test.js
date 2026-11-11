@@ -160,3 +160,35 @@ test('la importación rechaza registros malformados sin alterar datos conceptual
  assert.equal(imported.restore(old),true);
  assert.equal(imported.observe(imported.capture(basic())).valid,true);
 });
+
+
+test('02: conserva invariantes sin exigir coordenadas ni cara absoluta de puerto',()=>{
+ const register=new TopologyRegister({edgeKey});
+ const edges=['a|b','a|c','a|d'];
+ const sig={
+  schema:'p1.topology.v1',edges,
+  ports:{
+   a:edges.map((edge,i)=>({edge,id:'a:p'+(i+1),side:'right'})),
+   b:[{edge:edges[0],id:'b:p1',side:'left'}],
+   c:[{edge:edges[1],id:'c:p1',side:'left'}],
+   d:[{edge:edges[2],id:'d:p1',side:'left'}]
+  },nodeOrders:{x:[['a'],['b'],['c'],['d']],y:[['d'],['c'],['b'],['a']]},
+  crossings:[],crossingOrders:Object.fromEntries(edges.map(e=>[e,[]])),
+  neighbors:[],pending:[]
+ };
+ assert.equal(TopologyRegister.validShape(sig),true);
+ const moved=structuredClone(sig);
+ moved.nodeOrders={x:[['d'],['c'],['b'],['a']],y:[['a'],['b'],['c'],['d']]};
+ moved.ports.a=moved.ports.a.slice(1).concat(moved.ports.a.slice(0,1));
+ for(const port of moved.ports.a)port.side='top';
+ assert.equal(register.compareCompact(sig,moved).valid,true);
+ const reflected=structuredClone(moved);
+ reflected.ports.a.reverse();
+ assert.equal(register.compareCompact(sig,reflected).counts.portOrder,1);
+ const crossed=structuredClone(moved);
+ crossed.crossings=[{a:'a|b',b:'a|c',count:1,over:'a|c'}];
+ assert.equal(register.compareCompact(sig,crossed).counts.crossing,1);
+ const incomplete=structuredClone(moved);
+ incomplete.pending.push('a|b');
+ assert.equal(register.compareCompact(sig,incomplete).counts.unresolved,1);
+});
