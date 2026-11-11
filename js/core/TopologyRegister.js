@@ -195,6 +195,80 @@ export class TopologyRegister {
    crossings:[...crossingPairs.values()].sort((a,b)=>a.a.localeCompare(b.a)||a.b.localeCompare(b.b)),
    crossingOrders,neighbors,pending:keys.filter(k=>!routed.has(k))};
  }
+ // Equivalencia de inmersión para 02 (P1-ET-02).
+ // No se comparan coordenadas X/Y ni nombres de caras: no son invariantes
+ // bajo una redistribución sectorial. Sí se comprueban la rotación cíclica
+ // de puertos, los cruces ordenados y las vecindades identificables.
+ compareCompact(reference,candidate){
+  const counts={graph:0,port:0,portOrder:0,crossing:0,crossingOrder:0,neighbor:0,unresolved:0};
+  const issues=[];
+  const add=(kind,details={})=>{counts[kind]++;if(issues.length<24)issues.push({kind,...details});};
+  if(!TopologyRegister.validShape(reference)||!TopologyRegister.validShape(candidate)){
+   add('graph',{reason:'registro topológico inexistente o no verificable'});
+   return {valid:false,issueCount:1,issues,counts,compared:true};
+  }
+  const sameSet=(a,b)=>a.length===b.length&&new Set(a).size===a.length&&
+   a.every(v=>b.includes(v));
+  if(!sameSet(reference.edges,candidate.edges))add('graph',{reason:'identidad de vínculos'});
+  const nodeSet=t=>[...new Set(t.nodeOrders.x.flat())];
+  if(!sameSet(nodeSet(reference),nodeSet(candidate)))add('graph',{reason:'identidad de términos'});
+  for(const key of reference.edges)if(candidate.pending.includes(key)||
+   reference.pending.includes(key))add('unresolved',{edge:key,reason:'ruta pendiente en 01 o 02'});
+  const rotationEqual=(a,b)=>{
+   if(a.length!==b.length)return false;
+   if(!a.length)return true;
+   return (b.concat(b)).join('|').includes(a.join('|'))&&
+    Array.from({length:b.length},(_,i)=>i).some(i=>a.every((v,j)=>v===b[(j+i)%b.length]));
+  };
+  for(const id of new Set([...Object.keys(reference.ports),...Object.keys(candidate.ports)])){
+   const a=reference.ports[id]||[],b=candidate.ports[id]||[];
+   const indexed=new Map(b.map(x=>[x.edge,x]));
+   if(!sameSet(a.map(x=>x.edge),b.map(x=>x.edge)))add('port',{node:id,reason:'puertos ausentes o adicionales'});
+   for(const old of a){
+    const next=indexed.get(old.edge);
+    if(!next||next.id!==old.id)add('port',{node:id,edge:old.edge,reason:'identidad de puerto modificada'});
+   }
+   // El mismo orden horario es válido desde cualquier puerto inicial.
+   // Una reflexión del orden NO equivale a una rotación cíclica.
+   if(!rotationEqual(a.map(x=>x.edge),b.map(x=>x.edge)))
+    add('portOrder',{node:id,reason:'orden circular alterado'});
+  }
+  const byPair=list=>new Map(list.map(c=>[JSON.stringify([c.a,c.b]),c]));
+  const oldPairs=byPair(reference.crossings),newPairs=byPair(candidate.crossings);
+  for(const pair of new Set([...oldPairs.keys(),...newPairs.keys()])){
+   const a=oldPairs.get(pair),b=newPairs.get(pair);
+   if(!a||!b||a.count!==b.count||a.over!==b.over)
+    add('crossing',{pair,was:a?.count||0,now:b?.count||0});
+  }
+  for(const edge of reference.edges){
+   const a=reference.crossingOrders[edge]||[];
+   const b=candidate.crossingOrders[edge]||[];
+   if(a.join('\\u0000')!==b.join('\\u0000'))
+    add('crossingOrder',{edge,was:a,now:b});
+  }
+  // Los ejes h/v son convenciones métricas y cambian al girar un sector.
+  // Se exige conservar cada par de corredores vecinos; si uno desaparece,
+  // no se infiere automáticamente que la nueva proximidad sea equivalente.
+  const group=list=>{
+   const grouped=new Map();
+   for(const n of list){
+    const k=JSON.stringify([n.a,n.b]);
+    if(!grouped.has(k))grouped.set(k,[]);
+    grouped.get(k).push(n);
+   }
+   return grouped;
+  };
+  const refNeighbors=group(reference.neighbors),nowNeighbors=group(candidate.neighbors);
+  for(const [pair,old] of refNeighbors){
+   const next=nowNeighbors.get(pair)||[];
+   if(!next.length)add('neighbor',{pair,reason:'vecindad de corredor no identificable'});
+   else for(const oldRel of old)if(next.some(r=>r.axis===oldRel.axis&&r.side===-oldRel.side)&&
+       !next.some(r=>r.axis===oldRel.axis&&r.side===oldRel.side))
+    add('neighbor',{pair,reason:'disposición de corredor invertida en el mismo eje'});
+  }
+  const issueCount=Object.values(counts).reduce((a,b)=>a+b,0);
+  return {valid:issueCount===0,issueCount,issues,counts,compared:true};
+ }
  compare(reference,candidate){
   const issues=[],counts={nodeOrder:0,portSide:0,portOrder:0,crossing:0,crossingOrder:0,neighbor:0,unresolved:0};
   const add=(kind,detail)=>{
