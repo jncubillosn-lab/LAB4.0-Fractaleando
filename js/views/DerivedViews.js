@@ -121,6 +121,7 @@ export class DerivedViews {
    this.cache.clear();this.graphIdentity=key;
   }
   const cached=this.cache.get(mode);
+  if(!cached)this.current=null;
   if(cached){this.current=cached;this.draw(cached);this.fit();return;}
   this.status('Calculando la vista '+mode+' y sus conexiones…');
   const token=this.version,metrics=this.metrics();
@@ -230,6 +231,6 @@ export class DerivedViews {
   const value=this.current;
   return {mode:this.mode,cached:[...this.cache.keys()],
    current:value?{...value.layout.stats,valid:value.valid,audit:value.audit,
-    topology:value.topology.status(),pending:value.unfinished,calculations:value.calculations}:null};
+    topology:value.topology.status(),pending:value.unfinished,pendingKeys:[...value.routes].filter(([,r])=>!r?.points).map(([key])=>key),calculations:value.calculations}:null};
  }
 }
