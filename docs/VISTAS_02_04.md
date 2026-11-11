@@ -70,7 +70,9 @@ El cambio de tema solo cambia variables de color CSS y colores de exportación d
 
 ## Archivos
 
-- \`js/geometry/ViewLayouts.js\`: posiciones puras de 02–04.
+- \`js/geometry/TopologicalCompact.js\`: isotopía, auditoría y prioridades de 02.
+- \`js/workers/compact02.worker.js\`: cálculo asíncrono de 02.
+- \`js/geometry/ViewLayouts.js\`: posiciones puras de 03–04; prohíbe generar 02 sin registro de 01.
 - \`js/views/DerivedViews.js\`: control de vistas, Worker, cachés, topología, DRC, recuperación y visualización.
 - \`js/workers/initial-route.worker.js\`: enrutamiento según modalidad, sin cambiar la lógica de 01.
 - \`js/core/TopologyRegister.js\`: firma relacional independiente.
