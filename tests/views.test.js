@@ -7,18 +7,29 @@ const metrics=new Map(fixture.rects.map(([id,r])=>[id,{w:r.w,h:r.h}]));
 const positions=new Map(fixture.positions);
 const runner=new ViewLayouts();
 const args={nodes:fixture.nodes,edges:fixture.edges,metrics,sourcePositions:positions};
-test('02: compacta PPR sin cambiar el orden de centros ni solapar cajas',()=>{
+test('02: J0 centrado, zonas J1 variables y cuadros sin solapes',()=>{
  const result=runner.compute({mode:'02',...args});
- assert.equal(result.positions.size,210);
- assert.ok(result.stats.factor<1,'debe reducirse al menos alguna distancia');
- assert.ok(result.stats.relativeMoves>0,'debe aproximar al menos algunos términos vinculados');
- assert.ok(result.stats.linkLength<result.stats.uniformLinkLength,'debe mejorar la escala uniforme');
+ assert.equal(result.positions.size,fixture.nodes.length);
+ assert.equal(result.stats.arms,3);
+ assert.deepEqual(result.positions.get('p1'),{x:0,y:0});
+ assert.equal(result.stats.zoneValid,true);
+ assert.deepEqual(result.stats.unassigned,[]);
  assert.equal(result.stats.overlaps,0);
- for(let i=0;i<fixture.nodes.length;i++)for(let j=0;j<i;j++){
-  const id=fixture.nodes[i].id,other=fixture.nodes[j].id;
-  const p=positions.get(id),q=positions.get(other),a=result.positions.get(id),b=result.positions.get(other);
-  if(Math.abs(p.x-q.x)>.05)assert.equal(Math.sign(a.x-b.x),Math.sign(p.x-q.x));
-  if(Math.abs(p.y-q.y)>.05)assert.equal(Math.sign(a.y-b.y),Math.sign(p.y-q.y));
+ assert.ok(Number.isFinite(result.stats.proxyLength));
+ assert.ok(result.stats.area>0);
+ const rootMap=new Map(fixture.nodes.map(n=>[n.id,n]));
+ for(const node of fixture.nodes.filter(n=>n.id!=='p1')){
+  let current=node,branch=null;
+  for(let k=0;k<fixture.nodes.length;k++){
+   if(current.parent==='p1'){branch=current.id;break;}
+   current=rootMap.get(current.parent);
+   if(!current)break;
+  }
+  assert.ok(branch,'rama identificada de '+node.id);
+  const p=result.positions.get(node.id),center=result.stats.sectorCenters[branch];
+  const delta=Math.atan2(Math.sin(Math.atan2(p.y,p.x)-center),
+   Math.cos(Math.atan2(p.y,p.x)-center));
+  assert.ok(Math.abs(delta)<Math.PI/result.stats.arms,node.id+' fuera de su zona');
  }
 });
 test('03: radio idéntico por distancia mínima de vínculos y cero colisiones',()=>{
@@ -53,7 +64,8 @@ test('R01: cuatro hijos directos de P1 producen cuatro brazos',()=>{
  for(const mode of ['02','03','04']){
   const result=runner.compute({mode,nodes,edges,metrics,sourcePositions});
   assert.equal(result.stats.arms,4);assert.equal(result.positions.size,5);
-  if(mode!=='02')assert.equal(result.stats.overlaps,0);
+  assert.equal(result.stats.overlaps,0);
+  if(mode==='02')assert.equal(result.stats.zoneValid,true);
  }
 });
 test('03 emplea distancia de enlaces al origen, sin inventar conexiones',()=>{
