@@ -15,11 +15,33 @@ export class TopologyRegister {
  static validShape(value){
   if(!value||value.schema!=='p1.topology.v1'||!value.ports||!value.nodeOrders||
      !Array.isArray(value.edges)||!value.crossingOrders||!Array.isArray(value.crossings)||
-     !Array.isArray(value.neighbors)||!Array.isArray(value.nodeOrders.x)||!Array.isArray(value.nodeOrders.y))return false;
-  if(value.edges.some(k=>typeof k!=='string')||Object.values(value.ports).some(list=>
-   !Array.isArray(list)||list.some(p=>!p||typeof p.edge!=='string'||typeof p.id!=='string'||!['top','right','bottom','left'].includes(p.side))))return false;
-  if(value.crossings.some(c=>!c||typeof c.a!=='string'||typeof c.b!=='string'||!Number.isSafeInteger(c.count)||c.count<1))return false;
-  if(value.neighbors.some(c=>!c||typeof c.a!=='string'||typeof c.b!=='string'||!['h','v'].includes(c.axis)||![1,-1].includes(c.side)))return false;
+     !Array.isArray(value.neighbors)||!Array.isArray(value.pending)||
+     !Array.isArray(value.nodeOrders.x)||!Array.isArray(value.nodeOrders.y))return false;
+  const edgeSet=new Set(value.edges);
+  if(value.edges.some(k=>typeof k!=='string')||edgeSet.size!==value.edges.length)return false;
+  if(value.pending.some(k=>!edgeSet.has(k))||new Set(value.pending).size!==value.pending.length)return false;
+  for(const list of Object.values(value.ports)){
+   if(!Array.isArray(list))return false;
+   const ids=new Set(),edges=new Set();
+   for(const p of list){
+    if(!p||typeof p.edge!=='string'||!edgeSet.has(p.edge)||typeof p.id!=='string'||
+       !['top','right','bottom','left'].includes(p.side)||ids.has(p.id)||edges.has(p.edge))return false;
+    ids.add(p.id);edges.add(p.edge);
+   }
+  }
+  for(const axis of ['x','y']){
+   const seen=new Set();
+   for(const group of value.nodeOrders[axis]){
+    if(!Array.isArray(group)||!group.length)return false;
+    for(const id of group){if(typeof id!=='string'||seen.has(id))return false;seen.add(id);}
+   }
+  }
+  if(Object.entries(value.crossingOrders).some(([k,order])=>!edgeSet.has(k)||!Array.isArray(order)||order.some(o=>!edgeSet.has(o))))return false;
+  if(value.crossings.some(c=>!c||typeof c.a!=='string'||typeof c.b!=='string'||
+     !edgeSet.has(c.a)||!edgeSet.has(c.b)||c.a>=c.b||!Number.isSafeInteger(c.count)||c.count<1||
+     ![c.a,c.b].includes(c.over)))return false;
+  if(value.neighbors.some(c=>!c||typeof c.a!=='string'||typeof c.b!=='string'||!edgeSet.has(c.a)||
+     !edgeSet.has(c.b)||c.a>=c.b||!['h','v'].includes(c.axis)||![1,-1].includes(c.side)))return false;
   return true;
  }
  restore(value){
@@ -192,6 +214,7 @@ export class TopologyRegister {
     const next=curr.get(p.edge);
     if(!next){add('unresolved',{edge:p.edge,node:id,reason:'missing-port'});continue;}
     if(next.side!==p.side)add('portSide',{edge:p.edge,node:id,was:p.side,now:next.side});
+    if(next.id!==p.id)add('portOrder',{edge:p.edge,node:id,was:p.id,now:next.id,reason:'port-id-changed'});
    }
    const oldOrder=prior.map(p=>p.edge).filter(k=>curr.has(k));
    const newOrder=now.map(p=>p.edge).filter(k=>oldOrder.includes(k));
