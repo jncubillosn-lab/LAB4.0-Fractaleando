@@ -29,7 +29,7 @@ export class CompactLayout {
    return {mode:'02',positions,rects,levels:Object.fromEntries(levels),stats:{arms:roots.length,overlaps:0,unassigned:nodes.length,zoneValid:false}};
   put('p1',{x:0,y:0});
   const dimensions=[...metrics.values()];
-  const stepX=Math.max(160,...dimensions.map(m=>m.w+26));
+  const stepX=Math.max(160,...dimensions.map(m=>m.w+34));
   const stepY=Math.max(88,...dimensions.map(m=>m.h+32));
   const nSectors=sectors.length,TAU=2*Math.PI;
   const half=nSectors?Math.PI/nSectors:Math.PI;
@@ -47,21 +47,20 @@ export class CompactLayout {
   for(const id of sectors){
    const center=centers.get(id),c=Math.cos(center),s=Math.sin(center);
    const candidates=[];
-   // Retícula en coordenadas locales de cada sector, no filas heredadas de 01.
-   // Las rectas de frontera se respetan con el cuadro completo, no solo su centro.
-   for(let col=0;col<42;col++){
-    const u=(col+1)*stepX;
-    for(let row=-42;row<=42;row++){
-     const v=(row+(col%2)*.5)*stepY;
-     const p={x:c*u-s*v,y:s*u+c*v};
-     const r=rect(id,p); // Se verifica de nuevo con las dimensiones reales del término.
-     if(!isInside(r,center)||intersects(r,core,22))continue;
+   // Retícula global con cuadros sin girar; su recorte angular produce
+   // sectores, no columnas heredadas ni anillos de radio fijo.
+   // La malla global evita desperdiciar espacio al rotar cajas rectangulares.
+   for(let ix=-35;ix<=35;ix++){
+    for(let iy=-35;iy<=35;iy++){
+     const p={x:(ix+(Math.abs(iy)%2)*.5)*stepX,y:iy*stepY};
+     const r=rect(id,p);
+     if(!isInside(r,center)||intersects(r,core,28))continue;
      candidates.push(p);
     }
    }
    candidates.sort((a,b)=>Math.hypot(a.x,a.y)-Math.hypot(b.x,b.y)||a.x-b.x||a.y-b.y);
    const number=nodes.filter(n=>n.id!== 'p1' && (owner.get(n.id)===id)).length;
-   zoneCandidates.set(id,candidates.slice(0,Math.max(550,number*10)));
+   zoneCandidates.set(id,candidates.slice(0,Math.max(700,number*11)));
   }
   const adjacency=new Map(nodes.map(n=>[n.id,[]]));
   for(const e of edges)if(adjacency.has(e.from)&&adjacency.has(e.to)){
