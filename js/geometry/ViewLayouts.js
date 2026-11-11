@@ -53,7 +53,7 @@ export class ViewLayouts {
   return {owner,roots,homeless};
  }
  static overlap(a,b,gap=16){
-  return a.l<b.r+gap&&a.r>b.l-gap&&a.t<b.b+gap&&a.b>a.t-gap;
+  return a.l<b.r+gap&&a.r>b.l-gap&&a.t<b.b+gap&&a.b>b.t-gap;
  }
  static rect(id,p,m){
   return {id,x:p.x,y:p.y,w:m.w,h:m.h,l:p.x-m.w/2,r:p.x+m.w/2,t:p.y-m.h/2,b:p.y+m.h/2};
@@ -166,8 +166,8 @@ export class ViewLayouts {
   }
   const TAU=2*Math.PI;
   const spiral=mode==='04';
-  const W=spiral?.42:0; // progreso angular por jerarquía (radianes)
-  const D=spiral?.16:0; // variación radial intrajerárquica, relativa al ancho de banda
+  const W=spiral?0.42:0; // progreso angular por jerarquía (radianes)
+  const D=spiral?0.16:0; // variación radial intrajerárquica, relativa al ancho de banda
   const T=0;
   // Una separación angular relativa de conceptos entre ramas no se mezcla:
   // cada brazo es un sector, cuyo eje rota con la jerarquía en espiral.
