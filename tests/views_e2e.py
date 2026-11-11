@@ -9,7 +9,7 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
 with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
  threading.Thread(target=srv.serve_forever,daemon=True).start()
  with sync_playwright() as p:
-  browser=p.chromium.launch(headless=True)
+  browser=p.chromium.launch(channel='chrome', headless=True)
   page=browser.new_page(viewport={'width':1440,'height':900},accept_downloads=True)
   page.on('dialog',lambda dialog:dialog.accept())
   errors=[];page.on('pageerror',lambda exc:errors.append(str(exc)))
