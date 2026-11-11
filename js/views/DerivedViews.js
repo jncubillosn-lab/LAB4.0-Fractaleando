@@ -22,6 +22,7 @@ export class DerivedViews {
   this.current=null;
   this.graphIdentity=null;
  }
+ sourceKey(){return JSON.stringify([...this.plane.positions].map(([id,p])=>[id,Math.round(p.x*100)/100,Math.round(p.y*100)/100]));}
  graphKey(){
   return JSON.stringify({nodes:this.state.nodes.map(n=>[n.id,n.text,n.width,n.branch,n.parent]),
    edges:this.state.edges.map(e=>[e.from,e.to,e.kind||''])});
@@ -121,9 +122,10 @@ export class DerivedViews {
   if(this.graphIdentity!==key){
    this.cache.clear();this.graphIdentity=key;
   }
-  const cached=this.cache.get(mode);
+  let cached=this.cache.get(mode);
+  if(!cached)cached=this.tryRestore(mode,key);
   if(!cached)this.current=null;
-  if(cached){this.current=cached;this.draw(cached);this.fit();return;}
+  if(cached){this.cache.set(mode,cached);this.current=cached;this.draw(cached);this.fit();return;}
   this.status('Calculando la vista '+mode+' y sus conexiones…');
   const token=this.version,metrics=this.metrics();
   const layout=this.layoutEngine.compute({mode,nodes:this.state.nodes,edges:this.state.edges,
@@ -149,7 +151,7 @@ export class DerivedViews {
    const audit=this.validator.audit([...layout.rects.values()],[...routes.values()]);
    const topology=new TopologyRegister({edgeKey:this.edgeKey});
    const signature=topology.capture({positions:layout.positions,rects:layout.rects,routes,edges:ordered});
-   const stored=this.staged[mode];
+   const stored=this.staged[mode]?.topology;
    if(stored&&TopologyRegister.validShape(stored)&&stored.edges.join('|')===signature.edges.join('|')){
     topology.restore(stored);
    }
@@ -214,10 +216,55 @@ export class DerivedViews {
      ' rutas inválidas, '+(current.report.issueCount||0)+' diferencias topológicas.'):
     ('Geometría verificada · '+s.arms+' brazos J1')),warning);
  }
+ // Recuperación segura de una vista previamente calculada: mismos datos y
+ // geometría de 01, mismas posiciones deterministas, DRC independiente y
+ // firma de relaciones intacta. No acepta archivos que inventan caminos.
+ tryRestore(mode,graphKey){
+  const stored=this.staged[mode];
+  if(!stored||stored.graphKey!==graphKey||stored.sourceKey!==this.sourceKey()||
+     !Array.isArray(stored.positions)||!Array.isArray(stored.routes)||
+     !TopologyRegister.validShape(stored.topology))return null;
+  const layout=this.layoutEngine.compute({mode,nodes:this.state.nodes,edges:this.state.edges,
+   metrics:this.metrics(),sourcePositions:this.plane.positions});
+  if(layout.stats.overlaps||layout.stats.radialOrder===false)return null;
+  const saved=new Map(stored.positions.map(p=>[p.id,p]));
+  if(saved.size!==layout.positions.size)return null;
+  for(const [id,p] of layout.positions){
+   const q=saved.get(id);
+   if(!q||!Number.isFinite(q.x)||!Number.isFinite(q.y)||
+      Math.hypot(q.x-p.x,q.y-p.y)>.1)return null;
+  }
+  const edges=new Map(this.state.edges.map(e=>[this.edgeKey(e),e]));
+  const routes=new Map();
+  for(const record of stored.routes){
+   if(!record||!edges.has(record.key)||routes.has(record.key)||
+      !Array.isArray(record.points)||!record.fromPort||!record.toPort)return null;
+   routes.set(record.key,{edge:edges.get(record.key),points:record.points,
+    fromPort:record.fromPort,toPort:record.toPort});
+  }
+  if(routes.size!==edges.size)return null;
+  const levels=layout.levels;
+  const priority=e=>{
+   const a=levels[e.from]??1000,b=levels[e.to]??1000;
+   return Math.min(a,b)*10+(e.kind==='transversal'?5:0)+(Math.abs(a-b)>1?2:0);
+  };
+  const ordered=this.state.edges.map((e,i)=>({...e,__index:i}))
+   .sort((a,b)=>priority(a)-priority(b)||a.__index-b.__index);
+  const audit=this.validator.audit([...layout.rects.values()],[...routes.values()]);
+  if(audit.invalid||audit.boxes||audit.portsRepeated||audit.drawn!==edges.size)return null;
+  const topology=new TopologyRegister({edgeKey:this.edgeKey});
+  if(!topology.restore(stored.topology))return null;
+  const now=topology.capture({positions:layout.positions,rects:layout.rects,routes,edges:ordered});
+  const report=topology.observe(now);
+  if(!report.valid)return null;
+  return {mode,layout,routes,ordered,topology,audit,report,
+   unfinished:0,valid:true,calculations:0,restored:true};
+ }
  exportData(){
   const output={};
   for(const [mode,c] of this.cache)if(c.valid)
-   output[mode]={topology:c.topology.reference,
+   output[mode]={graphKey:this.graphKey(),sourceKey:this.sourceKey(),
+    topology:c.topology.reference,
     positions:[...c.layout.positions].map(([id,p])=>({id,x:p.x,y:p.y})),
     routes:[...c.routes].map(([key,r])=>({key,points:r.points,fromPort:r.fromPort,toPort:r.toPort}))};
   return output;
@@ -226,12 +273,12 @@ export class DerivedViews {
   this.staged={};
   if(!data||typeof data!=='object')return;
   for(const mode of ['02','03','04'])if(TopologyRegister.validShape(data[mode]?.topology))
-   this.staged[mode]=data[mode].topology;
+   this.staged[mode]=data[mode];
  }
  diagnostic(){
   const value=this.current;
   return {mode:this.mode,cached:[...this.cache.keys()],
    current:value?{...value.layout.stats,valid:value.valid,audit:value.audit,
-    topology:value.topology.status(),pending:value.unfinished,pendingKeys:[...value.routes].filter(([,r])=>!r?.points).map(([key])=>key),calculations:value.calculations}:null};
+    topology:value.topology.status(),pending:value.unfinished,restored:Boolean(value.restored),pendingKeys:[...value.routes].filter(([,r])=>!r?.points).map(([key])=>key),calculations:value.calculations}:null};
  }
 }
