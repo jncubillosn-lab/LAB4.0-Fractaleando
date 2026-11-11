@@ -23,7 +23,7 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
   # Visitas conservan el grafo y puntos de control independientes.
   for mode in ('02','03','04'):
    page.locator('[data-view="'+mode+'"]').click()
-   page.wait_for_function('(mode)=>window.P1_PLANO_DIAGNOSTICO.views().mode===mode && window.P1_PLANO_DIAGNOSTICO.views().current!==null',mode,timeout=90000)
+   page.wait_for_function('(mode)=>window.P1_PLANO_DIAGNOSTICO.views().mode===mode && window.P1_PLANO_DIAGNOSTICO.views().current!==null',arg=mode,timeout=90000)
    result=page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current')
    print('VISTA',mode,json.dumps(result,ensure_ascii=False)[:1800],flush=True)
    assert result['nodes']==210,result
