@@ -58,3 +58,12 @@ test('02: sin registro de 01 no se genera ninguna vista provisional',()=>{
  assert.equal(r.topologyValid,false);
  assert.ok(!r.positions);
 });
+
+test('02: nunca equipara un grafo editado con la firma anterior de 01',()=>{
+ const edges=structuredClone(fixture.edges);
+ edges[0].to='f0';
+ const r=computeCompact02({...input,edges});
+ assert.equal(r.valid,false);
+ assert.equal(r.topologyValid,false);
+ assert.ok(!r.positions);
+});
