@@ -67,3 +67,43 @@ test('02: nunca equipara un grafo editado con la firma anterior de 01',()=>{
  assert.equal(r.topologyValid,false);
  assert.ok(!r.positions);
 });
+
+
+test('02: cuatro J1 pueden satisfacer simultáneamente las tres normas',()=>{
+ const nodes=[
+  {id:'p1',parent:null,branch:-1},
+  {id:'a',parent:'p1',branch:0},{id:'b',parent:'p1',branch:1},
+  {id:'c',parent:'p1',branch:2},{id:'d',parent:'p1',branch:3}
+ ];
+ const ps=new Map([['p1',{x:0,y:0}],['a',{x:0,y:-360}],
+  ['b',{x:360,y:0}],['c',{x:0,y:360}],['d',{x:-360,y:0}]]);
+ const rects=new Map([...ps].map(([id,p])=>[id,{id,...p,w:100,h:60,
+  l:p.x-50,r:p.x+50,t:p.y-30,b:p.y+30}]));
+ const edges=nodes.slice(1).map(n=>({from:'p1',to:n.id}));
+ const port=(side,x,y)=>({side,x,y,
+  sx:x+(side==='right'?19:side==='left'?-19:0),
+  sy:y+(side==='bottom'?19:side==='top'?-19:0)});
+ const endpoints={
+  a:[port('top',0,-30),port('bottom',0,-330)],
+  b:[port('right',50,0),port('left',310,0)],
+  c:[port('bottom',0,30),port('top',0,330)],
+  d:[port('left',-50,0),port('right',-310,0)]
+ };
+ const routes=new Map(edges.map(e=>{
+  const [fromPort,toPort]=endpoints[e.to];
+  return [edgeKey(e),{edge:e,points:[{x:fromPort.x,y:fromPort.y},
+   {x:toPort.x,y:toPort.y}],fromPort,toPort}];
+ }));
+ const topology=new TopologyRegister({edgeKey});
+ const reference=topology.capture({positions:ps,rects,routes,edges});
+ const r=computeCompact02({nodes,edges,positions:[...ps],rects:[...rects],
+  routes:[...routes],levels:{p1:0,a:1,b:1,c:1,d:1},reference});
+ assert.equal(r.topologyValid,true,JSON.stringify(r.report?.issues));
+ assert.equal(r.zoneValid,true,JSON.stringify(r.stats?.sectors));
+ assert.equal(r.lengthValid,true,r.reason);
+ assert.equal(r.valid,true);
+ assert.equal(r.stats.arms,4);
+ assert.equal(r.stats.crossings,0);
+ assert.equal(r.audit.drawn,4);
+ assert.ok(r.stats.routeLength<r.stats.sourceRouteLength);
+});
