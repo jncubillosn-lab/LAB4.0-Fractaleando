@@ -28,7 +28,7 @@ export function computeInitialRoutes({nodes,edges,positions,rects,levels,mode='0
  let attempts=ordered.length;
  const missing=routes.filter(([key,r])=>!r.points);
  const retryBudget=mode==='01'?120:Math.min(1400,Math.max(180,missing.length*18));
- const routeBudgetMs=mode==='01'?2900:mode==='02'?6800:2500;
+ const routeBudgetMs=mode==='01'?2900:mode==='02'?6800:4700;
  const retryDeadline=performance.now()+(mode==='01'?12000:24000);
  if(missing.length){
   const used=new Map();
@@ -66,7 +66,7 @@ export function computeInitialRoutes({nodes,edges,positions,rects,levels,mode='0
    const edge=missingRoute.edge;
    const a=freePorts(edge.from,edge.to,edge),b=freePorts(edge.to,edge.from,edge);
    const choices=[];
-   for(let i=0;i<Math.min(a.length,9);i++)for(let j=0;j<Math.min(b.length,6);j++)choices.push([i,j]);
+   for(let i=0;i<Math.min(a.length,mode==='01'?9:22);i++)for(let j=0;j<Math.min(b.length,mode==='01'?6:15);j++)choices.push([i,j]);
    choices.sort((p,q)=>(p[0]+p[1])-(q[0]+q[1]));
    const begun=performance.now();let replacement=null;
    for(const [i,j] of choices){
