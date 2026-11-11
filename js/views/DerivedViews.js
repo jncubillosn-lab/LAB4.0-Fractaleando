@@ -67,7 +67,8 @@ export class DerivedViews {
    edges:edges.map(e=>({...e})),
    positions:[...layout.positions],
    rects:[...layout.rects],
-   levels:layout.levels
+   levels:layout.levels,
+   mode:layout.mode
   };
   // Workers de módulo son archivos ordinarios de GitHub Pages.
   // Al abandonar la vista se cancela el cálculo anterior.
