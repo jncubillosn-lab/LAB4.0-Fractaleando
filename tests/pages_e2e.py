@@ -14,7 +14,11 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
   page=b.new_page(viewport={'width':1360,'height':820},accept_downloads=True)
   errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
   page.goto(url,wait_until='domcontentloaded');page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes === 3',timeout=30000)
-  page.locator('#showAllBtn').click();page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes === 217',timeout=30000)
+  page.locator('#showAllBtn').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.visible === 210',timeout=30000)
+  d0=page.evaluate('({...window.P1_PLANO_DIAGNOSTICO,audit:window.P1_PLANO_DIAGNOSTICO.audit()})')
+  print('DIAGNOSTICO_NAVEGADOR', {k:d0[k] for k in ['visible','routes','pending','lastOperation','lastDurationMs','initialBuilds','routeCalculations']},d0['audit'],errors,flush=True)
+  assert d0['routes']==217 and d0['pending']==0, d0
   d=page.evaluate('window.P1_PLANO_DIAGNOSTICO.audit()')
   assert d['boxes']==d['invalid']==d['portsRepeated']==0,d
   assert page.locator('#lines circle').count()==d['crossings']
