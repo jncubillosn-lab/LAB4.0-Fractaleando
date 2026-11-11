@@ -49,7 +49,10 @@ await AvoidLib.load();
 const Avoid=AvoidLib.getInstance();
 console.log('LIBAVOID_LOADED',JSON.stringify({ms:+(performance.now()-loadStart).toFixed(1),flags:{OrthogonalRouting:Avoid.OrthogonalRouting,ConnType_Orthogonal:Avoid.ConnType_Orthogonal}}));
 const start=performance.now();
-const engine=new Avoid.Router(Avoid.OrthogonalRouting);
+// Los valores son los enums oficiales de libavoid: RouterFlag.OrthogonalRouting=2, ConnType_Orthogonal=2.
+// La versión WASM no exporta esas constantes como propiedades de JS.
+const ORTHOGONAL=2;
+const engine=new Avoid.Router(ORTHOGONAL);
 const shapes=[];
 for(const r of rects){
  const rectangle=new Avoid.Rectangle(new Avoid.Point(r.l-9,r.t-9),new Avoid.Point(r.r+9,r.b+9));
@@ -62,7 +65,7 @@ for(const [i,e] of ordered.entries()){
  const c=new Avoid.ConnRef(engine,
   new Avoid.ConnEnd(new Avoid.Point(from.sx,from.sy)),
   new Avoid.ConnEnd(new Avoid.Point(to.sx,to.sy)));
- c.setRoutingType(Avoid.OrthogonalRouting);
+ c.setRoutingType(ORTHOGONAL);
  conns.push({e,from,to,conn:c});
 }
 engine.processTransaction();
