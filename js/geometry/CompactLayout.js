@@ -30,7 +30,7 @@ export class CompactLayout {
   put('p1',{x:0,y:0});
   const dimensions=[...metrics.values()];
   const stepX=Math.max(160,...dimensions.map(m=>m.w+26));
-  const stepY=Math.max(88,...dimensions.map(m=>m.h+25));
+  const stepY=Math.max(88,...dimensions.map(m=>m.h+32));
   const nSectors=sectors.length,TAU=2*Math.PI;
   const half=nSectors?Math.PI/nSectors:Math.PI;
   const centers=new Map(sectors.map((id,i)=>[id,-Math.PI/2+(i+.5)*TAU/nSectors]));
@@ -60,13 +60,15 @@ export class CompactLayout {
     }
    }
    candidates.sort((a,b)=>Math.hypot(a.x,a.y)-Math.hypot(b.x,b.y)||a.x-b.x||a.y-b.y);
-   zoneCandidates.set(id,candidates);
+   const number=nodes.filter(n=>n.id!== 'p1' && (owner.get(n.id)===id)).length;
+   zoneCandidates.set(id,candidates.slice(0,Math.max(550,number*10)));
   }
   const adjacency=new Map(nodes.map(n=>[n.id,[]]));
   for(const e of edges)if(adjacency.has(e.from)&&adjacency.has(e.to)){
    adjacency.get(e.from).push(e.to);adjacency.get(e.to).push(e.from);
   }
   const used=new Map(sectors.map(id=>[id,new Set()]));
+  const zoneRects=new Map(sectors.map(id=>[id,[]]));
   let optimizationMoves=0;
   for(const node of queue){
    const branch=owner.get(node.id),center=centers.get(branch);
@@ -81,7 +83,8 @@ export class CompactLayout {
     const p=pool[i],r=rect(node.id,p);
     if(!isInside(r,center))continue;
     let collision=false;
-    for(const existing of rects.values())if(intersects(r,existing)){collision=true;break;}
+    if(intersects(r,core)){collision=true;}
+    if(!collision)for(const existing of zoneRects.get(branch))if(intersects(r,existing)){collision=true;break;}
     if(collision)continue;
     const distance=(q)=>Math.abs(p.x-q.x)+Math.abs(p.y-q.y);
     // Coste aproximado ortogonal. La métrica definitiva se toma de las rutas reales.
@@ -92,7 +95,7 @@ export class CompactLayout {
      best=p;bestScore=score;bestIndex=i;
     }
    }
-   if(best){put(node.id,best);usage.add(bestIndex);optimizationMoves++;}
+   if(best){put(node.id,best);zoneRects.get(branch).push(rects.get(node.id));usage.add(bestIndex);optimizationMoves++;}
   }
   // Los términos de jerarquía indeterminada no adquieren una rama inventada.
   // Permanecen visibles en una zona de espera externa y se declaran sin asignación.
