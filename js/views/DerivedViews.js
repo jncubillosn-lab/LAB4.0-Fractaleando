@@ -42,7 +42,7 @@ export class DerivedViews {
   document.querySelector('.app')?.classList.toggle('view-derived',derived);
   for(const id of ['addBtn','linkBtn','unlinkBtn','deleteBtn','nodeText','narrowBtn','widenBtn']){
    const control=document.getElementById(id);
-   if(derived&&control)control.disabled=true;
+   if(control)control.disabled=derived; // 01 recupera sus acciones originales; app revalida la selección.
   }
   for(const button of document.querySelectorAll('[data-view]')){
    const active=button.dataset.view===mode;
