@@ -121,3 +121,42 @@ test('detecta inversión de orden espacial de conceptos',()=>{
  const report=register.compare(register.reference,register.capture(moved));
  assert.ok(report.counts.nodeOrder>0,JSON.stringify(report));
 });
+
+test('detecta permutación de cruces conservando los mismos pares',()=>{
+ const edges=[{from:'a',to:'b'},{from:'c',to:'d'},{from:'e',to:'f'}];
+ const build=(firstX,secondX)=>{
+  const positions=new Map(['a','b','c','d','e','f'].map((id,i)=>[id,{x:i*100,y:i*100}]));
+  const rects=new Map([...positions].map(([id])=>[id,{id,w:60,h:50}]));
+  const p=(side,x,y)=>({side,x,y,sx:x,sy:y});
+  const routes=new Map([
+   [edgeKey(edges[0]),{edge:edges[0],points:[{x:0,y:0},{x:120,y:0}],
+    fromPort:p('right',0,0),toPort:p('left',120,0)}],
+   [edgeKey(edges[1]),{edge:edges[1],points:[{x:firstX,y:-30},{x:firstX,y:30}],
+    fromPort:p('bottom',firstX,-30),toPort:p('top',firstX,30)}],
+   [edgeKey(edges[2]),{edge:edges[2],points:[{x:secondX,y:-30},{x:secondX,y:30}],
+    fromPort:p('bottom',secondX,-30),toPort:p('top',secondX,30)}],
+  ]);
+  return {positions,rects,routes,edges};
+ };
+ const register=new TopologyRegister({edgeKey});
+ const old=register.capture(build(30,90));register.observe(old);
+ const next=register.capture(build(90,30));
+ assert.deepEqual(old.crossings.map(c=>[c.a,c.b]),next.crossings.map(c=>[c.a,c.b]));
+ const report=register.compare(old,next);
+ assert.ok(report.counts.crossingOrder>0,JSON.stringify(report));
+});
+test('la importación rechaza registros malformados sin alterar datos conceptuales',()=>{
+ const register=new TopologyRegister({edgeKey});
+ const old=register.capture(basic());
+ assert.equal(TopologyRegister.validShape(old),true);
+ const bad=structuredClone(old);bad.pending.push('unreal-route');
+ assert.equal(TopologyRegister.validShape(bad),false);
+ assert.equal(register.restore(bad),false);
+ assert.equal(register.reference,null);
+ const forged=structuredClone(old);
+ const p=forged.ports.a[0];forged.ports.a.push({...p});
+ assert.equal(TopologyRegister.validShape(forged),false);
+ const imported=new TopologyRegister({edgeKey});
+ assert.equal(imported.restore(old),true);
+ assert.equal(imported.observe(imported.capture(basic())).valid,true);
+});
