@@ -74,7 +74,10 @@ const candidates=conns.map(({e,from,to,conn})=>{
  let points=null;
  if(conn){
   const poly=conn.displayRoute(),inner=[];
-  for(let i=0;i<poly.size();i++){const p=poly.get_ps(i);inner.push({x:p.x,y:p.y});}
+  if(!globalThis.polyReported){console.log('POLY_API',JSON.stringify({methods:Object.getOwnPropertyNames(Object.getPrototypeOf(poly)),props:Object.keys(poly),size:poly.size?.(),psType:typeof poly.ps}));globalThis.polyReported=true;}
+  const accessor=poly.get_ps??poly.getPs??poly.getPoint??poly.at;
+  if(typeof accessor!=='function')throw Error('No existe método público de lectura de puntos');
+  for(let i=0;i<poly.size();i++){const p=accessor.call(poly,i);inner.push({x:p.x,y:p.y});}
   points=mergeRoute(from,to,inner);
  }
  return [key(e),{edge:e,points,fromPort:from||null,toPort:to||null}];
