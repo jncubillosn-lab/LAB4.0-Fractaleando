@@ -172,16 +172,21 @@ export function computeCompact02(input){
     byRoot.get(branch).push(a);
    }
   }
-  const values=[...byRoot.values()].flat().sort((a,b)=>a-b);
+  const tagged=[...byRoot].flatMap(([id,as])=>as.map(a=>({id,a})))
+   .sort((x,y)=>x.a-y.a);
   const TAU=2*Math.PI;
   let best=Infinity,orderedSectors=[];
-  // Buscar cualquier corte angular de los sectores. Nunca se exige ancho
-  // fijo ni se impone el orden cartesiano de los conceptos de 01.
+  // Si los sectores no se cruzan, siempre hay un hueco entre puntos
+  // pertenecientes a DOS ramas distintas. Solo probar esos cortes
+  // es completo para decidir separabilidad circular, y evita O(N²).
   const seams=[];
-  for(let i=0;i<values.length;i++){
-   const next=i===values.length-1?values[0]+TAU:values[i+1];
-   if(next-values[i]>.000001)seams.push((next+values[i])/2%TAU);
+  for(let i=0;i<tagged.length;i++){
+   const left=tagged[i],right=tagged[(i+1)%tagged.length];
+   const next=i===tagged.length-1?right.a+TAU:right.a;
+   if(left.id!==right.id&&next-left.a>1e-8)
+    seams.push(((next+left.a)/2)%TAU);
   }
+  if(!seams.length)seams.push(0);
   for(const seam of seams){
    const spans=[...byRoot].map(([id,as])=>{
     const vals=as.map(a=>(a-seam+TAU)%TAU);
@@ -211,7 +216,10 @@ export function computeCompact02(input){
  }
  let best={...centered,geometry:centeredCheck,zone:angles(centered),
   length:originalLength,extra:0};
- // Norma 01: sólo se adoptan candidatos que superen el control independiente.
+ // No se promueve jamás una simple propuesta a punto de control.
+ // Se ordenan transformaciones matemáticamente inyectivas y SE CERTIFICA
+ // cada finalista antes de aceptarla. Una propuesta rechazada no cambia
+ // el punto de control válido anterior.
  const certify=(draft)=>{
   if(!draft)return null;result.attempted++;
   const cert=snapshot(draft.ps,draft.rs,draft.rr);
@@ -219,31 +227,43 @@ export function computeCompact02(input){
   result.accepted++;
   return {...draft,geometry:cert,zone:angles(draft),length:length(draft.rs)};
  };
- // Compactación topológicamente segura: estrechar únicamente corredores
- // vacíos y conservar exactamente sus rutas. El núcleo queda en (0,0).
- for(const factor of [.90,.75,.6,.45]){
-  const trial=certify(transform(factor,factor,0));
-  if(trial&&trial.length<best.length-1e-5)best={...trial,extra:0};
+ const proposals=[];
+ const propose=(fx,fy,extra=0)=>{
+  const draft=transform(fx,fy,extra);
+  if(!draft)return;
+  const zone=angles(draft),routeLength=length(draft.rs);
+  if(Number.isFinite(routeLength))proposals.push({...draft,zone,length:routeLength,extra});
+ };
+ // Etapa 1: reducir distancias únicamente en espacios vacíos de 01.
+ // Estas deformaciones son globales e invertibles; NO crean rutas nuevas.
+ for(const factor of [.95,.85,.7,.55,.4,.25])propose(factor,factor,0);
+ proposals.sort((a,b)=>a.length-b.length);
+ // Primer candidato topológicamente y geométricamente aprobado.
+ for(const candidate of proposals.slice(0,6)){
+  if(candidate.zone.valid)continue;
+  const trial=certify(candidate);
+  if(trial&&trial.length<best.length-1e-5){best=trial;break;}
  }
- // Norma 02: el intento sectorial parte de una inmersión ya certificada.
- // Se ensanchan solamente franjas vacías entre ramas para separarlas,
- // conservando los 71 cruces de referencia cuando los había.
- if(!best.zone.valid&&separators.length===Math.max(0,roots.length-1)){
-  for(const extra of [150,300,600,1000,1600,2500,4000,6500,10000,15000,25000]){
-   const draft=transform(.65,.65,extra);
-   if(!draft)continue;
-   const zoned=angles(draft);
-   if(!zoned.valid)continue;
-   const trial=certify(draft);
-   if(trial?.zone.valid&&(!best.zone.valid||trial.length<best.length))best={...trial,extra};
+ // Etapa 2: buscar sectores angulares sin restringir su ancho al de
+ // una órbita. Etapa 3: entre las soluciones que ya satisfacen 1 y 2,
+ // minimizar la longitud REAL de todas las rutas (no centros).
+ if(separators.length===Math.max(0,roots.length-1)){
+  const extras=[0,150,300,600,1000,1600,2500,4000,6500,10000,15000,25000];
+  for(const extra of extras){
+   for(const xf of [.25,.4,.55,.7,.85]){
+    for(const yf of [.25,.45,.65,.85]){
+     if(extra===0&&xf===yf)continue;
+     propose(xf,yf,extra);
+    }
+   }
   }
  }
- // Regla 03: solo cuando 01 y 02 están aprobadas.
- if(best.zone.valid){
-  for(const factor of [.8,.65,.5,.35]){
-   const trial=certify(transform(factor,factor,best.extra));
-   if(trial?.zone.valid&&trial.length<best.length)best={...trial,extra:best.extra};
-  }
+ const zoned=proposals.filter(p=>p.zone.valid).sort((a,b)=>a.length-b.length);
+ for(const candidate of zoned){
+  if(best.zone.valid&&candidate.length>=best.length-1e-5)break;
+  const trial=certify(candidate);
+  if(trial?.zone.valid){best=trial;break;}
+  if(result.attempted>18)break;
  }
  const lengthOK=best.zone.valid&&best.length<originalLength-1e-5;
  const sourceArea=area(rects);
