@@ -7,19 +7,17 @@ const metrics=new Map(fixture.rects.map(([id,r])=>[id,{w:r.w,h:r.h}]));
 const positions=new Map(fixture.positions);
 const runner=new ViewLayouts();
 const args={nodes:fixture.nodes,edges:fixture.edges,metrics,sourcePositions:positions};
-test('02: compacta PPR sin cambiar el orden de centros ni solapar cajas',()=>{
+test('02: compacta subárboles en dos dimensiones, no escala columnas',()=>{
  const result=runner.compute({mode:'02',...args});
  assert.equal(result.positions.size,210);
- assert.ok(result.stats.factor<1,'debe reducirse al menos alguna distancia');
- assert.ok(result.stats.relativeMoves>0,'debe aproximar al menos algunos términos vinculados');
- assert.ok(result.stats.linkLength<result.stats.uniformLinkLength,'debe mejorar la escala uniforme');
  assert.equal(result.stats.overlaps,0);
- for(let i=0;i<fixture.nodes.length;i++)for(let j=0;j<i;j++){
-  const id=fixture.nodes[i].id,other=fixture.nodes[j].id;
-  const p=positions.get(id),q=positions.get(other),a=result.positions.get(id),b=result.positions.get(other);
-  if(Math.abs(p.x-q.x)>.05)assert.equal(Math.sign(a.x-b.x),Math.sign(p.x-q.x));
-  if(Math.abs(p.y-q.y)>.05)assert.equal(Math.sign(a.y-b.y),Math.sign(p.y-q.y));
- }
+ assert.ok(result.stats.subtreeBlocks>20,'deben existir bloques J2 independientes');
+ assert.ok(result.stats.macroBlocks===3);
+ assert.ok(result.stats.areaRatio<0.9,JSON.stringify(result.stats));
+ assert.ok(result.stats.microMoves>=0);
+ assert.deepEqual([...result.positions.keys()].sort(),fixture.nodes.map(n=>n.id).sort());
+ for(const p of result.positions.values())assert.ok(Number.isFinite(p.x)&&Number.isFinite(p.y));
+ console.log('COMPACT_STATS',JSON.stringify(result.stats));
 });
 test('03: radio idéntico por distancia mínima de vínculos y cero colisiones',()=>{
  const result=runner.compute({mode:'03',...args});
