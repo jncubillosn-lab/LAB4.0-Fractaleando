@@ -32,3 +32,38 @@ jobs:
           python tests/pages_e2e.py
           python tests/views_e2e.py
           python tests/topology_guard_e2e.py
+
+  deploy-pages:
+    name: Publicar P1 en GitHub Pages
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [unit, browser]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Descargar la versión aprobada
+        uses: actions/checkout@v4
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Preparar únicamente los archivos del sitio estático
+        run: |
+          mkdir -p _site
+          cp index.html .nojekyll _site/
+          cp -R css js _site/
+          test -f _site/index.html
+          test -f _site/js/geometry/ViewLayouts.js
+          test -f _site/js/views/DerivedViews.js
+          grep -q 'data-view="04"' _site/index.html
+          grep -q 'id="themeBtn"' _site/index.html
+      - name: Empaquetar sitio
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - name: Desplegar Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
