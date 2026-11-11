@@ -1,9 +1,9 @@
 import {PcbRouter} from '../geometry/PcbRouter.js';
 
 // All inputs are plain structured-clone data. No DOM, CSS, or canvas in workers.
-export function computeInitialRoutes({nodes,edges,positions,rects,levels}){
+export function computeInitialRoutes({nodes,edges,positions,rects,levels,mode='01'}){
  const state={nodes,edges},byId=new Map(nodes.map(n=>[n.id,n]));
- const router=new PcbRouter({state,nodeById:id=>byId.get(id),clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});
+ const router=new PcbRouter({state,nodeById:id=>byId.get(id),mode,clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});
  const positionMap=new Map(positions),rectMap=new Map(rects);
  const priority=e=>Math.min(levels[e.from]??1000,levels[e.to]??1000)*10+
   (e.kind==='transversal'?5:0)+(Math.abs((levels[e.from]??1000)-(levels[e.to]??1000))>1?2:0);
