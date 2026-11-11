@@ -145,6 +145,43 @@ export class ViewLayouts {
   traverse('p1');for(const n of nodes)traverse(n.id);
   for(const group of grouped.values())for(const list of group.values())
    list.sort((a,b)=>(preorder.get(a.id)??0)-(preorder.get(b.id)??0));
+  // Barrido baricéntrico dentro de cada brazo: los vecinos de otras
+  // jerarquías influyen en la posición angular, pero nunca se mezclan brazos.
+  // El objetivo es reducir el entrecruzamiento ANTES del enrutamiento PCB.
+  function estimatedAngle(id){
+   const level=levels.get(id),branch=owner.get(id)||'orphan';
+   const list=grouped.get(level)?.get(branch);
+   const center=centers.get(branch)||0,span=spans.get(branch)||0;
+   if(!list?.length)return center;
+   const index=list.findIndex(n=>n.id===id);
+   return center+((index+.5)/list.length-.5)*span;
+  }
+  const originalRank=new Map([...preorder]);
+  function sweep(level,direction){
+   const ring=grouped.get(level);
+   if(!ring)return;
+   for(const list of ring.values()){
+    if(list.length<2)continue;
+    const scores=new Map();
+    for(let k=0;k<list.length;k++){
+     const node=list[k];
+     let numerator=estimatedAngle(node.id)*.7,denominator=.7;
+     for(const other of adj.get(node.id)||[]){
+      if(levels.get(other)!==level+direction)continue;
+      const sameBranch=owner.get(other)===owner.get(node.id);
+      const weight=sameBranch?3:0.8;
+      numerator+=estimatedAngle(other)*weight;denominator+=weight;
+     }
+     scores.set(node.id,numerator/denominator);
+    }
+    list.sort((a,b)=>scores.get(a.id)-scores.get(b.id)||
+     originalRank.get(a.id)-originalRank.get(b.id));
+   }
+  }
+  for(let pass=0;pass<4;pass++){
+   for(let level=2;level<=maxLevel;level++)sweep(level,-1);
+   for(let level=maxLevel-1;level>=1;level--)sweep(level,1);
+  }
   // Carril angular de cada jerarquía: espaciamiento suficiente para cuadros.
   const radii=new Map([[0,0]]);
   const maxHalf=new Map([[0,Math.hypot(metricsMap.get('p1')?.w||108,metricsMap.get('p1')?.h||67)/2]]);
@@ -166,7 +203,7 @@ export class ViewLayouts {
   }
   const TAU=2*Math.PI;
   const spiral=mode==='04';
-  const W=spiral?0.42:0; // progreso angular por jerarquía (radianes)
+  const W=spiral?0.23:0; // progreso angular por jerarquía (radianes)
   const D=spiral?0.16:0; // variación radial intrajerárquica, relativa al ancho de banda
   const T=0;
   // Una separación angular relativa de conceptos entre ramas no se mezcla:
