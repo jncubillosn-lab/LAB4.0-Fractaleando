@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="application-version" content="p1-editor-plano-motor-01-2026-11-10">
+<meta name="application-version" content="p1-editor-vistas-01-04-2026-11-11">
 <title>P1 — Estudio de relaciones · editor fractal</title>
 <link rel="stylesheet" href="./css/interfaz.css">
 </head>
@@ -11,7 +11,7 @@
 <div class="app">
  <header class="top">
   <div class="identity"><div class="monogram">P1</div><div class="separator"></div><div class="brand">Estudio de relaciones <span>Editor de grafos conceptuales</span></div></div>
-  <div class="top-actions"><button class="smallbtn" id="undoBtn" title="Deshacer (Ctrl+Z)">Deshacer</button><button class="smallbtn" id="newBtn" title="Nuevo diagrama con núcleo y tres ramas">Nuevo</button><button class="smallbtn" id="resetBtn" title="Cargar los datos ilustrativos PPR">Ejemplo PPR</button><button class="smallbtn" id="coreBtn" title="Centrar el núcleo P1">Núcleo</button><button class="smallbtn" id="fitBtn">Centrar lectura</button></div>
+  <nav class="view-nav" aria-label="Representaciones"><button type="button" data-view="01" class="view-tab selected" aria-pressed="true">01 · Plano</button><button type="button" data-view="02" class="view-tab" aria-pressed="false">02 · Compacto</button><button type="button" data-view="03" class="view-tab" aria-pressed="false">03 · Órbitas</button><button type="button" data-view="04" class="view-tab" aria-pressed="false">04 · Espiral</button></nav><div class="top-actions"><button class="smallbtn" id="themeBtn" title="Alternar modo oscuro" aria-pressed="false">Oscuro</button><button class="smallbtn" id="undoBtn" title="Deshacer (Ctrl+Z)">Deshacer</button><button class="smallbtn" id="newBtn" title="Nuevo diagrama con núcleo y tres ramas">Nuevo</button><button class="smallbtn" id="resetBtn" title="Cargar los datos ilustrativos PPR">Ejemplo PPR</button><button class="smallbtn" id="coreBtn" title="Centrar el núcleo P1">Núcleo</button><button class="smallbtn" id="fitBtn">Centrar lectura</button></div>
  </header>
  <div class="body">
   <aside class="sidebar">
@@ -26,11 +26,11 @@
   <main class="stagewrap" id="stageWrap">
    <svg id="stage" class="stage" xmlns="http://www.w3.org/2000/svg" aria-label="Editor gráfico de relaciones"><g id="camera"><g id="lines"></g><g id="nodes"></g></g></svg>
    <div class="toplabel"><div class="eyebrow" >Plano conceptual / 01</div><div class="maptitle" >Mapa de relaciones</div><div class="mapcaption" >Núcleo · trayectorias editables</div></div>
-   <div id="readHint" class="readhint" hidden></div><div class="floating"><button id="zoomOut" aria-label="Alejar">−</button><button id="zoomIn" aria-label="Acercar">+</button><button id="zoomFit" aria-label="Centrar zona de lectura">⌖</button></div>
+   <div id="readHint" class="readhint" hidden></div><div id="derivedStatus" class="readhint derived-status" role="status" aria-live="polite" hidden></div><div class="floating"><button id="zoomOut" aria-label="Alejar">−</button><button id="zoomIn" aria-label="Acercar">+</button><button id="zoomFit" aria-label="Centrar zona de lectura">⌖</button></div>
    <div class="toast" id="toast" role="status"></div>
   </main>
  </div>
- <footer class="foot"><span id="footHint">Edición de conceptos · representación plana</span><span>P1 / 001 &nbsp;·&nbsp; DOS TINTAS &nbsp;·&nbsp; SOLO PLANO</span></footer>
+ <footer class="foot"><span id="footHint">Edición de conceptos · representación plana</span><span id="viewState">01 · EDITABLE</span><span>P1 / 001 &nbsp;·&nbsp; DOS TINTAS &nbsp;·&nbsp; CUATRO VISTAS</span></footer>
 </div>
 <script type="module" src="./js/app.js"></script>
 </body>

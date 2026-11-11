@@ -2,6 +2,7 @@ import {GraphDocument} from './core/GraphDocument.js';
 import {createSeeds} from './data/seeds.js';
 import {PlaneCheckpoint} from './core/PlaneCheckpoint.js';
 import {TopologyRegister} from './core/TopologyRegister.js';
+import {DerivedViews} from './views/DerivedViews.js';
 import {PcbRouter} from './geometry/PcbRouter.js';
 import {GeometryValidator} from './geometry/GeometryValidator.js';
 import {SvgRenderer} from './ui/SvgRenderer.js';
@@ -122,9 +123,21 @@ window.P1_PLANO_DIAGNOSTICO=diag; // lectura técnica, no herramienta de interfa
 const validator=new GeometryValidator({router,rectOverlap});
 const renderer=new SvgRenderer({linesEl,sEl,router,edgeKey:e=>edgeKey(e)});
 const edgeKey=e=>[e.from,e.to].sort().map(encodeURIComponent).join('|');
+const derived=new DerivedViews({state,plane,camera,linesEl,nodesEl,sEl,router,validator,
+ edgeKey,readDepthMap,fit,geometry,toast});
+
 // Registro relacional paralelo al punto de control geométrico.
 const topology=new TopologyRegister({edgeKey});
 let stagedTopology=null;
+let guardedMove=null;
+// Solo los arrastres manuales son transacciones geométricas estrictas.
+// Un cambio de datos (crear o eliminar vínculos) tiene una semántica diferente.
+function beginGuardedMove(id){
+ guardedMove={id,
+  positions:new Map([...plane.positions].map(([k,v])=>[k,{...v}])),
+  metrics:new Map(plane.metrics),rects:new Map(plane.rects),routes:new Map(plane.routes)};
+}
+
 function observeTopology(){
  if(!plane.ready)return;
  const levels=readDepthMap();
@@ -405,6 +418,24 @@ function reconcileCheckpoint(){
  }
  plane.revision++;diag.lastRouteCalculations=diag.routeCalculations-calcsBefore;
  diag.lastDurationMs=Math.round(performance.now()-start);diag.lastOperation='actualización localizada';diag.checkpoint=plane.revision;
+ if(guardedMove){
+  const levels=readDepthMap(),ordered=state.edges.map((e,i)=>({...e,__index:i}))
+   .sort((a,b)=>pathPriority(a,levels)-pathPriority(b,levels)||a.__index-b.__index);
+  const candidate=topology.capture({positions:plane.positions,rects:plane.rects,routes:plane.routes,edges:ordered});
+  const check=topology.reference?topology.compare(topology.reference,candidate):{valid:true,issueCount:0};
+  const audit=validator.audit([...plane.rects.values()],[...plane.routes.values()]);
+  const pending=[...plane.routes.values()].filter(r=>!r?.points).length;
+  if(!check.valid||audit.invalid||audit.boxes||audit.portsRepeated||pending){
+   plane.positions=guardedMove.positions;plane.metrics=guardedMove.metrics;
+   plane.rects=guardedMove.rects;plane.routes=guardedMove.routes;
+   for(const n of state.nodes){const p=plane.positions.get(n.id);if(p){n.x=p.x;n.y=p.y;}}
+   if(state.undo.length)state.undo.pop();
+   $('undoBtn').disabled=!state.undo.length;
+   diag.lastOperation='movimiento rechazado por topología';diag.lastRouteCalculations=diag.routeCalculations-calcsBefore;
+   toast('Movimiento rechazado: alteraría el orden topológico, una conexión o sus distancias seguras.');
+  }
+  guardedMove=null;
+ }
  observeTopology();
  return true;
 }
@@ -436,7 +467,7 @@ function nodeElement(n){
    el.setAttribute('transform',`translate(${d.startX} ${d.startY})`);
    toast('No es posible superponer conceptos. Mueve el cuadro a un espacio libre.');return;
   }
-  saveUndo();n.x=dest.x;n.y=dest.y;
+  beginGuardedMove(n.id);saveUndo();n.x=dest.x;n.y=dest.y;
   schedule();
  };
  el.addEventListener('pointerup',drop);
@@ -490,6 +521,7 @@ function paintVisibility(){
   if(topologyDiff)parts.push(`${topologyDiff} diferencias de orden, puertos o cruces respecto del registro topológico. La referencia anterior se conserva.`);
   note.textContent=parts.join(' ');note.hidden=false;
  }else note.hidden=true;
+ derived.paintVisibility();
 }
 function render(){
  state.renderQueued=false;
@@ -502,6 +534,7 @@ function scheduleVisibility(){syncDepth();if(state.renderQueued)return;paintVisi
 // Auditoría bajo demanda: no interviene en el tiempo habitual del dibujo.
 diag.audit=()=>({...validator.audit([...plane.rects.values()],[...plane.routes.values()]),total:state.edges.length,checkpoint:plane.revision});
 diag.topology=()=>topology.status(); // informe sin enrutamiento ni repintado
+diag.views=()=>derived.diagnostic();
 
 function updateCamera(){camera.setAttribute('transform',`translate(${state.tx.toFixed(2)} ${state.ty.toFixed(2)}) scale(${state.zoom.toFixed(4)})`);}
 function schedule(){syncDepth();if(state.renderQueued)return;state.renderQueued=true;requestAnimationFrame(render);}
@@ -519,7 +552,7 @@ function updatePanel(){const n=selected();$('selectionInfo').textContent=n?`${n.
 
 }
 function saveUndo(){state.undo.push(JSON.stringify({nodes:state.nodes,edges:state.edges,selected:state.selected}));if(state.undo.length>36)state.undo.shift();$('undoBtn').disabled=false;}
-function undo(){if(!state.undo.length)return;const s=JSON.parse(state.undo.pop());state.nodes=s.nodes;state.edges=s.edges;state.selected=s.selected;state.linkFrom=null;state.unlinkFrom=null;updatePanel();schedule();$('undoBtn').disabled=!state.undo.length;toast('Cambio deshecho.');}
+function undo(){if(derived.mode!=='01'){toast('Regresa a 01 · Plano para editar el grafo.');return;}if(!state.undo.length)return;const s=JSON.parse(state.undo.pop());state.nodes=s.nodes;state.edges=s.edges;state.selected=s.selected;state.linkFrom=null;state.unlinkFrom=null;updatePanel();schedule();$('undoBtn').disabled=!state.undo.length;toast('Cambio deshecho.');}
 function removeLink(from,to){
  const edge=state.edges.find(e=>(e.from===from&&e.to===to)||(e.from===to&&e.to===from));
  if(!edge){toast('Estos conceptos no tienen un vínculo directo.');return false;}
@@ -567,7 +600,8 @@ function addConcept(){
 function deleteSelected(){const n=selected();if(!n||n.id==='p1')return;const childCount=treeChildren(n.id).length;if(childCount&&!confirm(`Este concepto tiene ${childCount} descendientes directos, que quedarán sin padre. ¿Continuar?`))return;saveUndo();if(state.focusRoot===n.id)state.focusRoot=n.parent||'p1';state.unlinkFrom=null;state.nodes=state.nodes.filter(o=>o.id!==n.id);state.edges=state.edges.filter(e=>e.from!==n.id&&e.to!==n.id);for(const q of state.nodes)if(q.parent===n.id)q.parent=null;state.selected=n.parent&&nodeById(n.parent)?n.parent:'p1';updatePanel();schedule();toast('Concepto eliminado. Las relaciones restantes se conservan sin inventar sustituciones.');}
 function centerOn(){
  const root=nodesEl.querySelector('[data-node-id="p1"]');
- const x=nodeById('p1')?.x||0,y=nodeById('p1')?.y||0;
+ const center=derived.mode!=='01'?derived.current?.layout.positions.get('p1'):null;
+ const x=center?.x??nodeById('p1')?.x??0,y=center?.y??nodeById('p1')?.y??0;
  state.zoom=1;state.tx=stage.clientWidth/2-x;state.ty=stage.clientHeight/2-y;updateCamera();
 }
 function ensureNodeVisible(id){
@@ -595,6 +629,14 @@ function focusCore(){centerOn();}
 function zoomBy(factor,cx=stage.clientWidth/2,cy=stage.clientHeight/2){const z=clamp(state.zoom*factor,.22,3.2);const x=(cx-state.tx)/state.zoom,y=(cy-state.ty)/state.zoom;state.zoom=z;state.tx=cx-x*z;state.ty=cy-y*z;updateCamera();}
 function inFrame(clientX,clientY){const b=stage.getBoundingClientRect();return{x:clientX-b.left,y:clientY-b.top};}
 // Las interacciones dependientes de coordenadas y líneas se retiraron con el motor.
+// La vista activa no cambia el grafo; las representaciones derivadas son de lectura.
+for(const button of document.querySelectorAll('[data-view]')){
+ button.addEventListener('click',async()=>{
+  const mode=button.dataset.view;
+  await derived.select(mode);
+  if(mode==='01'){updatePanel();syncGraphics(false);fit();}
+ });
+}
 let panStart=null;
 stage.addEventListener('pointerdown',e=>{if(e.button!==0)return;panStart={x:e.clientX,y:e.clientY,tx:state.tx,ty:state.ty};stage.setPointerCapture(e.pointerId);});
 stage.addEventListener('pointermove',e=>{if(!panStart)return;state.tx=panStart.tx+e.clientX-panStart.x;state.ty=panStart.ty+e.clientY-panStart.y;updateCamera();});
@@ -615,12 +657,31 @@ $('depth').addEventListener('input',e=>{state.depth=Number(e.target.value);sched
 $('showAllBtn').onclick=()=>{state.depth=maximumDepth();scheduleVisibility();};
 window.addEventListener('keydown',e=>{const target=e.target.tagName.toLowerCase();if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){if(target!=='textarea'&&target!=='input'){e.preventDefault();undo();}}if(e.key==='Escape'&&(state.linkFrom||state.unlinkFrom)){state.linkFrom=null;state.unlinkFrom=null;updatePanel();}});
 function download(filename,data,mime){const blob=new Blob([data],{type:mime});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),500);}
-$('jsonBtn').onclick=()=>{download('p1-grafo.json',JSON.stringify({schema:'p1.graph.v1',nodes:state.nodes,edges:state.edges,planeCheckpoint:saveCheckpoint(),topologyRegister:topology.reference},null,2),'application/json;charset=utf-8');toast('Se exportó el grafo completo, independiente de la vista.');};
+$('jsonBtn').onclick=()=>{download('p1-grafo.json',JSON.stringify({schema:'p1.graph.v1',nodes:state.nodes,edges:state.edges,planeCheckpoint:saveCheckpoint(),topologyRegister:topology.reference,derivedViews:derived.exportData()},null,2),'application/json;charset=utf-8');toast('Se exportó el grafo completo, independiente de la vista.');};
 $('loadBtn').onclick=()=>$('fileInput').click();
 $('fileInput').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!Array.isArray(data.nodes)||!Array.isArray(data.edges))throw Error('Formato de grafo no reconocido');const ids=new Set(data.nodes.map(n=>n.id));if(ids.size!==data.nodes.length||!ids.has('p1'))throw Error('Debe existir un núcleo P1 único.');if(!data.nodes.every(n=>typeof n.id==='string'&&typeof n.text==='string'&&Number.isFinite(n.width)&&n.width>=90&&n.width<=500&&Number.isInteger(n.branch)&&n.branch>=-1&&Number.isFinite(n.x)&&Number.isFinite(n.y))||!data.edges.every(o=>ids.has(o.from)&&ids.has(o.to))||!data.nodes.filter(n=>n.parent==='p1').every(n=>data.edges.some(e=>e.from==='p1'&&e.to===n.id))||data.edges.some(e=>e.to==='p1'||(e.from==='p1'&&data.nodes.find(n=>n.id===e.to)?.parent!=='p1'))||!data.nodes.every(n=>n.parent==null||ids.has(n.parent)))throw Error('Hay nodos, conexiones o vínculos del núcleo inválidos.');
- cancelInitialBuild();saveUndo();topology.reset();stagedTopology=data.topologyRegister??null;state.nodes=data.nodes.map(n=>({...n}));state.focusRoot='p1';state.edges=data.edges.map(e=>({...e}));state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;state.idSerial=Math.max(0,...state.nodes.map(n=>Number(n.id.match(/^n(\d+)$/)?.[1]||0)));plane.ready=false;plane.nodeEls.clear();plane.routeEls.clear();linesEl.replaceChildren();nodesEl.replaceChildren();if(!validateSavedCheckpoint(data.planeCheckpoint)){plane.ready=false;}pendingAutoFit=true;updatePanel();schedule();toast('Grafo importado.');}catch(error){toast('No se pudo importar: '+error.message);}finally{e.target.value='';}});
+ cancelInitialBuild();guardedMove=null;saveUndo();derived.reset();derived.restoreData(data.derivedViews);topology.reset();stagedTopology=data.topologyRegister??null;state.nodes=data.nodes.map(n=>({...n}));state.focusRoot='p1';state.edges=data.edges.map(e=>({...e}));state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;state.idSerial=Math.max(0,...state.nodes.map(n=>Number(n.id.match(/^n(\d+)$/)?.[1]||0)));plane.ready=false;plane.nodeEls.clear();plane.routeEls.clear();linesEl.replaceChildren();nodesEl.replaceChildren();if(!validateSavedCheckpoint(data.planeCheckpoint)){plane.ready=false;}pendingAutoFit=true;updatePanel();schedule();toast('Grafo importado.');}catch(error){toast('No se pudo importar: '+error.message);}finally{e.target.value='';}});
 // Exportación sin cambiar el modelo, el zoom ni la posición del lienzo.
 // SVG autónomo: incluye los estilos de los nodos, las líneas y las máscaras.
+const themeButton=$('themeBtn');
+function setTheme(theme){
+ const dark=theme==='dark';
+ document.documentElement.dataset.theme=dark?'dark':'light';
+ themeButton.textContent=dark?'Claro':'Oscuro';
+ themeButton.setAttribute('aria-pressed',dark?'true':'false');
+ try{localStorage.setItem('p1-color-theme',dark?'dark':'light');}catch{}
+}
+let selectedTheme='light';
+try{selectedTheme=localStorage.getItem('p1-color-theme')==='dark'?'dark':'light';}catch{}
+setTheme(selectedTheme);
+themeButton.onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
+function exportColor(name){return document.documentElement.dataset.theme==='dark'?
+ (name==='paper'?'#171917':'#e9e9e4'):(name==='paper'?'#f7f6f1':'#1c1c1b');}
+function exportStyles(){return EXPORT_STYLE.replaceAll('#f7f6f1',exportColor('paper')).replaceAll('#1c1c1b',exportColor('ink'));}
+function exportCamera(node=camera){
+ const text=new XMLSerializer().serializeToString(node);
+ return text.replaceAll('fill="var(--paper)"','fill="'+exportColor('paper')+'"');
+}
 const EXPORT_STYLE=`
 .svgline{fill:none;stroke:#1c1c1b;stroke-width:1.35;stroke-opacity:.50;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .svgline.active{stroke-width:2;stroke-opacity:1}
@@ -635,8 +696,8 @@ function makeExportSvg(outputW,outputH){
  // El área mostrada se adapta completa a 16:9 sin estirar las coordenadas.
  const scale=Math.min(outputW/sourceW,outputH/sourceH);
  const x=(outputW-sourceW*scale)/2,y=(outputH-sourceH*scale)/2;
- const picture=new XMLSerializer().serializeToString(camera);
- return `<svg xmlns="http://www.w3.org/2000/svg" width="${outputW}" height="${outputH}" viewBox="0 0 ${outputW} ${outputH}"><rect width="${outputW}" height="${outputH}" fill="#f7f6f1"/><style>${EXPORT_STYLE}</style><g transform="translate(${x} ${y}) scale(${scale})">${picture}</g></svg>`;
+ const picture=exportCamera();
+ return `<svg xmlns="http://www.w3.org/2000/svg" width="${outputW}" height="${outputH}" viewBox="0 0 ${outputW} ${outputH}"><rect width="${outputW}" height="${outputH}" fill="${exportColor('paper')}"/><style>${exportStyles()}</style><g transform="translate(${x} ${y}) scale(${scale})">${picture}</g></svg>`;
 }
 function downloadBlob(filename,blob){
  const url=URL.createObjectURL(blob),a=document.createElement('a');
@@ -673,12 +734,12 @@ function makeCompletePngSvg(bounds){
  const graph=camera.cloneNode(true);
  // Importantísimo: la cámara solo gobierna la pantalla. No debe trasladarse al PNG.
  graph.removeAttribute('transform');
- const picture=new XMLSerializer().serializeToString(graph);
+ const picture=exportCamera(graph);
  const offsetX=(PNG_MARGIN-bbox.x)*scale;
  const offsetY=(PNG_MARGIN-bbox.y)*scale;
  // En una exportación a alta densidad el grosor de línea se escala junto al texto.
- const style=EXPORT_STYLE.replace(/vector-effect\s*:\s*non-scaling-stroke\s*;?/g,'');
- return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="${width}" height="${height}" fill="#f7f6f1"/><style>${style}</style><g transform="translate(${offsetX.toFixed(2)} ${offsetY.toFixed(2)}) scale(${scale})">${picture}</g></svg>`;
+ const style=exportStyles().replace(/vector-effect\s*:\s*non-scaling-stroke\s*;?/g,'');
+ return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="${width}" height="${height}" fill="${exportColor('paper')}"/><style>${style}</style><g transform="translate(${offsetX.toFixed(2)} ${offsetY.toFixed(2)}) scale(${scale})">${picture}</g></svg>`;
 }
 $('pngBtn').onclick=async()=>{
  const btn=$('pngBtn');if(btn.disabled)return;
@@ -700,7 +761,7 @@ $('pngBtn').onclick=async()=>{
   const canvas=document.createElement('canvas');canvas.width=bounds.width;canvas.height=bounds.height;
   const context=canvas.getContext('2d');
   if(!context)throw new Error('El navegador no puede crear el lienzo PNG de este tamaño. Prueba SVG.');
-  context.fillStyle='#f7f6f1';context.fillRect(0,0,canvas.width,canvas.height);
+  context.fillStyle=exportColor('paper');context.fillRect(0,0,canvas.width,canvas.height);
   context.drawImage(pic,0,0,bounds.width,bounds.height);
   const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('No se pudo codificar este PNG de gran tamaño. Puedes exportar SVG.')),'image/png'));
   downloadBlob(`p1-plano-completo-${bounds.width}x${bounds.height}.png`,blob);
@@ -708,6 +769,6 @@ $('pngBtn').onclick=async()=>{
  }catch(err){console.error('Error exportando PNG completo:',err);toast('No se pudo exportar PNG: '+err.message);}
  finally{if(temporaryURL)URL.revokeObjectURL(temporaryURL);btn.disabled=false;btn.textContent='Exportar diagrama completo · PNG';}
 };
-function init(useDemo=true){cancelInitialBuild();plane.reset();topology.reset();stagedTopology=null;linesEl.replaceChildren();nodesEl.replaceChildren();const demo=useDemo?seed():blankSeed();state.nodes=demo.nodes;state.edges=demo.edges;state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;state.focusRoot='p1';state.depth=1;state.undo=[];state.idSerial=0;syncDepth();updatePanel();$('undoBtn').disabled=true;pendingAutoFit=true;schedule();}
+function init(useDemo=true){cancelInitialBuild();guardedMove=null;plane.reset();derived.reset();topology.reset();stagedTopology=null;linesEl.replaceChildren();nodesEl.replaceChildren();const demo=useDemo?seed():blankSeed();state.nodes=demo.nodes;state.edges=demo.edges;state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;state.focusRoot='p1';state.depth=1;state.undo=[];state.idSerial=0;syncDepth();updatePanel();$('undoBtn').disabled=true;pendingAutoFit=true;schedule();}
 const ro=new ResizeObserver(()=>{updateCamera();});ro.observe(stage);
 init();

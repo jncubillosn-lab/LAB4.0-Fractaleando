@@ -1,9 +1,9 @@
 import {PcbRouter} from '../geometry/PcbRouter.js';
 
 // All inputs are plain structured-clone data. No DOM, CSS, or canvas in workers.
-export function computeInitialRoutes({nodes,edges,positions,rects,levels}){
+export function computeInitialRoutes({nodes,edges,positions,rects,levels,mode='01'}){
  const state={nodes,edges},byId=new Map(nodes.map(n=>[n.id,n]));
- const router=new PcbRouter({state,nodeById:id=>byId.get(id),clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});
+ const router=new PcbRouter({state,nodeById:id=>byId.get(id),mode,clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});
  const positionMap=new Map(positions),rectMap=new Map(rects);
  const priority=e=>Math.min(levels[e.from]??1000,levels[e.to]??1000)*10+
   (e.kind==='transversal'?5:0)+(Math.abs((levels[e.from]??1000)-(levels[e.to]??1000))>1?2:0);
@@ -27,6 +27,9 @@ export function computeInitialRoutes({nodes,edges,positions,rects,levels}){
  // successful paths are immutable: this is Walk Around, not global relayout.
  let attempts=ordered.length;
  const missing=routes.filter(([key,r])=>!r.points);
+ const retryBudget=mode==='01'?120:Math.min(1400,Math.max(180,missing.length*18));
+ const routeBudgetMs=mode==='01'?2900:mode==='02'?6800:mode==='03'?2500:4700;
+ const retryDeadline=performance.now()+(mode==='01'?12000:24000);
  if(missing.length){
   const used=new Map();
   for(const [,r] of routes)if(r.points){
@@ -63,11 +66,11 @@ export function computeInitialRoutes({nodes,edges,positions,rects,levels}){
    const edge=missingRoute.edge;
    const a=freePorts(edge.from,edge.to,edge),b=freePorts(edge.to,edge.from,edge);
    const choices=[];
-   for(let i=0;i<Math.min(a.length,9);i++)for(let j=0;j<Math.min(b.length,6);j++)choices.push([i,j]);
+   for(let i=0;i<Math.min(a.length,mode==='04'?22:9);i++)for(let j=0;j<Math.min(b.length,mode==='04'?15:6);j++)choices.push([i,j]);
    choices.sort((p,q)=>(p[0]+p[1])-(q[0]+q[1]));
    const begun=performance.now();let replacement=null;
    for(const [i,j] of choices){
-    if(attempts-ordered.length>120||performance.now()-begun>2900)break;
+    if(attempts-ordered.length>retryBudget||performance.now()-begun>routeBudgetMs||performance.now()>retryDeadline)break;
     const from=a[i],to=b[j];attempts++;
     const result=router.routeEdge({...from,id:edge.from},{...to,id:edge.to},[...rectMap.values()],occupied);
     if(result){replacement={edge:{...edge},points:result.points,crosses:result.crosses,fromPort:from,toPort:to};break;}

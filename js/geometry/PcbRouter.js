@@ -2,9 +2,14 @@
 // The class is instantiated for the active document; its algorithms are
 // extracted from the last approved R01 implementation, not a retired engine.
 export class PcbRouter {
- constructor({state,nodeById,clamp}){
+ constructor({state,nodeById,clamp,mode='01'}){
   const ROUTE_CLEAR=9, ROUTE_SEPARATION=6, PORT_STUB=19;
   function prefSide(node,other,edge){
+   if(mode==='03'||mode==='04'){
+    const dx=other.x-node.x,dy=other.y-node.y;
+    return Math.abs(dx)>Math.abs(dy)*.72?
+     (dx>0?'right':'left'):(dy>0?'bottom':'top');
+   }
    if(edge.kind==='transversal')return other.y>node.y?'bottom':'top';
    if((node.id==='p1'&&other.parent==='p1'))return 'bottom';
    if((other.id==='p1'&&node.parent==='p1'))return 'top';
@@ -174,6 +179,54 @@ export class PcbRouter {
    }
    rev.reverse();return simplify(rev);
   }
+  // Búsqueda auxiliar para órbitas densas: intenta carriles Manhattan
+  // amplios antes de declarar pendiente una conexión. No atraviesa cajas
+  // ni permite tramos compartidos; cada candidato pasa routeShapeValid.
+  function wideCandidates(start,s,t,end,obstacles,occupied,own){
+   const time=performance.now();
+   const midX=(s.x+t.x)/2,midY=(s.y+t.y)/2;
+   const nums=new Set(),ys=new Set();
+   const add=(set,v)=>{if(Number.isFinite(v))set.add(Math.round(v*100)/100);};
+   const minX=Math.min(s.x,t.x),maxX=Math.max(s.x,t.x);
+   const minY=Math.min(s.y,t.y),maxY=Math.max(s.y,t.y);
+   for(const d of [30,80,160,320,640,1300,2600,5200]){
+    for(const sign of [-1,1]){
+     add(nums,midX+sign*d);add(ys,midY+sign*d);
+    }
+    add(nums,minX-d);add(nums,maxX+d);
+    add(ys,minY-d);add(ys,maxY+d);
+   }
+   for(const r of obstacles){
+    if(r.r>=minX-700&&r.l<=maxX+700){
+     add(nums,r.l-ROUTE_CLEAR-5);add(nums,r.r+ROUTE_CLEAR+5);
+    }
+    if(r.b>=minY-700&&r.t<=maxY+700){
+     add(ys,r.t-ROUTE_CLEAR-5);add(ys,r.b+ROUTE_CLEAR+5);
+    }
+   }
+   // Los carriles externos más cercanos se examinan primero.
+   const channels=(set,mid)=>[...set].sort((a,b)=>Math.abs(a-mid)-Math.abs(b-mid)).slice(0,48);
+   let best=null;
+   function consider(candidate){
+    const points=simplify(candidate);
+    if(points.some((p,i)=>i&&Math.abs(p.x-points[i-1].x)>.01&&Math.abs(p.y-points[i-1].y)>.01))return;
+    const crosses=routeShapeValid(points,obstacles,own,occupied,true);
+    if(crosses===null)return;
+    const len=allSegments(points).reduce((v,x)=>v+Math.abs(x.a.x-x.b.x)+Math.abs(x.a.y-x.b.y),0);
+    if(!best||crosses<best.crosses||crosses===best.crosses&&len<best.len)best={points,crosses,len};
+   }
+   let tested=0;
+   for(const x of channels(nums,midX)){
+    consider([start,s,{x,y:s.y},{x,y:t.y},t,end]);
+    if(++tested%8===0&&performance.now()-time>140)break;
+   }
+   tested=0;
+   for(const y of channels(ys,midY)){
+    consider([start,s,{x:s.x,y},{x:t.x,y},t,end]);
+    if(++tested%8===0&&performance.now()-time>240)break;
+   }
+   return best;
+  }
   function routeEdge(src,dst,obstacles,occupied){
    const start={x:src.x,y:src.y},s={x:src.sx,y:src.sy};
    const t={x:dst.sx,y:dst.sy},end={x:dst.x,y:dst.y};
@@ -183,7 +236,7 @@ export class PcbRouter {
    // Canal individual para ramas paralelas del mismo progenitor.
    // Se reserva por orden espacial: los hijos más alejados usan los carriles interiores.
    const parent=nodeById(src.id),child=nodeById(dst.id);
-   if(child?.parent===src.id&&src.side==='right'&&dst.side==='left'&&t.x-s.x>30){
+   if((mode==='01'||mode==='02')&&child?.parent===src.id&&src.side==='right'&&dst.side==='left'&&t.x-s.x>30){
     const py=parent.y,above=t.y<py;
     const siblings=state.nodes.filter(n=>n.parent===src.id&&((n.y<py)===above))
      .sort((a,b)=>above?a.y-b.y:b.y-a.y);
@@ -211,6 +264,10 @@ export class PcbRouter {
     if(search){const full=simplify([start,...search,end]),crossings=routeShapeValid(full,obstacles,own,occupied,true);
      if(crossings!==null){best={points:search,crossings};break;}}
    }}
+   if(!best&&(mode==='02'||mode==='03')){
+    const wide=wideCandidates(start,s,t,end,obstacles,occupied,own);
+    if(wide)return {points:wide.points,crosses:wide.crosses};
+   }
    if(!best)return null;
    const p=simplify([start,...best.points,end]);
    const crosses=routeShapeValid(p,obstacles,own,occupied,true);
