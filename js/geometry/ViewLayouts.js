@@ -84,7 +84,7 @@ export class ViewLayouts {
   if(mode==='02'){
    const ids=nodes.map(n=>n.id);
    const first=source.get('p1')||{x:0,y:0};
-   let factor=0.68;
+   let factor=0.88;
    // Menor factor que conserva distancia suficiente entre cuadros existentes;
    // el orden topológico del plano no cambia al escalar uniformemente.
    const fits=f=>{
