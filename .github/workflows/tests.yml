@@ -28,4 +28,6 @@ jobs:
           python -m pip install 'playwright==1.56.0'
           python -m playwright install --with-deps chromium
       - name: Probar la página modular real y el worker
-        run: python tests/pages_e2e.py
+        run: |
+          python tests/pages_e2e.py
+          python tests/views_e2e.py
