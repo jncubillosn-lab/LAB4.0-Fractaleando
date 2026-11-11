@@ -10,7 +10,7 @@ La jerarquía utilizada en 03 y 04 es la **menor distancia en número de víncul
 
 ## 02 · Reorganización compacta
 
-La primera distribución aprobable emplea una **compactación métrica conservadora** de la disposición de 01. Reduce distancias entre los centros mediante una transformación uniforme, aumentando el factor únicamente si la separación entre cuadros se comprometiera. No altera el orden relativo de los centros, ni cambia parentescos o relaciones de datos.
+La distribución parte de una **compactación métrica conservadora** de 01 y luego acerca localmente los conceptos vinculados mediante un descenso de longitud de enlaces. Cada modificación local solo se acepta si reduce efectivamente la suma de distancias de sus vínculos, evita solapamientos y **conserva las precedencias relativas izquierda/derecha y arriba/abajo** que existían entre centros. El factor global se aumenta si fuese necesario para respetar la separación entre cuadros. No cambia parentescos ni relaciones de datos.
 
 No afirmamos que esta primera compactación sea el mínimo global de longitudes o un problema de optimización matemática resuelto. El requisito de minimización debe mantenerse como objetivo medible, pero no autoriza a destruir la estructura ya validada.
 
