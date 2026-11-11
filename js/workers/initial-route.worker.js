@@ -27,6 +27,9 @@ export function computeInitialRoutes({nodes,edges,positions,rects,levels,mode='0
  // successful paths are immutable: this is Walk Around, not global relayout.
  let attempts=ordered.length;
  const missing=routes.filter(([key,r])=>!r.points);
+ const retryBudget=mode==='01'?120:Math.min(1400,Math.max(180,missing.length*18));
+ const routeBudgetMs=mode==='01'?2900:mode==='02'?6800:2500;
+ const retryDeadline=performance.now()+(mode==='01'?12000:24000);
  if(missing.length){
   const used=new Map();
   for(const [,r] of routes)if(r.points){
@@ -67,7 +70,7 @@ export function computeInitialRoutes({nodes,edges,positions,rects,levels,mode='0
    choices.sort((p,q)=>(p[0]+p[1])-(q[0]+q[1]));
    const begun=performance.now();let replacement=null;
    for(const [i,j] of choices){
-    if(attempts-ordered.length>120||performance.now()-begun>2900)break;
+    if(attempts-ordered.length>retryBudget||performance.now()-begun>routeBudgetMs||performance.now()>retryDeadline)break;
     const from=a[i],to=b[j];attempts++;
     const result=router.routeEdge({...from,id:edge.from},{...to,id:edge.to},[...rectMap.values()],occupied);
     if(result){replacement={edge:{...edge},points:result.points,crosses:result.crosses,fromPort:from,toPort:to};break;}
