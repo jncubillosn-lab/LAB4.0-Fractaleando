@@ -128,6 +128,8 @@ const derived=new DerivedViews({state,plane,camera,linesEl,nodesEl,sEl,router,va
 
 // Registro relacional paralelo al punto de control geométrico.
 const topology=new TopologyRegister({edgeKey});
+// 02 recibe exclusivamente el registro validado de 01, de solo lectura.
+derived.planeTopology=()=>topology.reference;
 let stagedTopology=null;
 let guardedMove=null;
 // Solo los arrastres manuales son transacciones geométricas estrictas.
