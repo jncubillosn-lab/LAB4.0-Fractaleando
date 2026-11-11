@@ -19,6 +19,7 @@
 | `js/data/seeds.js` | Estructura de ejemplo PPR que ya existía. |
 | `js/core/GraphDocument.js` | Consultas de grafo, jerarquía y visibilidad; conserva componentes desconectados. |
 | `js/core/PlaneCheckpoint.js` | Estado de geometría fijada y serialización. |
+| `js/core/TopologyRegister.js` | Registro cualitativo independiente: orden de conceptos y puertos, vecindades de carriles, cruces y su validación. |
 | `js/geometry/PcbRouter.js` | Búsqueda de rutas y sus obstáculos; mismo núcleo de trazado de la versión vigente. |
 | `js/geometry/GeometryValidator.js` | Validación independiente para rutas y puertos; controla aceptación de JSON. |
 | `js/ui/SvgRenderer.js` | Pinta los recorridos existentes sin calcular caminos; cruces con saltos diferenciados. |
@@ -54,3 +55,7 @@
 - `.github/workflows/tests.yml`: pruebas en cada solicitud de incorporación a `main`.
 
 **Límite conocido:** un movimiento complejo puede dejar vínculos pendientes. No se declara imposible ese recorrido; simplemente el enrutador no lo resolvió dentro de sus intentos. Su solución futura debe ser una intervención medida y justificada, no una expansión automática del alcance.
+
+## Registro topológico y compatibilidad
+
+El punto de control geométrico (`planeCheckpoint`) y el registro de relaciones (`topologyRegister`) son independientes y opcionales en `p1.graph.v1`. El módulo topológico registra únicamente las relaciones comprobables y mantiene la referencia anterior si encuentra inversiones de orden, cambios en cruces o pérdidas de vecindad. No modifica `PcbRouter` ni fuerza un recálculo durante filtros y movimientos de cámara. Actualmente su resultado es **un diagnóstico**, no una operación transaccional de rechazo. Véase [TOPOLOGIA_01.md](TOPOLOGIA_01.md).
