@@ -1,0 +1,28 @@
+name: P1 · Experimento aislado de enrutamiento
+on:
+  push:
+    branches:
+      - experiment/p1-routing-libavoid
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar biblioteca solo para el experimento
+        run: npm install --no-save --no-package-lock libavoid-js@0.5.0-beta.5
+      - name: Comparar rutas y validar reglas P1
+        run: node experiments/routing/compare.mjs
+      - name: Conservar resultados
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-libavoid-comparacion
+          path: experiments/routing/resultado.json
+          if-no-files-found: ignore
