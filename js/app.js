@@ -130,11 +130,13 @@ function observeTopology(){
  const levels=readDepthMap();
  const ordered=state.edges.map((e,i)=>({...e,__index:i}))
   .sort((a,b)=>pathPriority(a,levels)-pathPriority(b,levels)||a.__index-b.__index);
- const snapshot=topology.capture({positions:plane.positions,rects:plane.rects,routes:plane.routes,edges:ordered});
+ // Primero recuperar las identidades persistentes; después calcular su orden.
+ // De otro modo los puertos recibirían números nuevos aun sin cambiar el dibujo.
  if(stagedTopology!==null){
   const imported=stagedTopology;stagedTopology=null;
   if(!topology.restore(imported))console.warn('Registro topológico importado no reconocido; se genera uno nuevo.');
  }
+ const snapshot=topology.capture({positions:plane.positions,rects:plane.rects,routes:plane.routes,edges:ordered});
  const report=topology.observe(snapshot);
  if(!report.valid)console.warn('Diferencia topológica respecto del punto validado:',report);
 }
