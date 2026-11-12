@@ -4,7 +4,7 @@
 // F_y=(1-w(y))*x+w(y)*F_cerca(x), donde F_cerca es estrictamente
 // creciente; por tanto F_y es estrictamente creciente para cada y.
 // Las rutas pueden tener diagonales en el corredor vacío de deformación.
-export function createFanOutWarp({nodes,positions,rects,routes,margin=48}){
+export function createFanOutWarp({nodes,positions,rects,routes=[],margin=48,skipRoutes=false}){
  const ps=new Map(positions),rr=new Map(rects),rs=new Map(routes);
  const core=ps.get('p1'),coreRect=rr.get('p1');
  if(!core||!coreRect)return {valid:false,reason:'Sin J0'};
@@ -86,7 +86,7 @@ export function createFanOutWarp({nodes,positions,rects,routes,margin=48}){
   }
  }
  const transformedRoutes=new Map();
- for(const [key,rt] of rs){
+ if(!skipRoutes)for(const [key,rt] of rs){
   if(!rt?.points)return {valid:false,reason:'Ruta incompleta en 01: '+key};
   const pts=[],input=rt.points;
   const push=p=>{
@@ -115,7 +115,7 @@ export function createFanOutWarp({nodes,positions,rects,routes,margin=48}){
    mappedPositions.get(n.id).y-mappedPositions.get('p1').y)
  }));
  return {valid:true,kind:'fanout',ps:mappedPositions,rr:mappedRects,
-  rs:transformedRoutes,rootRadii,stretch:{start,end,margin},
+  rs:transformedRoutes,mapPoint:map,rootRadii,stretch:{start,end,margin},
   mapParameters:{plateaus:plateauByX,start,end},
   proof:'Monotonía estricta de F_y y de y; cada cuadro es traslación rígida; rutas transformadas íntegramente'};
 }
