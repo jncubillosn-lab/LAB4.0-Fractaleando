@@ -131,6 +131,7 @@ export function analyzeCompactObjectives({nodes,positions,rects,edges=[],
   if(deficit>0)radialViolations++;
  }
  const j1=radialBands.find(r=>r.level===1);
+ const j1RadiusSum=[...tree.roots].reduce((sum,r)=>sum+(radiusById.get(r.id)||0),0);
  let parentDistance=0,parentEdges=0;
  for(const n of nodes)if(n.parent&&ps.has(n.parent)&&ps.has(n.id)){
   parentDistance+=Math.hypot(ps.get(n.id).x-ps.get(n.parent).x,
@@ -144,7 +145,7 @@ export function analyzeCompactObjectives({nodes,positions,rects,edges=[],
   errors,arms:tree.roots.length,zoneValid:zoneViolations===0,
   zonePenalty,zoneViolations,zoneByArm,radialValid:radialViolations===0,
   radialPenalty,radialViolations,radialBands,
-  j1MaxRadius:j1?.max||0,parentDistance,parentEdges,
+  j1MaxRadius:j1?.max||0,j1RadiusSum,parentDistance,parentEdges,
   centerManhattan,regions:sectorRef.sectors,
   levels:Object.fromEntries(tree.depths),owners:Object.fromEntries(tree.owners)};
 }
