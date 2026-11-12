@@ -98,7 +98,21 @@ export function captureEmbeddedTopology({positions,rects,routes,edges}){
   }
   const from=perimeterIndex(rt.fromPort,src),
    to=perimeterIndex(rt.toPort,dst);
+  const validStub=p=>{
+   if(![p.sx,p.sy].every(Number.isFinite))return false;
+   const delta=19,eps=.12;
+   if(p.side==='top')return Math.abs(p.sx-p.x)<eps&&
+    Math.abs(p.sy-(p.y-delta))<eps;
+   if(p.side==='bottom')return Math.abs(p.sx-p.x)<eps&&
+    Math.abs(p.sy-(p.y+delta))<eps;
+   if(p.side==='left')return Math.abs(p.sy-p.y)<eps&&
+    Math.abs(p.sx-(p.x-delta))<eps;
+   if(p.side==='right')return Math.abs(p.sy-p.y)<eps&&
+    Math.abs(p.sx-(p.x+delta))<eps;
+   return false;
+  };
   if(!Number.isFinite(from)||!Number.isFinite(to)||
+   !validStub(rt.fromPort)||!validStub(rt.toPort)||
    hyp(rt.points[0],rt.fromPort)>.12||
    hyp(rt.points.at(-1),rt.toPort)>.12){
    invalid++;problems.push('Puerto incorrecto: '+k);continue;
