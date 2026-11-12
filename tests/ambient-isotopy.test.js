@@ -90,3 +90,21 @@ test('se puede mover un subárbol como un cuerpo rígido, con el resto del plano
  assert.deepEqual(patch.map({x:230,y:140}),{x:242,y:140});
  assert.deepEqual(patch.map({x:1200,y:0}),{x:1200,y:0});
 });
+
+
+test('la auditoría rechaza stubs desplazados aunque las conexiones aún toquen el cuadro',()=>{
+ const original=simple();
+ const r=structuredClone(original.routes.get('a|p1'));
+ r.fromPort.sx+=3;
+ original.routes.set('a|p1',r);
+ const result=captureEmbeddedTopology(original);
+ assert.equal(result.valid,false);
+ assert.ok(result.audit.invalid>0);
+});
+test('una caja ajena con stub próximo impide la deformación, aunque no toque el soporte',()=>{
+ const original=simple();
+ original.rects.set('c',rect('c',418,100));
+ original.positions.set('c',{x:418,y:100});
+ const result=createCertifiedPatch({rects:original.rects,targetId:'a',dx:8});
+ assert.equal(result.valid,false);
+});
