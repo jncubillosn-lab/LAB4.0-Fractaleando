@@ -52,7 +52,7 @@ export function computeCompact02(input){
   if(!topology.restore(reference))return {ok:false,reason:'registro original inválido'};
   const audit=validator.audit([...rr.values()],ordered.map(e=>rs.get(edgeKey(e))).filter(Boolean));
   const signature=topology.capture({positions:ps,rects:rr,routes:rs,edges:ordered});
-  const report=topology.compare(reference,signature);
+  const report=topology.compareEmbedding(reference,signature);
   const all=ordered.every(e=>Array.isArray(rs.get(edgeKey(e))?.points));
   return {ok:all&&audit.boxes===0&&audit.invalid===0&&audit.portsRepeated===0&&
    audit.drawn===edges.length&&report.valid&&signature.pending.length===0,
