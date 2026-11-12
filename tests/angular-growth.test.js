@@ -59,3 +59,15 @@ test('02 angular: no es posible aprobar jerarquía cíclica',()=>{
  assert.equal(r.valid,false);
  assert.match(r.reason,/Jerarquía incompleta/);
 });
+
+test('02 angular: una sola rama no genera un radio artificial gigantesco',()=>{
+ const nodes=[{id:'p1',parent:null},{id:'a',parent:'p1',branch:0},
+  {id:'aa',parent:'a'}];
+ const positions=nodes.map((n,i)=>[n.id,{x:i*100,y:i*40}]);
+ const rects=nodes.map(n=>[n.id,{id:n.id,w:180,h:60}]);
+ const r=computeAngularGrowth({nodes,positions,rects});
+ assert.equal(r.valid,true,JSON.stringify(r.stats));
+ assert.equal(r.stats.arms,1);
+ assert.ok(r.stats.radialBands[1].max<400);
+ assert.ok(r.stats.radialBands[2].min>r.stats.radialBands[1].max);
+});
