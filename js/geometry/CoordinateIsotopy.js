@@ -1,3 +1,4 @@
+import {simplifyTransferredPolyline} from './PolylineSimplify.js';
 // EXP-02-D · Homeomorfismo separable por cortes transversales.
 // Para un eje móvil u y eje conservado v: (u,v) -> (F_v(u),v).
 // Cada F_v es estrictamente creciente, y es combinación convexa de cartas
@@ -114,7 +115,7 @@ export function warpCoordinate({positions,rects,routes,targets,axis='x',pad=19.2
    const point=map({x:p.x,y:p.y}),stub=map({x:p.sx,y:p.sy});
    return {...p,...point,sx:stub.x,sy:stub.y};
   };
-  routes2.set(key,{...rt,points:pts,
+  routes2.set(key,{...rt,points:simplifyTransferredPolyline(pts,.25),
    fromPort:mapPort(rt.fromPort),toPort:mapPort(rt.toPort)});
  }
  return {valid:true,ps:positions2,rr:rects2,rs:routes2,
