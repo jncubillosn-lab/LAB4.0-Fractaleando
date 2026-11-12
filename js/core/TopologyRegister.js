@@ -268,6 +268,80 @@ export class TopologyRegister {
   const total=Object.values(counts).reduce((a,b)=>a+b,0);
   return {valid:total===0,issueCount:total,issues,counts,compared:true};
  }
+ // Para 02: equivalencia de la INMERSIÓN topológica, NO de las
+ // coordenadas cartesianas ni de las caras absolutas de los puertos.
+ // Un giro de rama puede invertir izquierda/derecha o arriba/abajo, pero
+ // no puede permutar el orden circular de sus vínculos ni sus cruces.
+ compareEmbedding(reference,candidate){
+  const counts={graph:0,port:0,portOrder:0,crossing:0,
+   crossingOrder:0,neighbor:0,unresolved:0};
+  const issues=[];
+  const add=(kind,details={})=>{counts[kind]++;if(issues.length<24)issues.push({kind,...details});};
+  if(!TopologyRegister.validShape(reference)||!TopologyRegister.validShape(candidate)){
+   add('graph',{reason:'firma topológica ausente o malformada'});
+   return {valid:false,issueCount:1,issues,counts,compared:true};
+  }
+  const sameSet=(a,b)=>a.length===b.length&&
+   new Set(a).size===a.length&&new Set(b).size===b.length&&
+   a.every(x=>b.includes(x));
+  if(!sameSet(reference.edges,candidate.edges))
+   add('graph',{reason:'identidad de vínculos'});
+  const nodeIds=t=>t.nodeOrders.x.flat();
+  if(!sameSet(nodeIds(reference),nodeIds(candidate)))
+   add('graph',{reason:'identidad de conceptos'});
+  for(const edge of new Set([...reference.pending,...candidate.pending]))
+   add('unresolved',{edge,reason:'una de las vistas contiene ruta pendiente'});
+  const rotationsEqual=(a,b)=>{
+   if(a.length!==b.length)return false;
+   if(a.length===0)return true;
+   return Array.from({length:a.length},(_,shift)=>shift).some(shift=>
+    a.every((v,i)=>v===b[(i+shift)%b.length]));
+  };
+  const portNodes=new Set([...Object.keys(reference.ports),...Object.keys(candidate.ports)]);
+  for(const id of portNodes){
+   const before=reference.ports[id]||[],after=candidate.ports[id]||[];
+   if(!sameSet(before.map(p=>p.edge),after.map(p=>p.edge)))
+    add('port',{node:id,reason:'identidad de vínculos en puertos'});
+   const matched=new Map(after.map(p=>[p.edge,p]));
+   for(const p of before){
+    const now=matched.get(p.edge);
+    if(!now||now.id!==p.id)add('port',{
+     node:id,edge:p.edge,reason:'identidad de puerto'});
+   }
+   if(!rotationsEqual(before.map(p=>p.edge),after.map(p=>p.edge)))
+    add('portOrder',{node:id,reason:'orden horario invertido o modificado'});
+   // El lado absoluto top/right/bottom/left NO se compara. Es geométrico.
+  }
+  const byPair=list=>new Map(list.map(x=>[JSON.stringify([x.a,x.b]),x]));
+  const oldPairs=byPair(reference.crossings),newPairs=byPair(candidate.crossings);
+  for(const pair of new Set([...oldPairs.keys(),...newPairs.keys()])){
+   const a=oldPairs.get(pair),b=newPairs.get(pair);
+   if(!a||!b||a.count!==b.count||a.over!==b.over)
+    add('crossing',{pair,was:a?.count||0,now:b?.count||0,
+     overBefore:a?.over||null,overAfter:b?.over||null});
+  }
+  for(const edge of new Set([...reference.edges,...candidate.edges])){
+   const a=reference.crossingOrders[edge]||[],b=candidate.crossingOrders[edge]||[];
+   if(a.length!==b.length||a.some((x,i)=>x!==b[i]))
+    add('crossingOrder',{edge,was:a,now:b});
+  }
+  // La vecindad registrada es relacional; el eje h/v puede cambiar
+  // por una rotación de rama. No aceptar la desaparición del par vecino.
+  const key=r=>JSON.stringify([r.a,r.b]);
+  const aNeighbors=new Set(reference.neighbors.map(key));
+  const bNeighbors=new Set(candidate.neighbors.map(key));
+  for(const pair of aNeighbors)if(!bNeighbors.has(pair))
+   add('neighbor',{pair,reason:'relación de vecindad no conservada'});
+  // Ante una orientación de corredor que permanece en el MISMO eje,
+  // una inversión de signo entre dos rutas es un aviso topológico.
+  for(const a of reference.neighbors){
+   const matches=candidate.neighbors.filter(b=>b.a===a.a&&b.b===a.b&&b.axis===a.axis);
+   if(matches.length&&!matches.some(b=>b.side===a.side))
+    add('neighbor',{pair:key(a),reason:'inversión del mismo corredor'});
+  }
+  const issueCount=Object.values(counts).reduce((s,x)=>s+x,0);
+  return {valid:issueCount===0,issueCount,issues,counts,compared:true};
+ }
  // La referencia solo se promueve si el candidato es compatible. En caso
  // contrario se mantiene intacta, aun cuando el usuario edite el grafo.
  observe(snapshot){
