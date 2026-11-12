@@ -292,10 +292,14 @@ export class DerivedViews {
    const certified=current.certification;
    const topo=s.topologyValid?'conservada':'NO demostrada';
    const zones=s.zoneValid?'válidas':'pendientes';
+   const radius=s.radialValid?'válido':'incumplido';
+   const violated=s.radialViolations?.length||0;
    const length=s.reductionPercent>=0?'-'+s.reductionPercent.toFixed(2)+' %':
     '+'+Math.abs(s.reductionPercent).toFixed(2)+' %';
    this.status(prefix+' · norma 1: '+topo+' ('+s.crossings+'/'+s.sourceCrossings+
-    ' cruces) · norma 2: '+zones+' · norma 3: '+length+' longitud · '+
+    ' cruces) · norma 2: '+zones+' · norma 3: orden radial '+radius+
+    (violated?' ('+violated+' escalones)':'')+
+    ' · norma 4: '+length+' longitud · '+
     (current.valid?'Validada':certified.reason+' · En revisión'),warning);
   }else this.status(prefix+' · '+(warning?
     ('En revisión: '+current.unfinished+' pendientes, '+current.audit.invalid+
