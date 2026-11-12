@@ -61,3 +61,11 @@ test('02 rechaza pérdida de la relación de carriles del registro original',()=
  assert.equal(r.valid,false);
  assert.ok(r.counts.neighbor>0);
 });
+
+test('02 preserva vecindad aunque una rotación de 180° invierta el lado métrico',()=>{
+ const base=structuredClone(ref);
+ base.neighbors=[{a:edges[0],b:edges[1],axis:'h',side:1}];
+ const candidate=structuredClone(base);
+ candidate.neighbors=[{a:edges[0],b:edges[1],axis:'h',side:-1}];
+ assert.equal(new TopologyRegister({edgeKey}).compareEmbedding(base,candidate).valid,true);
+});
