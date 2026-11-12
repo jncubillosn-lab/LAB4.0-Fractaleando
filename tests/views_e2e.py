@@ -31,7 +31,16 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
    if mode in ('03','04'):assert result['radialOrder'],result
    assert result['audit']['boxes']==0,result
    assert result['audit']['invalid']==0,result
-   assert result['valid'] and result['pending']==0,result
+   if mode=='02':
+    assert not result['valid'],result  # nunca certificar las cuatro normas aún
+    assert result['preservedTopology'] and result['topologyIssues']==0,result
+    assert result['certifiedMoves']>=1,result
+    assert result['audit']['drawn']==217 and result['pending']==0,result
+    assert result['crossings']==71 and result['sourceCrossings']==71,result
+    assert 'norma 1 CERTIFICADA' in page.locator('#derivedStatus').inner_text(),result
+    assert 'EN REVISIÓN' in page.locator('#derivedStatus').inner_text(),result
+   else:
+    assert result['valid'] and result['pending']==0,result
    assert page.locator('#derivedLines circle').count()==result['audit']['crossings'],result
    assert result['topology']['hasReference'],result
    # El filtro de profundidad no vuelve a calcular el enrutamiento.
