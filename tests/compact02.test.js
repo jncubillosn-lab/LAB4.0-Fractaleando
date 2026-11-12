@@ -34,6 +34,9 @@ test('02: no altera ni un cruce de 01 durante la transformación certificada',()
  assert.equal(r.audit.invalid,0);
  assert.equal(r.audit.portsRepeated,0);
  assert.equal(r.report.issueCount,0);
+ assert.ok(r.stats.adaptiveExperiment.moves>=1,'el ensayo debe acercar hijos válidos en PPR');
+ assert.ok(r.stats.adaptiveExperiment.lengthSaved>0,'debe acortar rutas reales');
+ assert.ok(r.stats.adaptiveExperiment.afterSpacing.byLevel[1],'mide el escalón J0-J1');
  assert.equal(r.positions.length,210);
  assert.ok(r.attempted>0);
  assert.deepEqual(new Map(r.positions).get('p1'),{x:0,y:0});
