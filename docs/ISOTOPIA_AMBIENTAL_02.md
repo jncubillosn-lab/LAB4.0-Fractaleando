@@ -60,6 +60,24 @@ Los checkpoints antiguos de 02 no se restauran y la implementación nueva **no s
 
 Los tres modos 01, 03 y 04 conservan sus implementaciones previas. La rama `main` no se ha modificado.
 
+## Resultado de la integración real en navegador
+
+La prueba E2E del PPR abierto en el editor (no solamente el test aislado) confirma:
+
+| Indicador | 01 origen | 02 isotopía |
+|---|---:|---:|
+| Conceptos | 210 | 210 |
+| Conexiones completas | 217 | 217 |
+| Cruces | 71 | 71 |
+| Diferencias topológicas | 0 | 0 |
+| Cuadros solapados | 0 | 0 |
+| Rutas inválidas | 0 | 0 |
+| Longitud real de rutas | 174985,028 | 174952,690 |
+
+**Ejecución:** cuatro movimientos locales certificados más el recentrado global de J0; reducción de longitud de unas **32,338 unidades** en este primer ensayo, sin reconstruir rutas. Se incluye una prueba de traslación rígida de un subárbol completo, con los demás cuadros intactos.
+
+**Límites:** los sectores y radios siguen sin satisfacer P1-ET-02 en este primer estado. No es la solución final de compactación, sino un **motor de conservación topológica que ha superado las pruebas reales**.
+
 ## 6. Pruebas y siguientes condiciones de aceptación
 
 El ensayo usa el ejemplo PPR con **210 conceptos, 217 vínculos y 71 cruces originales**. El test no se conforma con el conteo total: compara identidad de pares, multiplicidades, orientaciones y orden de encuentros, además de auditar todos los cuadros y puertos.
