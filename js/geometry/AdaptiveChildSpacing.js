@@ -185,23 +185,44 @@ export function optimizeAdaptiveChildren({
      if(accepted||checks>=maxChecks)break;
      if(Math.abs(distance)<magnitude*1.5)continue;
      const delta=Math.sign(distance)*magnitude;
-     for(const elbow of ['end','start']){
-      const key=id+':'+axis+':'+delta+':'+elbow+':'+round;
+     // Se prueba primero el deslizamiento de codos: puede acortar la ruta
+     // realmente recorrida, sin alterar trayectorias ajenas. El campo local
+     // continuo es una alternativa, nunca un atajo para aprobar sin DRC.
+     const strategies=[
+      ['elastic',d=>translateChildElastic(best,id,axis,d)],
+      ['patch-end',d=>translateChildPatch(best,id,axis,d,{elbow:'end'})],
+      ['patch-start',d=>translateChildPatch(best,id,axis,d,{elbow:'start'})]
+     ];
+     for(const [strategy,build] of strategies){
+      if(accepted||checks>=maxChecks)break;
+      const key=id+':'+axis+':'+delta+':'+strategy+':'+round;
       if(tried.has(key))continue;tried.add(key);
-      const proposal=translateChildPatch(best,id,axis,delta,{elbow});
+      const proposal=build(delta);
       if(!proposal)continue;
       proposals++;
       const newLength=measure(proposal.rs);
       if(!Number.isFinite(newLength)||newLength>=best.length-.01)continue;
       const z=zone(proposal);
       if(!z.valid)continue;
+      // Comprobar también tres puntos intermedios. El recorrido del cuadro
+      // fue barrido contra todos los otros cuadros por translateChildElastic;
+      // en cada instante muestreado se conservan DRC y registro de 01.
+      let traversable=true;
+      for(const fraction of [.25,.5,.75]){
+       if(checks>=maxChecks){traversable=false;break;}
+       const intermediate=build(delta*fraction);
+       if(!intermediate||!zone(intermediate).valid){traversable=false;break;}
+       checks++;
+       if(!certify(intermediate)?.geometry?.ok){traversable=false;break;}
+      }
+      if(!traversable||checks>=maxChecks)continue;
       checks++;
       const trial=certify(proposal);
       if(trial?.geometry?.ok&&trial.zone.valid&&trial.length<best.length-.01){
-       best={...trial,adaptiveHistory:[...(best.adaptiveHistory||[]),proposal.adaptive]};
+       best={...trial,adaptiveHistory:[...(best.adaptiveHistory||[]),
+        {...proposal.adaptive,improvement:best.length-trial.length}]};
        moves++;accepted=true;break;
       }
-      if(checks>=maxChecks)break;
      }
     }
    }
