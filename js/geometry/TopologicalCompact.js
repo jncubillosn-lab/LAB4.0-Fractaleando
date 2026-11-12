@@ -1,6 +1,7 @@
 import {TopologyRegister} from '../core/TopologyRegister.js';
 import {PcbRouter} from './PcbRouter.js';
 import {GeometryValidator} from './GeometryValidator.js';
+import {analyzeRadialHierarchy} from './RadialHierarchy.js';
 
 // P1-ET-02 · Primer principio: conservar una inmersión topológica YA validada.
 // Cada propuesta procede de una isotopía explícita del plano
@@ -208,6 +209,7 @@ export function computeCompact02(input){
   return {valid:best<.000001,overlapCount:best,
    sectors:orderedSectors,unassigned:orphans};
  };
+ const radial=draft=>analyzeRadialHierarchy({nodes,positions:draft.ps,j0Id:'p1'});
  const area=rr=>{
   const a=[...rr.values()];
   return (Math.max(...a.map(r=>r.r))-Math.min(...a.map(r=>r.l)))*
@@ -223,7 +225,7 @@ export function computeCompact02(input){
   return result;
  }
  let best={...centered,geometry:centeredCheck,zone:angles(centered),
-  length:originalLength,extra:0};
+  radial:radial(centered),length:originalLength,extra:0};
  // No se promueve jamás una simple propuesta a punto de control.
  // Se ordenan transformaciones matemáticamente inyectivas y SE CERTIFICA
  // cada finalista antes de aceptarla. Una propuesta rechazada no cambia
@@ -233,14 +235,15 @@ export function computeCompact02(input){
   const cert=snapshot(draft.ps,draft.rs,draft.rr);
   if(!cert.ok)return null;
   result.accepted++;
-  return {...draft,geometry:cert,zone:angles(draft),length:length(draft.rs)};
+  return {...draft,geometry:cert,zone:angles(draft),
+   radial:radial(draft),length:length(draft.rs)};
  };
  const proposals=[];
  const propose=(fx,fy,extra=0)=>{
   const draft=transform(fx,fy,extra);
   if(!draft)return;
-  const zone=angles(draft),routeLength=length(draft.rs);
-  if(Number.isFinite(routeLength))proposals.push({...draft,zone,length:routeLength,extra});
+  const zone=angles(draft),radius=radial(draft),routeLength=length(draft.rs);
+  if(Number.isFinite(routeLength))proposals.push({...draft,zone,radial:radius,length:routeLength,extra});
  };
  // Etapa 1: reducir distancias únicamente en espacios vacíos de 01.
  // Estas deformaciones son globales e invertibles; NO crean rutas nuevas.
@@ -266,20 +269,25 @@ export function computeCompact02(input){
    }
   }
  }
- const zoned=proposals.filter(p=>p.zone.valid).sort((a,b)=>a.length-b.length);
+ // P1-ET-02 v1.1: sectores y orden radial deben cumplirse a la vez.
+ // El primer candidato no puede ganar solo por encajar en su zona.
+ const zoned=proposals.filter(p=>p.zone.valid&&p.radial.valid)
+  .sort((a,b)=>a.length-b.length);
  for(const candidate of zoned){
-  if(best.zone.valid&&candidate.length>=best.length-1e-5)break;
+  if(best.zone.valid&&best.radial.valid&&candidate.length>=best.length-1e-5)break;
   const trial=certify(candidate);
-  if(trial?.zone.valid){best=trial;break;}
+  if(trial?.zone.valid&&trial.radial.valid){best=trial;break;}
   if(result.attempted>18)break;
  }
- const lengthOK=best.zone.valid&&best.length<originalLength-1e-5;
+ const radialOK=best.radial.valid;
+ const lengthOK=best.zone.valid&&radialOK&&best.length<originalLength-1e-5;
  const sourceArea=area(rects);
- Object.assign(result,{valid:Boolean(best.geometry?.ok&&best.zone.valid&&lengthOK),
+ Object.assign(result,{valid:Boolean(best.geometry?.ok&&best.zone.valid&&radialOK&&lengthOK),
   topologyValid:Boolean(best.geometry?.ok),
-  zoneValid:best.zone.valid,lengthValid:lengthOK,
+  zoneValid:best.zone.valid,radialValid:radialOK,lengthValid:lengthOK,
   reason:!best.geometry?.ok?'Sin topología válida':
    !best.zone.valid?'Topología conservada; no se encontró distribución sectorial válida':
+   !radialOK?'No se respeta el orden radial J0, J1, J2…: es necesario cambiar las direcciones de crecimiento desde el núcleo':
    !lengthOK?(manhattanBound(best.rs)>=originalLength?
     'Zonas conservadas, pero la distancia Manhattan mínima ya supera toda la longitud de 01; requiere otra deformación geométrica':
     'Zonas válidas sin reducción de longitud real'):'Todas las normas verificadas',
@@ -288,6 +296,8 @@ export function computeCompact02(input){
   stats:{mode:'02',nodes:best.ps.size,arms:roots.length,overlaps:best.geometry.audit.boxes,
    zoneValid:best.zone.valid,sectorOverlap:best.zone.overlapCount,
    sectors:best.zone.sectors,unassigned:best.zone.unassigned,
+   radialValid:radialOK,radialBands:best.radial.summary,
+   radialViolations:best.radial.violations,radialErrors:best.radial.errors,
    sourceRouteLength:originalLength,routeLength:best.length,
    sourceManhattanBound:manhattanBound(routes),manhattanBound:manhattanBound(best.rs),
    reductionPercent:100*(1-best.length/originalLength),
