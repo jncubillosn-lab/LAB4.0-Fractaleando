@@ -92,5 +92,19 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
   page.locator('[data-view="01"]').click()
   assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.pending')==0
   assert not errors,errors
+  # Acceso directo: primero construye 01, luego presenta 02 al completo.
+  preview=browser.new_page(viewport={'width':1440,'height':900})
+  preview.goto('http://127.0.0.1:'+str(srv.server_address[1])+
+   '/index.html?preview=02',wait_until='domcontentloaded')
+  preview.wait_for_function(
+   'window.P1_PLANO_DIAGNOSTICO?.views().mode==="02" && '+
+   'window.P1_PLANO_DIAGNOSTICO?.views().current?.mode==="02"',
+   timeout=90000)
+  previewState=preview.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current')
+  assert previewState['nodes']==210 and previewState['audit']['drawn']==217,previewState
+  assert previewState['crossings']==71 and previewState['topologyIssues']==0,previewState
+  assert 'topología CERTIFICADA' in preview.locator('#derivedStatus').inner_text()
+  print('PREVIEW_02',json.dumps(previewState,ensure_ascii=False)[:1200],flush=True)
+  preview.close()
   browser.close()
  srv.shutdown()
