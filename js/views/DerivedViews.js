@@ -78,7 +78,8 @@ export class DerivedViews {
   edges.sort((a,b)=>priority(a)-priority(b)||a.__index-b.__index);
   const payload={token,nodes,edges,positions:[...this.plane.positions],
    rects:[...this.plane.rects],routes:[...this.plane.routes],
-   reference:this.planeTopology(),maxMoves:4};
+   reference:this.planeTopology(),maxHubMoves:4,maxSectorMoves:10,
+   maxRadialMoves:3,maxProposals:24000};
   if(typeof Worker==='undefined')return computeCertified02(payload);
   return new Promise((resolve,reject)=>{
    const worker=new Worker('./js/workers/ambient-02.worker.js',{type:'module'});
@@ -124,7 +125,7 @@ export class DerivedViews {
    });
    const snapshot={mode:'02',layout,routes,ordered,topology,
     audit:result.audit,report:result.report,unfinished:0,
-    valid:false,restored:false,calculations:result.steps.length,
+    valid:Boolean(result.valid),restored:false,calculations:result.steps.length,
     isotopy:true,crossingEvents:result.crossingEvents,
     certification:result};
    this.current=snapshot;this.cache.set('02',snapshot);
@@ -310,10 +311,18 @@ export class DerivedViews {
   }
   const s=current.layout.stats;
   if(this.mode==='02'&&current.isotopy){
-   this.status('02 · norma 1 CERTIFICADA: '+s.certifiedMoves+
-    ' transformaciones · '+current.audit.drawn+' vínculos · '+
-    current.audit.crossings+' cruces · 0 divergencias topológicas'+
-    ' · radios y sectores pendientes · EN REVISIÓN',true);
+   const sectors=s.sectorValid?'sectores conformes':
+    s.zoneViolations+' conceptos fuera de sector';
+   const radial=s.radialValid?'radios ordenados':
+    s.radialViolations+' escalones radiales pendientes';
+   const change=s.reductionPercent>=0?
+    ('-'+s.reductionPercent.toFixed(1)+' %'):
+    ('+'+Math.abs(s.reductionPercent).toFixed(1)+' %');
+   this.status('02 · topología CERTIFICADA: '+current.audit.drawn+
+    ' vínculos, '+current.audit.crossings+' cruces, 0 diferencias'+
+    ' · '+sectors+' · '+radial+
+    ' · longitud '+change+' · '+(current.valid?'VALIDADA':'EN REVISIÓN'),
+    !current.valid);
    return;
   }
   const problems=current.audit.invalid+current.audit.boxes+current.audit.portsRepeated+
