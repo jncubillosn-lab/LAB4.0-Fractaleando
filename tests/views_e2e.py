@@ -37,7 +37,11 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
     assert result['certifiedMoves']>=1,result
     assert result['audit']['drawn']==217 and result['pending']==0,result
     assert result['crossings']==71 and result['sourceCrossings']==71,result
-    assert 'norma 1 CERTIFICADA' in page.locator('#derivedStatus').inner_text(),result
+    assert 'topología CERTIFICADA' in page.locator('#derivedStatus').inner_text(),result
+    assert result['firstRingValid'],result
+    assert result['zonePenalty']>=0 and result['radialPenalty']>=0,result
+    assert result['valid']==(result['sectorValid'] and result['radialValid'] and
+     result['reductionPercent']>0),result
     assert 'EN REVISIÓN' in page.locator('#derivedStatus').inner_text(),result
    else:
     assert result['valid'] and result['pending']==0,result
