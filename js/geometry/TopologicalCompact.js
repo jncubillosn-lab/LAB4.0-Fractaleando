@@ -269,14 +269,28 @@ export function computeCompact02(input){
    }
   }
  }
- // P1-ET-02 v1.1: sectores y orden radial deben cumplirse a la vez.
- // El primer candidato no puede ganar solo por encajar en su zona.
- const zoned=proposals.filter(p=>p.zone.valid&&p.radial.valid)
-  .sort((a,b)=>a.length-b.length);
+ // Primero zonas, luego crecimiento radial: si ninguno lo logra,
+ // conservar el mejor sector con radio insuficiente SOLO para diagnóstico.
+ // Ningún candidato sin norma radial puede entrar al conjunto 'valid'.
+ const radialDeficit=r=>r.valid?0:r.violations.reduce((sum,v)=>
+  sum+Math.max(0,1e-7-v.clearance),0);
+ const zoned=proposals.filter(p=>p.zone.valid)
+  .sort((a,b)=>Number(b.radial.valid)-Number(a.radial.valid)||
+   radialDeficit(a.radial)-radialDeficit(b.radial)||a.length-b.length);
  for(const candidate of zoned){
-  if(best.zone.valid&&best.radial.valid&&candidate.length>=best.length-1e-5)break;
+  if(best.zone.valid&&best.radial.valid&&candidate.radial.valid&&
+     candidate.length>=best.length-1e-5)continue;
   const trial=certify(candidate);
-  if(trial?.zone.valid&&trial.radial.valid){best=trial;break;}
+  if(!trial?.zone.valid)continue;
+  const better=!best.zone.valid||
+   (trial.radial.valid&&!best.radial.valid)||
+   (trial.radial.valid&&best.radial.valid&&trial.length<best.length-1e-5)||
+   (!trial.radial.valid&&!best.radial.valid&&
+    (radialDeficit(trial.radial)<radialDeficit(best.radial)-1e-5||
+     (Math.abs(radialDeficit(trial.radial)-radialDeficit(best.radial))<1e-5&&
+      trial.length<best.length-1e-5)));
+  if(better)best=trial;
+  if(best.radial.valid&&best.length<originalLength-1e-5)break;
   if(result.attempted>18)break;
  }
  const radialOK=best.radial.valid;
