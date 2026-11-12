@@ -10,6 +10,11 @@ La jerarquía utilizada en 03 y 04 es la **menor distancia en número de víncul
 
 ## 02 · Compacto — P1-ET-02 (desarrollo normado)
 
+**Actualización P1-ET-02 v1.1:** además de preservar la topología de 01 y separar sectores J1, 02 debe abrir cada rama desde J0 en una dirección de crecimiento propia y respetar `max radio(Jk) < min radio(J(k+1))` para todos los niveles consecutivos. Los términos del mismo nivel pueden tener radios distintos. El ángulo de cada rama no está fijado en 40° ni en ninguna cifra universal. En 03, por el contrario, pueden existir radios idénticos por nivel según su especificación propia. La condición de 02 es **orden radial**, no **radio constante**.
+
+El verificador `js/geometry/RadialHierarchy.js` rechaza propuestas que solo desplazan verticalmente ramas completas a sectores remotos. Una geometría con sectores válidos pero radio J1 más lejano que un J2 queda **En revisión**; el generador de crecimiento angular conforme a la nueva norma continúa pendiente de desarrollo y validación.
+
+
 **Prioridad inviolable: 01 topología → 02 zonas J1 → 03 longitud real.** No se permite generar sectores desde cero y tratar de reparar los cruces después. El punto de partida es la geometría de 01 *certificada* por su propio registro, y el algoritmo se detiene si esa referencia no pasa auditoría.
 
 Se utiliza una **isotopía separable del plano**: `(x,y) → (F(x),G(y))`, con `F,G` estrictamente crecientes. Dentro de la franja ocupada por cada cuadro más un margen de protección, la función se comporta como una traslación rígida: mantiene dimensiones, caras de puertos, stubs y líneas legibles. Todos los cuadros, puertos y **todos los puntos de los recorridos existentes de 01** reciben exactamente la misma transformación. No se llama al enrutador para inventar nuevas trayectorias.
