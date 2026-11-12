@@ -2,6 +2,7 @@ import {TopologyRegister} from '../core/TopologyRegister.js';
 import {PcbRouter} from './PcbRouter.js';
 import {GeometryValidator} from './GeometryValidator.js';
 import {analyzeRadialHierarchy} from './RadialHierarchy.js';
+import {computeAngularGrowth} from './AngularGrowthLayout.js';
 
 // P1-ET-02 · Primer principio: conservar una inmersión topológica YA validada.
 // Cada propuesta procede de una isotopía explícita del plano
@@ -78,6 +79,10 @@ export function computeCompact02(input){
   result.audit=original?.audit||null;result.report=original?.report||null;
   return result;
  }
+ // Candidata geométrica desde J0: genera únicamente posiciones y cuadros.
+ // NO se fusiona con el checkpoint porque la primera norma exige verificar
+ // las rutas completas y su inmersión original. Estadística de diagnóstico.
+ const angularCandidate=computeAngularGrowth({nodes,edges,positions,rects});
  const originalLength=length(routes);
  if(!Number.isFinite(originalLength)){
   result.reason='01 contiene rutas sin longitud verificable';return result;
@@ -312,6 +317,12 @@ export function computeCompact02(input){
    sectors:best.zone.sectors,unassigned:best.zone.unassigned,
    radialValid:radialOK,radialBands:best.radial.summary,
    radialViolations:best.radial.violations,radialErrors:best.radial.errors,
+   angularGeometryTrial:{
+    geometryValid:angularCandidate.valid,
+    topologicalRoutesVerified:false,
+    reason:'La geometría radial se ha calculado; sus recorridos todavía requieren certificación completa contra 01',
+    ...angularCandidate.stats
+   },
    sourceRouteLength:originalLength,routeLength:best.length,
    sourceManhattanBound:manhattanBound(routes),manhattanBound:manhattanBound(best.rs),
    reductionPercent:100*(1-best.length/originalLength),
