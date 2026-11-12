@@ -9,11 +9,11 @@ export function warpCoordinate({positions,rects,routes,targets,axis='x',pad=19.2
  const fixed=axis==='x'?'y':'x',low=axis==='x'?'l':'t',
   high=axis==='x'?'r':'b',fixLo=axis==='x'?'t':'l',
   fixHi=axis==='x'?'b':'r';
- const eps=.0001,all=[...rr.values()];
+ const eps=.00001,all=[...rr.values()];
  const borders=all.flatMap(r=>[r[fixLo]-pad,r[fixHi]+pad])
   .concat(Math.min(...all.map(r=>r[fixLo]))-200,
    Math.max(...all.map(r=>r[fixHi]))+200);
- const knots=[...new Set(borders.map(n=>Math.round(n*1000)/1000))]
+ const knots=[...new Set(borders.map(n=>Math.round(n*1e7)/1e7))]
   .sort((a,b)=>a-b);
  const charts=[];
  for(const v of knots){
@@ -68,8 +68,7 @@ export function warpCoordinate({positions,rects,routes,targets,axis='x',pad=19.2
   const shift=positions2.get(id)[axis]-r[axis];
   for(const x of [r.l,r.x,r.r])for(const y of [r.t,r.y,r.b]){
    const p=map({x,y});
-   if(Math.abs(p[axis]-(r[axis]===(axis==='x'?r.x:r.y)?
-    (axis==='x'?x:y)+shift:(axis==='x'?x:y)+shift))>.03)
+   if(Math.abs(p[axis]-((axis==='x'?x:y)+shift))>.03)
     return {valid:false,reason:'Caja no rígida: '+id};
   }
  }
