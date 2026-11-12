@@ -1,4 +1,4 @@
-import {applyCertifiedPatch} from './AmbientIsotopy.js';
+import {applyCertifiedPatch,translateWholePlane} from './AmbientIsotopy.js';
 import {captureEmbeddedTopology,compareEmbeddedTopology} from './EmbeddedTopology.js';
 import {TopologyRegister} from '../core/TopologyRegister.js';
 
@@ -40,10 +40,21 @@ export function computeCertified02(input){
  }
  const roots=nodes.filter(n=>n.parent==='p1').sort((a,b)=>
   (a.branch??0)-(b.branch??0)||a.id.localeCompare(b.id));
- const targets=[...roots,
+ const rootOf=id=>{
+  let at=byId.get(id),seen=new Set();
+  while(at?.parent&&at.parent!=='p1'&&!seen.has(at.id)){
+   seen.add(at.id);at=byId.get(at.parent);
+  }
+  return at?.parent==='p1'?at.id:null;
+ };
+ const targets=[
+  ...roots.map(n=>({...n,targetIds:nodes.filter(ch=>
+   rootOf(ch.id)===n.id).map(ch=>ch.id)})),
   ...nodes.filter(n=>n.parent&&n.parent!=='p1')
    .sort((a,b)=>(degree.get(a.id)||0)-(degree.get(b.id)||0)||
-     a.id.localeCompare(b.id))];
+     a.id.localeCompare(b.id))
+   .map(n=>({...n,targetIds:[n.id]}))
+ ];
  const len=rs=>{
   let total=0;
   for(const r of rs.values())for(let i=1;i<r.points.length;i++)
@@ -52,10 +63,21 @@ export function computeCertified02(input){
   return total;
  };
  const baselineLength=len(original.routes);
- let current=original,cert=initial;
- const steps=[],rejections=[];
+ const center=original.positions.get('p1');
+ if(!center)return failure('J0 no tiene posición de origen');
+ const centered=translateWholePlane(original,-center.x,-center.y);
+ if(!centered.valid)return failure('No es posible recentrar J0: '+centered.reason);
+ let current=centered.snapshot,cert=captureEmbeddedTopology(current);
+ const centeredReport=compareEmbeddedTopology(initial.signature,cert.signature);
+ if(!cert.valid||!centeredReport.valid)
+  return failure('La traslación global no se pudo certificar',
+   {issues:[...cert.problems,...centeredReport.issues].slice(0,10)});
+ const steps=[{id:'p1',kind:'global-translation',dx:-center.x,dy:-center.y,
+  maxLip:0,edgeCount:cert.audit.drawn,crossings:cert.audit.crossings,
+  topologyIssues:centeredReport.issueCount,members:nodes.length}];
+ const rejections=[];
  for(const node of targets){
-  if(steps.length>=maxMoves)break;
+  if(steps.filter(step=>step.kind==='local').length>=maxMoves)break;
   const p=current.positions.get(node.id),q=current.positions.get(node.parent);
   if(!p||!q)continue;
   const dx=q.x-p.x,dy=q.y-p.y;
@@ -66,7 +88,8 @@ export function computeCertified02(input){
   for(const displacement of axes){
    if(!displacement.dx&&!displacement.dy)continue;
    const trial=applyCertifiedPatch(current,{
-    targetId:node.id,...displacement,pad:24,shoulder:54
+    targetId:node.id,targetIds:node.targetIds,
+    ...displacement,pad:24,shoulder:54
    });
    if(!trial.valid){
     rejections.push({id:node.id,reason:trial.reason});continue;
@@ -79,9 +102,10 @@ export function computeCertified02(input){
     continue;
    }
    current=trial.snapshot;cert=audit;
-   steps.push({id:node.id,dx:displacement.dx,dy:displacement.dy,
-    maxLip:trial.proof.bound,edgeCount:audit.audit.drawn,
-    crossings:audit.audit.crossings,topologyIssues:report.issueCount});
+   steps.push({id:node.id,kind:'local',dx:displacement.dx,dy:displacement.dy,
+    members:node.targetIds.length,maxLip:trial.proof.bound,
+    edgeCount:audit.audit.drawn,crossings:audit.audit.crossings,
+    topologyIssues:report.issueCount});
    accepted=true;break;
   }
  }
@@ -107,7 +131,7 @@ export function computeCertified02(input){
  const radialBands=[...bands].sort(([a],[b])=>a-b).map(([level,values])=>({
   level,count:values.length,min:Math.min(...values),max:Math.max(...values)}));
  const radialValid=radialBands.every((b,i)=>i===0||b.min>radialBands[i-1].max);
- const completed=topology.valid&&cert.valid&&steps.length>0;
+ const completed=topology.valid&&cert.valid&&steps.some(step=>step.kind==='local');
  return {
   certified:completed,topologyPreserved:topology.valid,
   // La prioridad topológica sola no equivale a validar toda 02.
@@ -124,7 +148,8 @@ export function computeCertified02(input){
    sourceCrossings:initial.audit.crossings,crossings:cert.audit.crossings,
    sourceRouteLength:baselineLength,routeLength:currentLength,
    radialValid,radialBands,sectorValid:false,
-   certifiedMoves:steps.length,topologyIssues:topology.issueCount,
+   certifiedMoves:steps.filter(step=>step.kind==='local').length,
+   certifiedSteps:steps.length,topologyIssues:topology.issueCount,
    graphComplete:cert.audit.drawn===edges.length,
    preservedTopology:topology.valid}
  };
