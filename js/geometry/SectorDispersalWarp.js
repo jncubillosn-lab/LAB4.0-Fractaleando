@@ -3,7 +3,7 @@ import {warpCoordinate} from './CoordinateIsotopy.js';
 // EXP-02-E: distribuir lateralmente conceptos del mismo nivel, sin fijar
 // radios ni filas. Cada hijo puede adoptar una coordenada distinta.
 // Los cambios se aplican como homeomorfismo global, no como saltos de cajas.
-export function disperseSectorColumns({nodes,positions,rects,routes}){
+export function disperseSectorColumns({nodes,positions,rects,routes=[],skipRoutes=false}){
  const ps=new Map(positions),rr=new Map(rects),byId=new Map(nodes.map(n=>[n.id,n]));
  const depth=new Map([['p1',0]]),owner=new Map([['p1',null]]);
  const visit=id=>{
@@ -65,7 +65,7 @@ export function disperseSectorColumns({nodes,positions,rects,routes}){
   Math.abs(targets.get(id)-ps.get(id).x)>.01))return {
   valid:false,reason:'La proyección forzaría a desplazar J0/J1',conflicts:conflicts.slice(0,12)};
  const candidate=warpCoordinate({positions:ps,rects:rr,routes,
-  targets,axis:'x'});
+  targets,axis:'x',skipRoutes});
  if(!candidate.valid)return {...candidate,conflicts:conflicts.slice(0,10)};
  return {...candidate,targets,groups:stats,adjustments:conflicts.length};
 }
