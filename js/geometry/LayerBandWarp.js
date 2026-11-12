@@ -57,7 +57,7 @@ export function createLayerWarp({nodes,positions,rects,routes,clearance=44}){
  }
  // Se obtienen funciones G_x, monótonas para cada coordenada x. Se
  // incluyen TODOS los puntos donde comienza/termina un rectángulo.
- const EPS=.0001,padX=1,padY=19.25;
+ const EPS=.0001,padX=19.5,padY=19.25;
  const limits=[...rr.values()].flatMap(r=>[r.l-padX,r.r+padX])
   .concat(Math.min(...[...rr.values()].map(r=>r.l))-300,
    Math.max(...[...rr.values()].map(r=>r.r))+300);
