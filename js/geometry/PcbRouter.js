@@ -5,7 +5,9 @@ export class PcbRouter {
  constructor({state,nodeById,clamp,mode='01'}){
   const ROUTE_CLEAR=9, ROUTE_SEPARATION=6, PORT_STUB=19;
   function prefSide(node,other,edge){
-   if(mode==='03'||mode==='04'){
+   // 02 crece angularmente desde J0: los puertos se orientan hacia
+   // el término conectado, no hacia la columna vertical de 01.
+   if(mode==='02'||mode==='03'||mode==='04'){
     const dx=other.x-node.x,dy=other.y-node.y;
     return Math.abs(dx)>Math.abs(dy)*.72?
      (dx>0?'right':'left'):(dy>0?'bottom':'top');
