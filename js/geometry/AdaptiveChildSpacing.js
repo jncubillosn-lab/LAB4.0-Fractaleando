@@ -151,7 +151,37 @@ export function translateChildElastic(base,id,axis,delta){
   if(!moved)return null;
   rs.set(key,moved);
  }
- return {ps,rr,rs,adaptive:{id,axis,delta,type:'elastic'}};
+ // Certificado geométrico conservador del barrido CONTINUO:
+ // si ningún segmento ajeno penetra la región recorrida por los tramos
+ // desplazados, no puede aparecer/desaparecer un cruce durante el movimiento.
+ // Evita confiar solamente en cuatro muestras temporales.
+ const intersectsSweep=(a,b,box)=>{
+  const eps=.01;
+  if(Math.abs(a.y-b.y)<eps)
+   return a.y>box.t-eps&&a.y<box.b+eps&&
+    Math.max(a.x,b.x)>box.l-eps&&Math.min(a.x,b.x)<box.r+eps;
+  if(Math.abs(a.x-b.x)<eps)
+   return a.x>box.l-eps&&a.x<box.r+eps&&
+    Math.max(a.y,b.y)>box.t-eps&&Math.min(a.y,b.y)<box.b+eps;
+  return true;
+ };
+ for(const [key,oldRoute] of base.rs){
+  const changed=rs.get(key);
+  if(changed===oldRoute)continue;
+  for(let i=1;i<oldRoute.points.length;i++){
+   const a=oldRoute.points[i-1],b=oldRoute.points[i];
+   const c=changed.points[i-1],d=changed.points[i];
+   if(same(a,c)&&same(b,d))continue;
+   const box={l:Math.min(a.x,b.x,c.x,d.x),r:Math.max(a.x,b.x,c.x,d.x),
+    t:Math.min(a.y,b.y,c.y,d.y),b:Math.max(a.y,b.y,c.y,d.y)};
+   for(const [other,route] of base.rs){
+    if(other===key)continue;
+    for(let j=1;j<route.points.length;j++)
+     if(intersectsSweep(route.points[j-1],route.points[j],box))return null;
+   }
+  }
+ }
+ return {ps,rr,rs,adaptive:{id,axis,delta,type:'elastic',sweptCertified:true}};
 }
 
 // Diagnóstico descriptivo; no establece distancias obligatorias entre Jn.
