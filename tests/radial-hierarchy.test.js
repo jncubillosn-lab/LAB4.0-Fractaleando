@@ -37,7 +37,7 @@ test('v1.1: un solo J2 dentro del radio del J1 más lejano invalida 02',()=>{
 
 test('v1.1: dos niveles de igual radio no cumplen una desigualdad estricta',()=>{
  const ps=new Map(positions);
- ps.set('bb',{x:0,y:150});
+ ps.set('bb',{x:-150,y:-20});
  const r=analyzeRadialHierarchy({nodes,positions:ps});
  assert.equal(r.valid,false);
 });
