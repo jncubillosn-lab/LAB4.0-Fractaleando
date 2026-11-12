@@ -1,3 +1,4 @@
+import {simplifyTransferredPolyline} from './PolylineSimplify.js';
 // EXP-02-C · Rearreglo de jerarquías mediante un homeomorfismo vertical.
 // Se aplica DESPUÉS del abanico que acercó los J1. Para cada x fijo,
 // y -> G_x(y) es continua y estrictamente creciente: no cruza rutas.
@@ -169,7 +170,8 @@ export function createLayerWarp({nodes,positions,rects,routes,clearance=44}){
    const a=map(p),stub=map({x:p.sx,y:p.sy});
    return {...p,...a,sx:stub.x,sy:stub.y};
   };
-  mappedRoutes.set(key,{...rt,points:pts,fromPort:mapPort(rt.fromPort),toPort:mapPort(rt.toPort)});
+  mappedRoutes.set(key,{...rt,points:simplifyTransferredPolyline(pts,.25),
+   fromPort:mapPort(rt.fromPort),toPort:mapPort(rt.toPort)});
  }
  return {valid:true,kind:'layered-homeomorphism',
   ps:mappedPositions,rr:mappedRects,rs:mappedRoutes,
