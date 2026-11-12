@@ -1,6 +1,7 @@
 import {TopologyRegister} from '../core/TopologyRegister.js';
 import {PcbRouter} from './PcbRouter.js';
 import {GeometryValidator} from './GeometryValidator.js';
+import {optimizeAdaptiveChildren} from './AdaptiveChildSpacing.js';
 
 // P1-ET-02 · Primer principio: conservar una inmersión topológica YA validada.
 // Cada propuesta procede de una isotopía explícita del plano
@@ -273,6 +274,18 @@ export function computeCompact02(input){
   if(trial?.zone.valid){best=trial;break;}
   if(result.attempted>18)break;
  }
+ // EXP-02-A: no fijar radio por jerarquía; permitir proximidad diferente
+ // para cada hijo. Solo se acepta tras comparar cada nueva geometría con
+ // el registro de 01 y superar el DRC completo y las zonas J1.
+ const beforeAdaptive={length:best.length,area:area(best.rr),validZones:best.zone.valid};
+ let adaptiveStats={proposals:0,checks:0,moves:0,variableSpacing:false};
+ if(best.zone.valid){
+  const experiment=optimizeAdaptiveChildren({
+   baseline:best,nodes,edges,zone:angles,measure:length,certify,
+   maxChecks:14,maxMoves:6
+  });
+  best=experiment;adaptiveStats=experiment.adaptiveStats;
+ }
  const lengthOK=best.zone.valid&&best.length<originalLength-1e-5;
  const sourceArea=area(rects);
  Object.assign(result,{valid:Boolean(best.geometry?.ok&&best.zone.valid&&lengthOK),
@@ -294,6 +307,8 @@ export function computeCompact02(input){
    sourceArea,area:area(best.rr),sourceCrossings:original.signature.crossings.reduce((n,c)=>n+c.count,0),
    crossings:best.geometry.signature.crossings.reduce((n,c)=>n+c.count,0),
    attempted:result.attempted,accepted:result.accepted,
+   adaptiveExperiment:{...adaptiveStats,initialLength:beforeAdaptive.length,
+    initialArea:beforeAdaptive.area,lengthSaved:beforeAdaptive.length-best.length},
    topologyValid:best.geometry.ok,radiusByLevel:null},
   levels});
  return result;
