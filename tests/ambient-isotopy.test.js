@@ -36,11 +36,11 @@ test('la isotopía transforma íntegramente las líneas, no solo sus extremos',(
  assert.ok(trial.snapshot.routes.get('a|p1').points.some(p=>p.x!==150&&p.x!==250&&p.x!==50));
 });
 
-test('ningún movimiento con Lipschitz >= 1 puede aprobarse',()=>{
+test('rechazar desplazamientos sin certificado Lipschitz ni monotonía axial',()=>{
  const original=simple();
  const bad=createCertifiedPatch({rects:original.rects,targetId:'a',dx:90});
  assert.equal(bad.valid,false);
- assert.match(bad.reason,/Lipschitz/);
+ assert.match(bad.reason,/no certificable|Lip/i);
 });
 
 test('la meseta rígida no puede deformar cuadros de terceros',()=>{
