@@ -40,7 +40,7 @@ export function createLayerWarp({nodes,positions,rects,routes,clearance=44}){
    for(const prior of level){
     if(!relative.has(prior.id))continue;
     const q=rr.get(prior.id);
-    if(Math.min(r.r,q.r)-Math.max(r.l,q.l)<-5)continue;
+    if(Math.min(r.r,q.r)-Math.max(r.l,q.l)<-40)continue;
     low=Math.max(low,relative.get(prior.id)+(r.h+q.h)/2+clearance);
    }
    relative.set(n.id,low);
