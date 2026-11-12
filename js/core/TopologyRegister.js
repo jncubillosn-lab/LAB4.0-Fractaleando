@@ -332,13 +332,8 @@ export class TopologyRegister {
   const bNeighbors=new Set(candidate.neighbors.map(key));
   for(const pair of aNeighbors)if(!bNeighbors.has(pair))
    add('neighbor',{pair,reason:'relación de vecindad no conservada'});
-  // Ante una orientación de corredor que permanece en el MISMO eje,
-  // una inversión de signo entre dos rutas es un aviso topológico.
-  for(const a of reference.neighbors){
-   const matches=candidate.neighbors.filter(b=>b.a===a.a&&b.b===a.b&&b.axis===a.axis);
-   if(matches.length&&!matches.some(b=>b.side===a.side))
-    add('neighbor',{pair:key(a),reason:'inversión del mismo corredor'});
-  }
+  // El signo del lado y el eje h/v NO son invariantes ante giros
+  // de 90° o 180°. Preservar el par vecino, sin imponer orientación.
   const issueCount=Object.values(counts).reduce((s,x)=>s+x,0);
   return {valid:issueCount===0,issueCount,issues,counts,compared:true};
  }
