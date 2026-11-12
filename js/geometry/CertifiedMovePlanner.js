@@ -1,6 +1,7 @@
 import {createCertifiedPatch,applyCertifiedPatch} from './AmbientIsotopy.js';
 import {createAxisCorridorWarp,applyAxisCorridorWarp} from './AxisCorridorWarp.js';
 import {referenceSectors,analyzeCompactObjectives} from './CompactObjectives.js';
+import {optimizeSectorBoundaries} from './CompactSectorOptimizer.js';
 import {captureEmbeddedTopology,compareEmbeddedTopology} from './EmbeddedTopology.js';
 
 // Planificador P1-ET-02: NO mueve directamente ninguna caja.
@@ -89,7 +90,8 @@ export function planCertifiedCompact02({
  allowAxisCompression=true
 }){
  let current=normalize(snapshot),sectors=reference||
-  referenceSectors({nodes:current.nodes,positions:current.positions});
+  optimizeSectorBoundaries({nodes:current.nodes,edges:current.edges,
+   positions:current.positions,rects:current.rects});
  if(!sectors.valid)return {valid:false,reason:sectors.reason||'Sectores originales inválidos'};
  const {nodes,edges}=current,{children,descendants}=ancestry(nodes),
   stats={proposed:0,rejected:0,certified:0,geometryRejected:0};
@@ -310,5 +312,6 @@ export function planCertifiedCompact02({
   snapshot:current,topology,metrics:metric,
   initialLength:referenceLength,routeLength:currentLength,
   sectorReference:sectors,moves,timeline,failures:failures.slice(0,6),
+  sectorOptimization:sectors.optimization||null,
   stats:{...stats,elapsedMs:Date.now()-t0}};
 }
