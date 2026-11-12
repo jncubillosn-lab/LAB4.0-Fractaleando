@@ -4,7 +4,7 @@
 const EPS=1e-8;
 const same=(a,b)=>Math.abs(a.x-b.x)<EPS&&Math.abs(a.y-b.y)<EPS;
 
-export function translateChildPatch(base,id,axis,delta,{innerPad=27,shoulder=66,elbow='end'}={}){
+export function translateChildPatch(base,id,axis,delta,{innerPad=27,shoulder=40,elbow='end'}={}){
  if(!['x','y'].includes(axis)||!Number.isFinite(delta)||!delta||
   !(shoulder>Math.abs(delta)*2))return null;
  const r=base.rr.get(id),p=base.ps.get(id);
@@ -111,7 +111,7 @@ export function optimizeAdaptiveChildren({
    (Math.abs(b.from.x-b.parent.x)+Math.abs(b.from.y-b.parent.y))-
    (Math.abs(a.from.x-a.parent.x)+Math.abs(a.from.y-a.parent.y)));
  const tried=new Set();
- for(let round=0;round<2&&checks<maxChecks&&moves<maxMoves;round++){
+ for(let round=0;round<3&&checks<maxChecks&&moves<maxMoves;round++){
   for(const entry of candidates){
    if(checks>=maxChecks||moves>=maxMoves)break;
    const id=entry.n.id,parent=best.ps.get(entry.n.parent),child=best.ps.get(id);
@@ -123,7 +123,7 @@ export function optimizeAdaptiveChildren({
    let accepted=false;
    for(const [axis,distance] of axes){
     if(Math.abs(distance)<6||accepted)continue;
-    for(const magnitude of [12,6,3]){
+    for(const magnitude of [18,12,8,4]){
      if(accepted||checks>=maxChecks)break;
      if(Math.abs(distance)<magnitude*1.5)continue;
      const delta=Math.sign(distance)*magnitude;
