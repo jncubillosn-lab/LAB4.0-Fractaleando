@@ -128,6 +128,8 @@ const derived=new DerivedViews({state,plane,camera,linesEl,nodesEl,sEl,router,va
 
 // Registro relacional paralelo al punto de control geométrico.
 const topology=new TopologyRegister({edgeKey});
+// La firma topológica de 01 es una fuente protegida para la isotopía 02.
+derived.planeTopology=()=>topology.reference;
 let stagedTopology=null;
 let guardedMove=null;
 // Solo los arrastres manuales son transacciones geométricas estrictas.
