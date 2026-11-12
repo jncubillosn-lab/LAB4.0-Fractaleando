@@ -71,8 +71,10 @@ export function computeAngularGrowth({nodes,edges=[],rects,positions,j0Id='p1',
   const layer=nodes.filter(n=>levels.get(n.id)===depth);
   const layerStart=depth===1?
    Math.max(Math.max(core.w,core.h)/2+190,
-    Math.max(...roots.map(n=>Math.max(sourceRects.get(n.id)?.w||0,
-     sourceRects.get(n.id)?.h||0)))/(2*Math.sin(Math.PI/count))+clearance+20)
+    (count>1?
+     Math.max(...roots.map(n=>Math.max(sourceRects.get(n.id)?.w||0,
+      sourceRects.get(n.id)?.h||0)))/(2*Math.sin(Math.PI/count))+
+      clearance+20:0))
     :prevMax+Math.max(hierarchyGap,clearance+85);
   // Las restricciones entre jerarquías deben ser estrictas, pero no
   // obligan a poner todos los miembros de un nivel en el mismo radio.
