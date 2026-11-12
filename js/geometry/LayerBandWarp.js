@@ -4,8 +4,8 @@ import {simplifyTransferredPolyline} from './PolylineSimplify.js';
 // y -> G_x(y) es continua y estrictamente creciente: no cruza rutas.
 // Se comprueba que cada cuadro mantiene su alto y ancho (traslación rígida).
 // La elección de niveles no impone un radio igual entre hermanos.
-export function createLayerWarp({nodes,positions,rects,routes,clearance=44}){
- const ps=new Map(positions),rr=new Map(rects),rs=new Map(routes);
+export function createLayerWarp({nodes,positions,rects,routes=[],clearance=44,skipRoutes=false}){
+ const ps=new Map(positions),rr=new Map(rects),rs=new Map(routes||[]);
  const byId=new Map(nodes.map(n=>[n.id,n]));
  const depth=new Map([['p1',0]]),pending=new Set();
  const getDepth=id=>{
@@ -129,7 +129,7 @@ export function createLayerWarp({nodes,positions,rects,routes,clearance=44}){
  // En cada celda G_x es bilineal; una diagonal se muestrea para
  // controlar el error, las rectas horizontales/verticales son lineales.
  const mappedRoutes=new Map();
- for(const [key,rt] of rs){
+ if(!skipRoutes)for(const [key,rt] of rs){
   const old=rt.points,pts=[],push=p=>{
    if(!pts.length||Math.hypot(p.x-pts.at(-1).x,p.y-pts.at(-1).y)>.02)pts.push(p);
   };
@@ -174,7 +174,7 @@ export function createLayerWarp({nodes,positions,rects,routes,clearance=44}){
    fromPort:mapPort(rt.fromPort),toPort:mapPort(rt.toPort)});
  }
  return {valid:true,kind:'layered-homeomorphism',
-  ps:mappedPositions,rr:mappedRects,rs:mappedRoutes,
+  ps:mappedPositions,rr:mappedRects,rs:mappedRoutes,mapPoint:map,
   bands:summaries,charts:charts.length,
   proof:'Para cada x, G_x es estrictamente creciente; interpolación convexa entre cartas positivas'};
 }
