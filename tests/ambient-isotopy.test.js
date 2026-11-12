@@ -72,5 +72,21 @@ test('PPR real: antes de mover cualquier cosa se exigen las 217 rutas y 71 cruce
  assert.equal(result.report.issueCount,0);
  assert.ok(result.steps.length>=1);
  assert.ok(result.steps.every(s=>s.maxLip<1&&s.crossings===71));
+ assert.deepEqual(new Map(result.positions).get('p1'),{x:0,y:0});
+ assert.ok(result.steps.some(s=>s.members>1),'debe deformarse una rama completa');
  assert.equal(result.valid,false,'no declarar completadas las cuatro prioridades');
+});
+
+test('se puede mover un subárbol como un cuerpo rígido, con el resto del plano intacto',()=>{
+ const boxes=new Map([
+  ['a',rect('a',0,0)],['b',rect('b',230,140)],
+  ['c',rect('c',1200,0)]
+ ]);
+ const patch=createCertifiedPatch({rects:boxes,targetId:'a',
+  targetIds:['a','b'],dx:12,dy:0,pad:24,shoulder:54});
+ assert.equal(patch.valid,true,patch.reason);
+ assert.equal(patch.targetIds.length,2);
+ assert.deepEqual(patch.map({x:0,y:0}),{x:12,y:0});
+ assert.deepEqual(patch.map({x:230,y:140}),{x:242,y:140});
+ assert.deepEqual(patch.map({x:1200,y:0}),{x:1200,y:0});
 });
