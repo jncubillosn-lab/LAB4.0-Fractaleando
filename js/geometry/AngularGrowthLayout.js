@@ -4,7 +4,7 @@ import {analyzeRadialHierarchy} from './RadialHierarchy.js';
 // reconstruidas ni se promueve a 02 sin certificación topológica de 01.
 // Un sector por J1, bandas Jn variables, sin imponer radio idéntico.
 export function computeAngularGrowth({nodes,edges=[],rects,positions,j0Id='p1',
- clearance=14,sectorPadding=.045,radialStep=76,angularStep=.065}){
+ clearance=26,sectorPadding=.045,radialStep=88,angularStep=.065,hierarchyGap=190}){
  const sourceRects=rects instanceof Map?rects:new Map(rects);
  const sourcePositions=positions instanceof Map?positions:new Map(positions);
  const byId=new Map(nodes.map(n=>[n.id,n]));
@@ -73,7 +73,7 @@ export function computeAngularGrowth({nodes,edges=[],rects,positions,j0Id='p1',
    Math.max(Math.max(core.w,core.h)/2+190,
     Math.max(...roots.map(n=>Math.max(sourceRects.get(n.id)?.w||0,
      sourceRects.get(n.id)?.h||0)))/(2*Math.sin(Math.PI/count))+clearance+20)
-    :prevMax+Math.max(90,clearance+85);
+    :prevMax+Math.max(hierarchyGap,clearance+85);
   // Las restricciones entre jerarquías deben ser estrictas, pero no
   // obligan a poner todos los miembros de un nivel en el mismo radio.
   let layerMax=0;
