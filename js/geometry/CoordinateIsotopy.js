@@ -4,8 +4,8 @@ import {simplifyTransferredPolyline} from './PolylineSimplify.js';
 // Cada F_v es estrictamente creciente, y es combinación convexa de cartas
 // monótonas. Los cuadros y sus extensiones de puerto se trasladan rígidamente.
 // No genera un solo enlace nuevo ni borra los cruces antiguos.
-export function warpCoordinate({positions,rects,routes,targets,axis='x',pad=19.25}){
- const ps=new Map(positions),rr=new Map(rects),rs=new Map(routes),
+export function warpCoordinate({positions,rects,routes=[],targets,axis='x',pad=19.25,skipRoutes=false}){
+ const ps=new Map(positions),rr=new Map(rects),rs=new Map(routes||[]),
   desired=new Map(targets);
  const fixed=axis==='x'?'y':'x',low=axis==='x'?'l':'t',
   high=axis==='x'?'r':'b',fixLo=axis==='x'?'t':'l',
@@ -74,7 +74,7 @@ export function warpCoordinate({positions,rects,routes,targets,axis='x',pad=19.2
   }
  }
  const routes2=new Map();
- for(const [key,rt] of rs){
+ if(!skipRoutes)for(const [key,rt] of rs){
   if(!rt?.points?.length)return {valid:false,reason:'Ruta sin puntos '+key};
   const pts=[],push=p=>{
    const last=pts.at(-1);
@@ -118,7 +118,7 @@ export function warpCoordinate({positions,rects,routes,targets,axis='x',pad=19.2
   routes2.set(key,{...rt,points:simplifyTransferredPolyline(pts,.25),
    fromPort:mapPort(rt.fromPort),toPort:mapPort(rt.toPort)});
  }
- return {valid:true,ps:positions2,rr:rects2,rs:routes2,
+ return {valid:true,ps:positions2,rr:rects2,rs:routes2,mapPoint:map,
   charts:charts.length,axis,
   proof:'Cada F_v es estrictamente creciente; los cuadros y puertos tienen desplazamiento rígido'};
 }
