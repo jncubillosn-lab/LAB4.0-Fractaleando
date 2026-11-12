@@ -96,6 +96,64 @@ export function translateChildPatch(base,id,axis,delta,{innerPad=27,shoulder=40,
  return {ps,rr,rs,adaptive:{id,axis,delta,elbow}};
 }
 
+// Alternativa más útil que deformar trayectorias como goma: deslizar el
+// último/primer codo de cada vínculo incidente con el hijo, conservando
+// todos los demás tramos. El certificado externo rechaza cruces nuevos.
+export function translateChildElastic(base,id,axis,delta){
+ if(!['x','y'].includes(axis)||!Number.isFinite(delta)||!delta)return null;
+ const old=base.ps.get(id),r=base.rr.get(id);
+ if(!old||!r)return null;
+ const p={...old,[axis]:old[axis]+delta};
+ const rect={...r,x:p.x,y:p.y,l:p.x-r.w/2,r:p.x+r.w/2,
+  t:p.y-r.h/2,b:p.y+r.h/2};
+ const sweep={
+  l:Math.min(r.l,rect.l),r:Math.max(r.r,rect.r),
+  t:Math.min(r.t,rect.t),b:Math.max(r.b,rect.b)
+ };
+ for(const [other,q] of base.rr){
+  if(other===id)continue;
+  if(sweep.l<q.r+14&&sweep.r>q.l-14&&
+    sweep.t<q.b+14&&sweep.b>q.t-14)return null;
+ }
+ const ps=new Map(base.ps),rr=new Map(base.rr),rs=new Map(base.rs);
+ ps.set(id,p);rr.set(id,rect);
+ const moveRoute=(rt,atStart)=>{
+  if(!Array.isArray(rt.points)||rt.points.length<3)return null;
+  const points=rt.points.map(p=>({...p}));
+  const orig=rt.points,step=atStart?1:-1,endpoint=atStart?0:points.length-1;
+  let j=endpoint;
+  while(j>=0&&j<points.length){
+   points[j][axis]+=delta;
+   const k=j+step;
+   if(k<0||k>=points.length)return null;
+   // Si el segmento toca perpendicularmente el puerto, desplazar toda
+   // su recta final hasta el primer codo; los demás vértices se mantienen.
+   if(Math.abs(orig[j][axis]-orig[k][axis])<.005)j=k;
+   else break;
+  }
+  if(points.slice(1).some((p,i)=>{
+   const q=points[i];
+   return Math.abs(p.x-q.x)>.005&&Math.abs(p.y-q.y)>.005;
+  }))return null;
+  const port={...(atStart?rt.fromPort:rt.toPort)};
+  if(!port)return null;
+  port[axis]+=delta;
+  port[axis==='x'?'sx':'sy']+=delta;
+  // Rechaza rutas con tramos nulos tras mover un codo.
+  if(points.slice(1).some((p,i)=>Math.hypot(p.x-points[i].x,p.y-points[i].y)<.01))return null;
+  return atStart?{...rt,points,fromPort:port}:{...rt,points,toPort:port};
+ };
+ for(const [key,rt] of base.rs){
+  const start=rt.edge.from===id,end=rt.edge.to===id;
+  if(!start&&!end)continue;
+  if(start&&end)return null;
+  const moved=moveRoute(rt,start);
+  if(!moved)return null;
+  rs.set(key,moved);
+ }
+ return {ps,rr,rs,adaptive:{id,axis,delta,type:'elastic'}};
+}
+
 // La selección es experimental: NO asume radio, fila ni separación entre
 // Jn y Jn+1. Cada desplazamiento pasa 01, luego zona J1 y finalmente coste.
 export function optimizeAdaptiveChildren({
