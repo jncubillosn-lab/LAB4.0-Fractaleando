@@ -154,6 +154,37 @@ export function translateChildElastic(base,id,axis,delta){
  return {ps,rr,rs,adaptive:{id,axis,delta,type:'elastic'}};
 }
 
+// Diagnóstico descriptivo; no establece distancias obligatorias entre Jn.
+export function childSpacingReport(state,nodes){
+ const byId=new Map(nodes.map(n=>[n.id,n]));
+ const groups=new Map(),levels=new Map();
+ for(const n of nodes){
+  if(!n.parent||!state.rr.has(n.id)||!state.rr.has(n.parent))continue;
+  const child=state.rr.get(n.id),parent=state.rr.get(n.parent);
+  const dx=Math.max(0,Math.abs(child.x-parent.x)-(child.w+parent.w)/2);
+  const dy=Math.max(0,Math.abs(child.y-parent.y)-(child.h+parent.h)/2);
+  const gap=Math.hypot(dx,dy);
+  let depth=0,at=n,seen=new Set();
+  while(at&&at.parent&&!seen.has(at.id)){
+   seen.add(at.id);depth++;at=byId.get(at.parent);
+  }
+  if(!groups.has(n.parent))groups.set(n.parent,[]);
+  groups.get(n.parent).push(gap);
+  if(!levels.has(depth))levels.set(depth,[]);
+  levels.get(depth).push(gap);
+ }
+ const describe=values=>{
+  if(!values.length)return {count:0,min:0,median:0,max:0};
+  const vs=[...values].sort((a,b)=>a-b);
+  return {count:vs.length,min:vs[0],median:vs[Math.floor(vs.length/2)],max:vs.at(-1)};
+ };
+ return {byLevel:Object.fromEntries([...levels].sort(([a],[b])=>a-b)
+  .map(([depth,values])=>[depth,describe(values)])),
+  siblingsWithUnequalClearance:[...groups.values()].filter(a=>
+   a.length>1&&Math.max(...a)-Math.min(...a)>.1).length,
+  siblingGroups:[...groups.values()].filter(a=>a.length>1).length};
+}
+
 // La selección es experimental: NO asume radio, fila ni separación entre
 // Jn y Jn+1. Cada desplazamiento pasa 01, luego zona J1 y finalmente coste.
 export function optimizeAdaptiveChildren({
