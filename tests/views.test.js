@@ -53,8 +53,8 @@ test('03 emplea distancia de enlaces al origen, sin inventar conexiones',()=>{
  const orbit=runner.compute({mode:'03',nodes,edges,metrics,sourcePositions});
  assert.equal(orbit.levels.c,1);assert.equal(orbit.levels.b,2);assert.equal(edges.length,4);
 });
-test('las tres vistas son deterministas',()=>{
- for(const mode of ['02','03','04']){
+test('03 y 04 son deterministas; 02 exige firma y rutas originales',()=>{
+ for(const mode of ['03','04']){
   const a=runner.compute({mode,...args}),b=runner.compute({mode,...args});
   assert.deepEqual([...a.positions],[...b.positions]);
  }
