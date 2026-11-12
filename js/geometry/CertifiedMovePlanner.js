@@ -46,7 +46,19 @@ function shoulders(dx,dy){
 function patchRequest(targetId,targetIds,dx,dy){
  return {targetId,targetIds,dx,dy,pad:24,shoulders:shoulders(dx,dy)};
 }
+function preserveAchievedBands(a,b){
+ // Nunca reabrir un escalón jerárquico que ya cumple su desigualdad.
+ // Un objetivo incompleto sí puede mejorarse gradualmente.
+ for(let i=1;i<b.radialBands.length;i++){
+  const before=b.radialBands[i],beforeInner=b.radialBands[i-1],
+   after=a.radialBands[i],afterInner=a.radialBands[i-1];
+  if(before.min>beforeInner.max+.01&&
+     !(after.min>afterInner.max+.01))return false;
+ }
+ return true;
+}
 function relativeBetter(a,b,phase){
+ if(!preserveAchievedBands(a,b))return false;
  // Comparación exacta de prioridades geométricas (la norma 1 la
  // certifica el motor antes de permitir este comparador).
  if(phase==='hub'){
@@ -73,7 +85,7 @@ function describe(m,length){
 }
 export function planCertifiedCompact02({
  snapshot,initialSignature,reference=null,maxHubMoves=4,
- maxSectorMoves=5,maxRadialMoves=2,maxProposals=1200,
+ maxSectorMoves=5,maxRadialMoves=2,maxProposals=6500,
  allowAxisCompression=true
 }){
  let current=normalize(snapshot),sectors=reference||
@@ -199,8 +211,14 @@ export function planCertifiedCompact02({
    const all=descendants(n.id);
    if(all.length>=2)groups.push(all);
   }
-  // Conceptos individuales: ayudan a resolver el remanente local.
-  for(const n of nodes)if(n.parent&&n.parent!=='p1')groups.push([n.id]);
+  // Los primeros pasos actúan sobre ramas y subárboles, no miles de
+  // posiciones individuales que consumen el presupuesto de búsqueda.
+  // Pasos finales: añadir hojas de J2 y luego nodos sueltos.
+  if(step>=2)for(const n of nodes)
+   if(n.parent&&n.parent!=='p1'&&
+      (step>=4||children.get(n.parent)?.length>0&&
+       roots.some(root=>n.parent===root.id)))
+    groups.push([n.id]);
   const unique=new Set(),scored=[];
   for(const group of groups){
    const k=group.join('|');
@@ -260,11 +278,12 @@ export function planCertifiedCompact02({
   if(!trial.valid)continue;
   const target=metricsFor(trial.snapshot.positions,trial.snapshot.rects);
   const trialLength=routeLength(trial.snapshot.routes);
-  const phaseImproved=target.zonePenalty<metric.zonePenalty-.1||
+  const phaseImproved=preserveAchievedBands(target,metric)&&
+   (target.zonePenalty<metric.zonePenalty-.1||
    (target.zonePenalty<=metric.zonePenalty+EPS&&
     (target.radialPenalty<metric.radialPenalty-.1||
      (target.radialPenalty<=metric.radialPenalty+EPS&&
-      trialLength<currentLength-.01)));
+      trialLength<currentLength-.01))));
   if(!phaseImproved)continue;
   const audit=captureEmbeddedTopology(trial.snapshot);
   const compared=compareEmbeddedTopology(oldSignature,audit.signature);
