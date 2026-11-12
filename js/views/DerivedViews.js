@@ -212,8 +212,10 @@ export class DerivedViews {
    return;
   }
   const key=this.graphKey();
-  if(this.graphIdentity!==key||this.sourceRevision!==this.sourceKey()){
-   this.cache.clear();this.graphIdentity=key;this.sourceRevision=this.sourceKey();
+  // El checkpoint de 01 incrementa revision también cuando cambian las
+  // rutas sin cambiar posiciones: no reutilizar una firma topológica vieja.
+  if(this.graphIdentity!==key||this.sourceRevision!==this.plane.revision){
+   this.cache.clear();this.graphIdentity=key;this.sourceRevision=this.plane.revision;
   }
   if(mode==='02'){
    const cached02=this.cache.get('02');
