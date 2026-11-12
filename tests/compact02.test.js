@@ -37,7 +37,15 @@ test('02: no altera ni un cruce de 01 durante la transformación certificada',()
  assert.equal(r.positions.length,210);
  assert.ok(r.attempted>0);
  assert.deepEqual(new Map(r.positions).get('p1'),{x:0,y:0});
- assert.equal(r.valid,r.topologyValid&&r.zoneValid&&r.lengthValid);
+ assert.equal(r.valid,r.topologyValid&&r.zoneValid&&r.radialValid&&r.lengthValid);
+ assert.equal(r.radialValid,r.stats.radialValid);
+ assert.ok(r.stats.radialBands.length>=4);
+ assert.equal(r.stats.radialBands[0].count,1);
+ assert.equal(r.stats.radialBands[1].count,3);
+ if(!r.radialValid){
+  assert.ok(r.stats.radialViolations.length>0);
+  assert.equal(r.valid,false,'sin orden radial no existe 02 aprobada');
+ }
  assert.ok(!r.valid||r.stats.reductionPercent>0);
 });
 
@@ -100,6 +108,7 @@ test('02: cuatro J1 pueden satisfacer simultáneamente las tres normas',()=>{
   routes:[...routes],levels:{p1:0,a:1,b:1,c:1,d:1},reference});
  assert.equal(r.topologyValid,true,JSON.stringify(r.report?.issues));
  assert.equal(r.zoneValid,true,JSON.stringify(r.stats?.sectors));
+ assert.equal(r.radialValid,true,r.reason);
  assert.equal(r.lengthValid,true,r.reason);
  assert.equal(r.valid,true);
  assert.equal(r.stats.arms,4);
