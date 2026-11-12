@@ -46,20 +46,27 @@ function simplify(points){
  }
  return res;
 }
-export function createCertifiedPatch({rects,targetId,dx=0,dy=0,pad=24,shoulder=54}){
+export function createCertifiedPatch({rects,targetId,targetIds=null,dx=0,dy=0,pad=24,shoulder=54}){
  const rm=rects instanceof Map?rects:new Map(rects||[]);
- const target=rm.get(targetId),amount=hypot(dx,dy);
- if(!isRect(target)||!Number.isFinite(amount)||amount<EPS||
+ const ids=targetIds||[targetId],selected=new Set(ids);
+ const group=ids.map(id=>rm.get(id));
+ const target=group[0],amount=hypot(dx,dy);
+ if(!ids.length||ids.length!==selected.size||group.some(r=>!isRect(r))||
+    !Number.isFinite(amount)||amount<EPS||
   !Number.isFinite(pad)||pad<21||!Number.isFinite(shoulder)||shoulder<=0)
   return {valid:false,reason:'Parámetros o cuadro inicial inválidos'};
- const xs=[target.l-pad-shoulder,target.l-pad,target.r+pad,target.r+pad+shoulder];
- const ys=[target.t-pad-shoulder,target.t-pad,target.b+pad,target.b+pad+shoulder];
+ const envelope={l:Math.min(...group.map(r=>r.l)),r:Math.max(...group.map(r=>r.r)),
+  t:Math.min(...group.map(r=>r.t)),b:Math.max(...group.map(r=>r.b))};
+ const xs=[envelope.l-pad-shoulder,envelope.l-pad,
+  envelope.r+pad,envelope.r+pad+shoulder];
+ const ys=[envelope.t-pad-shoulder,envelope.t-pad,
+  envelope.b+pad,envelope.b+pad+shoulder];
  const bounds={x:xs,y:ys},fixed=[];
  for(const [id,rect] of rm){
   if(!isRect(rect))return {valid:false,reason:'Rectángulo inválido: '+id};
   const zone=rigidZone(rect,bounds);
-  if(zone==='mixed'||(id===targetId&&zone!=='inside')||
-   (id!==targetId&&zone!=='outside'))
+  if(zone==='mixed'||(selected.has(id)&&zone!=='inside')||
+   (!selected.has(id)&&zone!=='outside'))
    return {valid:false,reason:'La meseta afectaría otro cuadro: '+id};
   fixed.push({id,zone});
  }
@@ -123,7 +130,7 @@ export function createCertifiedPatch({rects,targetId,dx=0,dy=0,pad=24,shoulder=5
   return simplified.length>=2&&simplified.length<=2500?simplified:null;
  };
  return {valid:true,kind:'ambient-isotopy-triangulated',
-  targetId,dx,dy,pad,shoulder,bounds,maxLip,rigid:fixed,
+  targetId,targetIds:[...ids],dx,dy,pad,shoulder,bounds,maxLip,rigid:fixed,
   proof:{kind:'global-lipschitz',bound:maxLip,strictlyBelowOne:true,
    continuous:true,affineTriangles:18,exactPolylineSubdivision:true},
   map,mapPolyline};
@@ -167,7 +174,8 @@ export function applyCertifiedPatch(snapshot,request){
  }
  const next={...snapshot,positions:transformedPositions,rects:transformedRects,
   routes:nextRoutes,proofs:[...(snapshot.proofs||[]),patch.proof],
-  lastPatch:{targetId:request.targetId,dx:request.dx,dy:request.dy,
+  lastPatch:{targetId:request.targetId,targetIds:request.targetIds||[request.targetId],
+   dx:request.dx,dy:request.dy,
    maxLip:patch.maxLip,segments:edges.length}};
  return {valid:true,snapshot:next,proof:patch.proof,patch};
 }
