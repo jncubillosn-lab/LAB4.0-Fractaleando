@@ -132,7 +132,8 @@ export function computeAngularGrowth({nodes,edges=[],rects,positions,j0Id='p1',
  }
  const radial=analyzeRadialHierarchy({nodes,positions:output,j0Id});
  const zones=[...owners].filter(([id])=>id!==j0Id)
-  .every(([id,owner])=>withinSector(placed.get(id),sectorCenters.get(owner)));
+  .every(([id,owner])=>placed.has(id)&&sectorCenters.has(owner)&&
+   withinSector(placed.get(id),sectorCenters.get(owner)));
  const all=[...placed.values()];
  let overlaps=0;for(let i=0;i<all.length;i++)for(let j=0;j<i;j++)
   if(overlap(all[i],all[j],0))overlaps++;
