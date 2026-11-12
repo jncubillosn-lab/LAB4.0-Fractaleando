@@ -64,7 +64,12 @@ export function createCertifiedPatch({rects,targetId,targetIds=null,dx=0,dy=0,pa
  const bounds={x:xs,y:ys},fixed=[];
  for(const [id,rect] of rm){
   if(!isRect(rect))return {valid:false,reason:'Rectángulo inválido: '+id};
-  const zone=rigidZone(rect,bounds);
+  // Los portales de los cuadros ajenos tienen un stub de 19 unidades
+  // que tampoco puede ser deformado. Reservar margen 20 alrededor.
+  const guarded=selected.has(id)?rect:{
+   ...rect,l:rect.l-20,r:rect.r+20,t:rect.t-20,b:rect.b+20
+  };
+  const zone=rigidZone(guarded,bounds);
   if(zone==='mixed'||(selected.has(id)&&zone!=='inside')||
    (!selected.has(id)&&zone!=='outside'))
    return {valid:false,reason:'La meseta afectaría otro cuadro: '+id};
