@@ -71,9 +71,16 @@ test('PPR real: antes de mover cualquier cosa se exigen las 217 rutas y 71 cruce
  assert.equal(result.audit.crossings,71);
  assert.equal(result.report.issueCount,0);
  assert.ok(result.steps.length>=1);
- assert.ok(result.steps.every(s=>s.maxLip<1&&s.crossings===71));
+ assert.ok(result.steps.every(s=>s.crossings===71&&
+  (s.certificate==='monotone-axis-shear'?
+   s.minimumDerivative>0:s.bound<1)),JSON.stringify(result.steps));
  assert.deepEqual(new Map(result.positions).get('p1'),{x:0,y:0});
  assert.ok(result.steps.some(s=>s.members>1),'debe deformarse una rama completa');
+ assert.equal(result.stats.firstRingValid,true,'todo J1 debe tener radio menor que J2');
+ assert.equal(result.stats.sectorValid,true,'los términos deben quedar en sus sectores');
+ assert.equal(result.stats.zoneViolations,0);
+ assert.equal(result.stats.radialValid,false,'restan los anillos exteriores');
+ assert.ok(result.stats.certifiedMoves>=5);
  assert.equal(result.valid,false,'no declarar completadas las cuatro prioridades');
 });
 
