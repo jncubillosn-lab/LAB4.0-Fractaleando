@@ -179,3 +179,35 @@ export function applyCertifiedPatch(snapshot,request){
    maxLip:patch.maxLip,segments:edges.length}};
  return {valid:true,snapshot:next,proof:patch.proof,patch};
 }
+
+
+export function translateWholePlane(snapshot,dx,dy){
+ // La traslación global también es una isotopía ambiental, H_t=p+t*d,
+ // con Lipschitz del desplazamiento exactamente cero.
+ if(![dx,dy].every(Number.isFinite))return {valid:false,reason:'Traslación inválida'};
+ const map=p=>({x:p.x+dx,y:p.y+dy});
+ const positions=new Map(snapshot.positions instanceof Map?
+  snapshot.positions:snapshot.positions||[]);
+ const rects=new Map(snapshot.rects instanceof Map?
+  snapshot.rects:snapshot.rects||[]);
+ const routes=new Map(snapshot.routes instanceof Map?
+  snapshot.routes:snapshot.routes||[]);
+ for(const [id,p] of positions)positions.set(id,map(p));
+ for(const [id,r] of rects){
+  const p=positions.get(id);
+  if(!p)return {valid:false,reason:'Cuadro sin centro: '+id};
+  rects.set(id,{...r,x:p.x,y:p.y,l:p.x-r.w/2,r:p.x+r.w/2,
+   t:p.y-r.h/2,b:p.y+r.h/2});
+ }
+ for(const [key,rt] of routes){
+  if(!rt?.points||!rt.fromPort||!rt.toPort)
+   return {valid:false,reason:'Ruta inexistente: '+key};
+  const port=p=>({...p,...map(p),sx:p.sx+dx,sy:p.sy+dy});
+  routes.set(key,{...rt,points:rt.points.map(map),
+   fromPort:port(rt.fromPort),toPort:port(rt.toPort)});
+ }
+ const proof={kind:'global-translation',bound:0,continuous:true,
+  strictlyBelowOne:true,exactPolylineSubdivision:true};
+ return {valid:true,proof,snapshot:{...snapshot,positions,rects,routes,
+  proofs:[...(snapshot.proofs||[]),proof]}};
+}
