@@ -57,7 +57,7 @@ function pointRectPort(p,r){
   Math.abs(p.sy-p.y)<.13&&
   Math.abs(p.sx-p.x-(p.side==='left'?-19:19))<.13;
 }
-export function auditFanOut({rects,routes,ordered,reference,edgeKey}){
+export function auditFanOut({rects,routes,ordered,reference,edgeKey,clearance=8}){
  const rr=new Map(rects),rs=new Map(routes);
  const issues=[],flag=(type,item)=>{if(issues.length<30)issues.push({type,...item});};
  const allRects=[...rr.values()],segments=[],ports=new Map();
@@ -89,7 +89,7 @@ export function auditFanOut({rects,routes,ordered,reference,edgeKey}){
    if(len<EPS){flag('empty-segment',{key,i});continue;}
    for(const r of allRects){
     if([e.from,e.to].includes(r.id))continue;
-    if(segmentRectHit(a,b,r,8)){obstacles++;flag('obstacle',{key,node:r.id,i});}
+    if(segmentRectHit(a,b,r,clearance)){obstacles++;flag('obstacle',{key,node:r.id,i});}
    }
    segments.push({key,a,b,len,offset:accumulated});
    accumulated+=len;
