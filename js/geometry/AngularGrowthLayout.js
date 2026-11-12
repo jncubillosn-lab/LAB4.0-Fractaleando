@@ -3,19 +3,21 @@ import {analyzeRadialHierarchy} from './RadialHierarchy.js';
 // Transformación candidata por crecimiento angular: no contiene rutas
 // reconstruidas ni se promueve a 02 sin certificación topológica de 01.
 // Un sector por J1, bandas Jn variables, sin imponer radio idéntico.
-export function computeAngularGrowth({nodes,rects,positions,j0Id='p1',
+export function computeAngularGrowth({nodes,edges=[],rects,positions,j0Id='p1',
  clearance=14,sectorPadding=.045,radialStep=76,angularStep=.065}){
  const sourceRects=rects instanceof Map?rects:new Map(rects);
  const sourcePositions=positions instanceof Map?positions:new Map(positions);
  const byId=new Map(nodes.map(n=>[n.id,n]));
  const roots=nodes.filter(n=>n.parent===j0Id).sort((a,b)=>
   (a.branch??0)-(b.branch??0)||a.id.localeCompare(b.id));
- const failures=[],levels=new Map([[j0Id,0]]),owners=new Map([[j0Id,null]]);
+ const failures=[],levels=new Map([[j0Id,0]]),owners=new Map([[j0Id,null]]),visiting=new Set();
  const walk=id=>{
   if(levels.has(id))return levels.get(id);
   const n=byId.get(id);
-  if(!n||!n.parent||!byId.has(n.parent))return null;
+  if(!n||!n.parent||!byId.has(n.parent)||visiting.has(id))return null;
+  visiting.add(id);
   const up=walk(n.parent);
+  visiting.delete(id);
   if(up===null)return null;
   levels.set(id,up+1);
   owners.set(id,n.parent===j0Id?id:owners.get(n.parent));
@@ -68,7 +70,10 @@ export function computeAngularGrowth({nodes,rects,positions,j0Id='p1',
  for(let depth=1;depth<=maxDepth;depth++){
   const layer=nodes.filter(n=>levels.get(n.id)===depth);
   const layerStart=depth===1?
-   Math.max(core.w,core.h)/2+190:prevMax+Math.max(90,clearance+85);
+   Math.max(Math.max(core.w,core.h)/2+190,
+    Math.max(...roots.map(n=>Math.max(sourceRects.get(n.id)?.w||0,
+     sourceRects.get(n.id)?.h||0)))/(2*Math.sin(Math.PI/count))+clearance+20)
+    :prevMax+Math.max(90,clearance+85);
   // Las restricciones entre jerarquías deben ser estrictas, pero no
   // obligan a poner todos los miembros de un nivel en el mismo radio.
   let layerMax=0;
@@ -136,10 +141,20 @@ export function computeAngularGrowth({nodes,rects,positions,j0Id='p1',
   const a=output.get(n.id),b=output.get(n.parent);
   proxyLength+=Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
  }
+ const centerManhattan=edges.reduce((sum,e)=>{
+  const a=output.get(e.from),b=output.get(e.to);
+  return !a||!b?Infinity:sum+Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
+ },0);
+ const sourceCenterManhattan=edges.reduce((sum,e)=>{
+  const a=sourcePositions.get(e.from),b=sourcePositions.get(e.to);
+  return !a||!b?Infinity:sum+Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
+ },0);
  return {valid:!failures.length&&radial.valid&&zones&&overlaps===0,
   positions:[...output],rects:[...placed],levels:Object.fromEntries(levels),
   stats:{nodes:output.size,arms:count,radialValid:radial.valid,
    radialBands:radial.summary,radialViolations:radial.violations,
    sectorsValid:zones,sectorCenters:Object.fromEntries(sectorCenters),
-   overlaps,depthStats,proxyLength,unplaced:failures,closestJ1:depthStats[0]?.start??null}};
+   overlaps,depthStats,proxyLength,centerManhattan,
+   sourceCenterManhattan,unplaced:failures,
+   closestJ1:depthStats[0]?.start??null}};
 }
