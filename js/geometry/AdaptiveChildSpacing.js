@@ -165,6 +165,7 @@ export function translateChildElastic(base,id,axis,delta){
     Math.max(a.y,b.y)>box.t-eps&&Math.min(a.y,b.y)<box.b+eps;
   return true;
  };
+ const sweeps=[];
  for(const [key,oldRoute] of base.rs){
   const changed=rs.get(key);
   if(changed===oldRoute)continue;
@@ -174,12 +175,19 @@ export function translateChildElastic(base,id,axis,delta){
    if(same(a,c)&&same(b,d))continue;
    const box={l:Math.min(a.x,b.x,c.x,d.x),r:Math.max(a.x,b.x,c.x,d.x),
     t:Math.min(a.y,b.y,c.y,d.y),b:Math.max(a.y,b.y,c.y,d.y)};
+   sweeps.push({key,box});
    for(const [other,route] of base.rs){
     if(other===key)continue;
     for(let j=1;j<route.points.length;j++)
      if(intersectsSweep(route.points[j-1],route.points[j],box))return null;
    }
   }
+ }
+ for(let i=0;i<sweeps.length;i++)for(let j=0;j<i;j++){
+  const a=sweeps[i],b=sweeps[j];
+  if(a.key===b.key)continue;
+  if(a.box.l<b.box.r+.01&&a.box.r>b.box.l-.01&&
+   a.box.t<b.box.b+.01&&a.box.b>b.box.t-.01)return null;
  }
  return {ps,rr,rs,adaptive:{id,axis,delta,type:'elastic',sweptCertified:true}};
 }
