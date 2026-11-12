@@ -46,7 +46,7 @@ function simplify(points){
  }
  return res;
 }
-export function createCertifiedPatch({rects,targetId,targetIds=null,dx=0,dy=0,pad=24,shoulder=54}){
+export function createCertifiedPatch({rects,targetId,targetIds=null,dx=0,dy=0,pad=24,shoulder=54,shoulders=null}){
  const rm=rects instanceof Map?rects:new Map(rects||[]);
  const ids=targetIds||[targetId],selected=new Set(ids);
  const group=ids.map(id=>rm.get(id));
@@ -57,10 +57,16 @@ export function createCertifiedPatch({rects,targetId,targetIds=null,dx=0,dy=0,pa
   return {valid:false,reason:'Parámetros o cuadro inicial inválidos'};
  const envelope={l:Math.min(...group.map(r=>r.l)),r:Math.max(...group.map(r=>r.r)),
   t:Math.min(...group.map(r=>r.t)),b:Math.max(...group.map(r=>r.b))};
- const xs=[envelope.l-pad-shoulder,envelope.l-pad,
-  envelope.r+pad,envelope.r+pad+shoulder];
- const ys=[envelope.t-pad-shoulder,envelope.t-pad,
-  envelope.b+pad,envelope.b+pad+shoulder];
+ // Permite regiones de influencia asimétricas: por ejemplo, mover una
+ // rama hacia el espacio libre exterior sin alcanzar otra rama.
+ const sizes={left:shoulders?.left??shoulder,right:shoulders?.right??shoulder,
+  top:shoulders?.top??shoulder,bottom:shoulders?.bottom??shoulder};
+ if(Object.values(sizes).some(v=>!Number.isFinite(v)||v<=0))
+  return {valid:false,reason:'Anchura del soporte inválida'};
+ const xs=[envelope.l-pad-sizes.left,envelope.l-pad,
+  envelope.r+pad,envelope.r+pad+sizes.right];
+ const ys=[envelope.t-pad-sizes.top,envelope.t-pad,
+  envelope.b+pad,envelope.b+pad+sizes.bottom];
  const bounds={x:xs,y:ys},fixed=[];
  for(const [id,rect] of rm){
   if(!isRect(rect))return {valid:false,reason:'Rectángulo inválido: '+id};
@@ -76,7 +82,7 @@ export function createCertifiedPatch({rects,targetId,targetIds=null,dx=0,dy=0,pa
   fixed.push({id,zone});
  }
  const weights=(i,j)=>(i===1||i===2)&&(j===1||j===2)?1:0;
- let maxLip=0;
+ let maxLip=0,minDerivative=Infinity;
  for(let i=0;i<3;i++)for(let j=0;j<3;j++){
   const w=xs[i+1]-xs[i],h=ys[j+1]-ys[j],
    p00=weights(i,j),p10=weights(i+1,j),
@@ -85,13 +91,22 @@ export function createCertifiedPatch({rects,targetId,targetIds=null,dx=0,dy=0,pa
    {x:(p10-p00)/w,y:(p11-p10)/h},
    {x:(p11-p01)/w,y:(p01-p00)/h}
   ];
-  for(const g of gradients)maxLip=Math.max(maxLip,amount*hypot(g.x,g.y));
+  for(const g of gradients){
+   maxLip=Math.max(maxLip,amount*hypot(g.x,g.y));
+   if(dy===0)minDerivative=Math.min(minDerivative,1+dx*g.x);
+   else if(dx===0)minDerivative=Math.min(minDerivative,1+dy*g.y);
+  }
  }
- // Es una cota de la norma del Jacobiano del desplazamiento.
- // <1 asegura la biyección global para cada t, sin pliegues.
- if(!(maxLip<1-1e-6))
-  return {valid:false,reason:'No certificable: la cota Lipschitz es >=1',
-   maxLip};
+ // Prueba A (general): Lip(u)<1 garantiza inyectividad en todo t.
+ // Prueba B (horizontal/vertical): la coordenada transversal no cambia,
+ // la coordenada desplazada es estrictamente creciente en cada línea.
+ // Es una garantía suficiente aunque ||Du|| sea >1; permite shears.
+ const lipCertificate=maxLip<1-1e-6;
+ const axisCertificate=(dx===0||dy===0)&&minDerivative>1e-6;
+ if(!lipCertificate&&!axisCertificate)
+  return {valid:false,
+   reason:'Movimiento no certificable: Lip>=1 y derivada monótona no positiva',
+   maxLip,minDerivative};
  const weight=p=>{
   if(p.x<=xs[0]||p.x>=xs[3]||p.y<=ys[0]||p.y>=ys[3])return 0;
   let i=0,j=0;
@@ -135,8 +150,12 @@ export function createCertifiedPatch({rects,targetId,targetIds=null,dx=0,dy=0,pa
   return simplified.length>=2&&simplified.length<=2500?simplified:null;
  };
  return {valid:true,kind:'ambient-isotopy-triangulated',
-  targetId,targetIds:[...ids],dx,dy,pad,shoulder,bounds,maxLip,rigid:fixed,
-  proof:{kind:'global-lipschitz',bound:maxLip,strictlyBelowOne:true,
+  targetId,targetIds:[...ids],dx,dy,pad,shoulder,shoulders:sizes,
+  bounds,maxLip,minDerivative,rigid:fixed,
+  proof:{kind:lipCertificate?'global-lipschitz':'monotone-axis-shear',
+   bound:maxLip,strictlyBelowOne:lipCertificate,
+   minimumDerivative:axisCertificate?minDerivative:null,
+   strictlyMonotone:axisCertificate,
    continuous:true,affineTriangles:18,exactPolylineSubdivision:true},
   map,mapPolyline};
 }
