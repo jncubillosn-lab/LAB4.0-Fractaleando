@@ -39,9 +39,14 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
     assert result['topology']['valid'] and result['topology']['issueCount']==0,result
     assert result['audit']['invalid']==0 and result['audit']['portsRepeated']==0,result
     assert result['arms']==3,result
-    assert result['valid']==(result['zoneValid'] and result['reductionPercent']>0),result
+    assert result['radialValid']==(len(result['radialViolations'])==0 and len(result['radialErrors'])==0),result
+    assert result['radialBands'][0]['count']==1,result
+    assert result['radialBands'][1]['count']==3,result
+    assert result['valid']==(result['zoneValid'] and result['radialValid'] and result['reductionPercent']>0),result
     if not result['valid']:
      assert 'En revisión' in page.locator('#derivedStatus').inner_text(),result
+     if not result['radialValid']:
+      assert 'orden radial incumplido' in page.locator('#derivedStatus').inner_text(),result
    else:
     assert result['valid'] and result['pending']==0,result
    assert page.locator('#derivedLines circle').count()==result['audit']['crossings'],result
