@@ -1,6 +1,7 @@
 import {applyAxisCorridorWarp} from './AxisCorridorWarp.js';
 import {captureEmbeddedTopology,compareEmbeddedTopology} from './EmbeddedTopology.js';
 import {analyzeCompactObjectives} from './CompactObjectives.js';
+import {translateWholePlane} from './AmbientIsotopy.js';
 
 // La vista de trabajo NO debe exhibir una distribución más extensa
 // ni con más recorrido si todavía no satisface P1-ET-02. Se conserva
@@ -76,6 +77,24 @@ export function makeCertifiedCompactFallback({
    steps.splice(0,steps.length,...plan.moves);
    source='certified-sector-plan';
   }
+ }
+ // Una compresión monótona puede trasladar el origen absoluto.
+ // Recentrar TODO el plano con otra isotopía, no mover J0 aislado.
+ const origin=current.positions.get('p1');
+ if(!origin)return {valid:false,reason:'No hay núcleo J0'};
+ if(Math.hypot(origin.x,origin.y)>1e-8){
+  const recentered=translateWholePlane(current,-origin.x,-origin.y);
+  if(!recentered.valid)return {valid:false,reason:'No se pudo recentrar J0'};
+  const checked=captureEmbeddedTopology(recentered.snapshot),
+   checkedReport=compareEmbeddedTopology(initialSignature,checked.signature);
+  if(!checked.valid||!checkedReport.valid||checked.audit.drawn!==edges.length)
+   return {valid:false,reason:'El recentrado alteraría la topología'};
+  current=recentered.snapshot;audit=checked;
+  steps.push({phase:'recenter',kind:'global-translation',id:'p1',
+   dx:-origin.x,dy:-origin.y,
+   certificate:'global-translation',bound:0,members:nodes.length,
+   links:checked.audit.drawn,crossings:checked.audit.crossings,
+   topologyIssues:checkedReport.issueCount});
  }
  const metrics=analyzeCompactObjectives({
   nodes,edges,positions:current.positions,rects:current.rects,
