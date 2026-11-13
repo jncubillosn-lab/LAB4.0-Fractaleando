@@ -128,6 +128,8 @@ const derived=new DerivedViews({state,plane,camera,linesEl,nodesEl,sEl,router,va
 
 // Registro relacional paralelo al punto de control geométrico.
 const topology=new TopologyRegister({edgeKey});
+// La firma topológica de 01 es una fuente protegida para la isotopía 02.
+derived.planeTopology=()=>topology.reference;
 let stagedTopology=null;
 let guardedMove=null;
 // Solo los arrastres manuales son transacciones geométricas estrictas.
@@ -772,3 +774,28 @@ $('pngBtn').onclick=async()=>{
 function init(useDemo=true){cancelInitialBuild();guardedMove=null;plane.reset();derived.reset();topology.reset();stagedTopology=null;linesEl.replaceChildren();nodesEl.replaceChildren();const demo=useDemo?seed():blankSeed();state.nodes=demo.nodes;state.edges=demo.edges;state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;state.focusRoot='p1';state.depth=1;state.undo=[];state.idSerial=0;syncDepth();updatePanel();$('undoBtn').disabled=true;pendingAutoFit=true;schedule();}
 const ro=new ResizeObserver(()=>{updateCamera();});ro.observe(stage);
 init();
+
+// Acceso directo a la vista de ensayo: ?preview=02.
+// No altera el modo de arranque normal ni el sitio publicado en main.
+// El cálculo topológico de 01 debe finalizar ANTES de abrir 02.
+// Si la firma de 01 es incompleta, nunca se fabrica una vista derivada.
+if(new URLSearchParams(location.search).get('preview')==='02'){
+ const previewStatus=document.getElementById('derivedStatus');
+ if(previewStatus)previewStatus.textContent=
+  'Vista experimental 02 · cargando el plano topológico completo de 01…';
+ let frames=0;
+ const previewWhenReady=()=>{
+  if(derived.mode!=='01')return;
+  if(plane.ready&&plane.routes.size===state.edges.length&&
+   topology.reference?.pending?.length===0){
+   const all=document.getElementById('showAllBtn');
+   all?.click();
+   void derived.select('02');
+   return;
+  }
+  if(frames++<1800)requestAnimationFrame(previewWhenReady);
+  else if(previewStatus)previewStatus.textContent=
+   'No se pudo validar el plano 01: la vista 02 permanece bloqueada.';
+ };
+ requestAnimationFrame(previewWhenReady);
+}

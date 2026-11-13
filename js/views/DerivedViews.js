@@ -2,6 +2,7 @@ import {ViewLayouts} from '../geometry/ViewLayouts.js';
 import {SvgRenderer} from '../ui/SvgRenderer.js';
 import {TopologyRegister} from '../core/TopologyRegister.js';
 import {computeInitialRoutes} from '../workers/initial-route.worker.js';
+import {computeCertified02} from '../workers/ambient-02.worker.js';
 
 // Vistas derivadas read-only: conservan el grafo y el plano 01.
 // Cada vista tiene su propio punto de control y registro topológico.
@@ -12,7 +13,7 @@ export class DerivedViews {
   this.cache=new Map();this.mode='01';this.version=0;
   this.pending=null;this.staged={};
   this.names={'01':['Plano conceptual / 01','Construcción y fractaleo','Núcleo · trayectorias editables'],
-   '02':['Proximidad / 02','Reorganización compacta','Geometría conservadora · relaciones intactas'],
+   '02':['Compacto experimental / 02','Deformación topológica','Vista en estudio: solo movimientos certificados'],
    '03':['Órbitas / 03','Jerarquías y cercanía','Mismo radio para cada jerarquía'],
    '04':['Espiral / 04','Crecimiento espiral','Un brazo por cada término J1 · T = 0']};
   this.derivedLines=sEl('g',{id:'derivedLines'});
@@ -21,6 +22,8 @@ export class DerivedViews {
   this.renderer=new SvgRenderer({linesEl:this.derivedLines,sEl,router,edgeKey});
   this.current=null;
   this.graphIdentity=null;
+  this.sourceRevision=null;
+  this.planeTopology=()=>null;
  }
  sourceKey(){return JSON.stringify([...this.plane.positions].sort(([a],[b])=>a.localeCompare(b)).map(([id,p])=>[id,Math.round(p.x*100)/100,Math.round(p.y*100)/100]));}
  graphKey(){
@@ -30,7 +33,7 @@ export class DerivedViews {
  reset(){
   this.version++;
   if(this.pending){this.pending.terminate?.();this.pending=null;}
-  this.cache.clear();this.current=null;this.staged={};this.graphIdentity=null;
+  this.cache.clear();this.current=null;this.staged={};this.graphIdentity=null;this.sourceRevision=null;
   this.derivedLines.replaceChildren();this.derivedNodes.replaceChildren();
   this.switchVisibility('01');this.updateLabels('01');
  }
@@ -61,6 +64,97 @@ export class DerivedViews {
  }
  metrics(){
   return new Map(this.state.nodes.map(n=>[n.id,this.geometry(n)]));
+ }
+ // 02 no puede reconstruir el grafo. Recibe TODAS las rutas y la
+ // firma oficial de 01; devuelve exclusivamente transformaciones certificadas.
+ async routeIsotopy02(token){
+  const nodes=this.state.nodes.map(n=>({...n}));
+  const edges=this.state.edges.map((e,i)=>({...e,__index:i}));
+  const depth=this.readDepthMap();
+  const level=id=>depth.get?.(id)??depth[id]??1000;
+  const priority=e=>Math.min(level(e.from),level(e.to))*10+
+   (e.kind==='transversal'?5:0)+
+   (Math.abs(level(e.from)-level(e.to))>1?2:0);
+  edges.sort((a,b)=>priority(a)-priority(b)||a.__index-b.__index);
+  const payload={token,nodes,edges,positions:[...this.plane.positions],
+   rects:[...this.plane.rects],routes:[...this.plane.routes],
+   reference:this.planeTopology(),maxHubMoves:4,maxSectorMoves:10,
+   maxRadialMoves:3,maxProposals:24000};
+  if(typeof Worker==='undefined')return computeCertified02(payload);
+  return new Promise((resolve,reject)=>{
+   const worker=new Worker('./js/workers/ambient-02.worker.js',{type:'module'});
+   this.pending=worker;let done=false;
+   const finish=(err,data)=>{
+    if(done)return;done=true;clearTimeout(timeout);worker.terminate();
+    if(this.pending===worker)this.pending=null;
+    if(err)reject(err);else resolve(data);
+   };
+   const timeout=setTimeout(()=>finish(new Error('Isotopía: límite de cálculo excedido')),90000);
+   worker.onmessage=e=>e.data?.error?
+    finish(new Error(e.data.error)):finish(null,e.data.result);
+   worker.onerror=e=>finish(new Error(e.message||'Fallo del worker de isotopía'));
+   worker.postMessage(payload);
+  });
+ }
+ async selectIsotopy02(token){
+  this.current=null;this.derivedLines.replaceChildren();this.derivedNodes.replaceChildren();
+  this.status('02 · certificando la inmersión completa de 01…');
+  try{
+   const result=await this.routeIsotopy02(token);
+   if(token!==this.version)return;
+   if(!result.certified||!result.topologyPreserved){
+    this.status('02 · bloqueada por norma 1: '+result.reason,true);
+    console.warn('02 · certificado rechazado',result);
+    return;
+   }
+   const positions=new Map(result.positions),rects=new Map(result.rects),
+    routes=new Map(result.routes);
+   const layout={mode:'02',positions,rects,levels:result.levels,
+    stats:{...result.stats,overlaps:result.audit.boxes}};
+   const topology=new TopologyRegister({edgeKey:this.edgeKey});
+   topology.restore(this.planeTopology());
+   topology.report={valid:true,issueCount:0,issues:[],counts:{},compared:true};
+   topology.latest=topology.reference;
+   const ordered=this.state.edges.map((e,i)=>({...e,__index:i}));
+   const level=id=>result.levels[id]??1000;
+   ordered.sort((a,b)=>{
+    const score=e=>Math.min(level(e.from),level(e.to))*10+
+     (e.kind==='transversal'?5:0)+
+     (Math.abs(level(e.from)-level(e.to))>1?2:0);
+    return score(a)-score(b)||a.__index-b.__index;
+   });
+   const snapshot={mode:'02',layout,routes,ordered,topology,
+    audit:result.audit,report:result.report,unfinished:0,
+    valid:Boolean(result.valid),restored:false,calculations:result.steps.length,
+    isotopy:true,crossingEvents:result.crossingEvents,
+    certification:result};
+   this.current=snapshot;this.cache.set('02',snapshot);
+   this.draw(snapshot);this.fit();
+  }catch(error){
+   if(token!==this.version)return;
+   console.warn('02 · isotopía:',error);
+   this.status('02 · error de certificación: '+error.message,true);
+  }
+ }
+ drawIsotopy(snapshot){
+  this.derivedLines.replaceChildren();
+  const fmt=x=>Number(x.toFixed(3));
+  for(const e of snapshot.ordered){
+   const k=this.edgeKey(e),route=snapshot.routes.get(k);
+   if(!route?.points)continue;
+   const group=this.sEl('g',{'data-edge-key':k});
+   for(const point of snapshot.crossingEvents||[]){
+    if(point.over!==k||!(point.a===k||point.b===k))continue;
+    group.append(this.sEl('circle',{cx:fmt(point.p.x),cy:fmt(point.p.y),
+     r:5.7,fill:'var(--paper)','pointer-events':'none'}));
+   }
+   const d=route.points.map((p,i)=>
+    (i?'L ':'M ')+fmt(p.x)+' '+fmt(p.y)).join(' ');
+   group.append(this.sEl('path',{d,
+    class:'svgline'+(e.kind==='transversal'?' transverse':''),
+    'data-link-from':e.from,'data-link-to':e.to}));
+   this.derivedLines.append(group);
+  }
  }
  async route(layout,nodes,edges,token){
   const payload={
@@ -119,8 +213,15 @@ export class DerivedViews {
    return;
   }
   const key=this.graphKey();
-  if(this.graphIdentity!==key){
-   this.cache.clear();this.graphIdentity=key;
+  // El checkpoint de 01 incrementa revision también cuando cambian las
+  // rutas sin cambiar posiciones: no reutilizar una firma topológica vieja.
+  if(this.graphIdentity!==key||this.sourceRevision!==this.plane.revision){
+   this.cache.clear();this.graphIdentity=key;this.sourceRevision=this.plane.revision;
+  }
+  if(mode==='02'){
+   const cached02=this.cache.get('02');
+   if(cached02){this.current=cached02;this.draw(cached02);this.fit();return;}
+   return this.selectIsotopy02(this.version);
   }
   let cached=this.cache.get(mode);
   if(!cached)cached=this.tryRestore(mode,key);
@@ -190,7 +291,8 @@ export class DerivedViews {
  draw(snapshot){
   this.derivedLines.replaceChildren();
   this.drawNodes(snapshot.layout);
-  this.renderer.draw(snapshot.ordered,snapshot.routes);
+  if(snapshot.isotopy)this.drawIsotopy(snapshot);
+  else this.renderer.draw(snapshot.ordered,snapshot.routes);
   this.paintVisibility();
  }
  paintVisibility(){
@@ -207,7 +309,29 @@ export class DerivedViews {
    if(el)el.style.display=show?'':'none';
    if(show){if(rt.points)drawn++;else pending++;}
   }
-  const s=current.layout.stats,problems=current.audit.invalid+current.audit.boxes+current.audit.portsRepeated+
+  const s=current.layout.stats;
+  if(this.mode==='02'&&current.isotopy){
+   const sectors=s.sectorValid?'sectores conformes':
+    s.zoneViolations+' conceptos fuera de sector';
+   const radial=s.radialValid?'radios ordenados':
+    s.radialViolations+' escalones radiales pendientes';
+   const change=s.reductionPercent>=0?
+    ('-'+s.reductionPercent.toFixed(1)+' %'):
+    ('+'+Math.abs(s.reductionPercent).toFixed(1)+' %');
+   const provisional=s.previewSource==='certified-global-compaction';
+   const head=provisional?'02 · BASE COMPACTADA DE 01 (aún no es 02)':
+    '02 · topología CERTIFICADA';
+   const area=Number.isFinite(s.areaReductionPercent)?
+    ' · superficie -'+s.areaReductionPercent.toFixed(1)+' %':'';
+   this.status(head+' · '+current.audit.drawn+
+    ' vínculos, '+current.audit.crossings+' cruces, 0 diferencias'+
+    ' · '+sectors+' · '+radial+
+    ' · longitud '+change+area+
+    ' · '+(current.valid?'VALIDADA':'EN REVISIÓN'),
+    !current.valid);
+   return;
+  }
+  const problems=current.audit.invalid+current.audit.boxes+current.audit.portsRepeated+
    (current.report.issueCount||0)+current.unfinished;
   const prefix='Vista '+this.mode+' · '+shown.size+' conceptos · '+drawn+' vínculos';
   const warning=problems>0;
@@ -222,6 +346,8 @@ export class DerivedViews {
  // geometría de 01, mismas posiciones deterministas, DRC independiente y
  // firma de relaciones intacta. No acepta archivos que inventan caminos.
  tryRestore(mode,graphKey){
+  // Los checkpoints 02 de un algoritmo anterior no se aceptan.
+  if(mode==='02')return null;
   const stored=this.staged[mode];
   if(!stored||stored.graphKey!==graphKey||stored.sourceKey!==this.sourceKey()||
      !Array.isArray(stored.positions)||!Array.isArray(stored.routes)||

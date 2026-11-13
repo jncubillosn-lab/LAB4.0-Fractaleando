@@ -1,6 +1,6 @@
 # P1 — Representaciones 02, 03 y 04
 
-**Estado:** implementación de las representaciones derivadas; su aceptación está supeditada a los resultados de validación geométrica y topológica.
+**Estado de 02 (13 de noviembre de 2026):** **no resuelta / desarrollo detenido**. Las deformaciones experimentales preservaron la topología pero no consiguieron el crecimiento radial y la compactación requeridos. Las vistas 03 y 04 conservan su alcance propio.
 
 ## Principio invariable
 
@@ -8,11 +8,19 @@ El grafo conceptual es **uno solo**. Las vistas 02–04 no pueden crear, editar 
 
 La jerarquía utilizada en 03 y 04 es la **menor distancia en número de vínculos hasta P1**, obtenida por búsqueda en anchura sobre el grafo no dirigido. No se inventan relaciones: los componentes desconectados quedan etiquetados y situados en una banda periférica visual sin asignarles un camino artificial al origen.
 
-## 02 · Reorganización compacta
+## 02 · Compacto — norma vigente y resultado real
 
-La distribución parte de una **compactación métrica conservadora** de 01 y luego acerca localmente los conceptos vinculados mediante un descenso de longitud de enlaces. Cada modificación local solo se acepta si reduce efectivamente la suma de distancias de sus vínculos, evita solapamientos y **conserva las precedencias relativas izquierda/derecha y arriba/abajo** que existían entre centros. El factor global se aumenta si fuese necesario para respetar la separación entre cuadros. No cambia parentescos ni relaciones de datos.
+**Documentación:** [P1-ET-02.md](P1-ET-02.md) · [ESTADO_02_CONGELADO.md](ESTADO_02_CONGELADO.md) · [ISOTOPIA_AMBIENTAL_02.md](ISOTOPIA_AMBIENTAL_02.md).
 
-No afirmamos que esta primera compactación sea el mínimo global de longitudes o un problema de optimización matemática resuelto. El requisito de minimización debe mantenerse como objetivo medible, pero no autoriza a destruir la estructura ya validada.
+02 **no** es una compresión de las columnas de 01. Debe mostrar J0 central, un sector por J1 y todas sus descendencias, crecimiento angular desde el núcleo, radios jerárquicos progresivos y un conjunto visualmente integrado.
+
+Orden de normas: **(1)** preservar por construcción la inmersión completa de 01, incluidos puertos, rutas y cruces; **(2)** sectores J1; **(3)** máximo radio de Jk menor que el mínimo de J(k+1); **(4)** menor longitud real de recorridos y compacidad genuina.
+
+Los hermanos pueden adoptar distancias distintas, y ningún ángulo —incluidos 40°— es una constante obligatoria. Ningún movimiento puede reconstruir enlaces a posteriori tras recolocar cuadros.
+
+**No está aprobado:** el prototipo pudo preservar 217 rutas y 71 cruces del PPR, pero no cumplió conjuntamente sectores, orden radial y compacidad. La última alternativa mostraba una base de 01 comprimida, no una vista radial, y fue rechazada visualmente pese a sus métricas de ahorro.
+
+El código del ensayo queda aislado en el PR #11, en borrador y sin fusionar; el desarrollo de 02 está detenido.
 
 ## 03 · Órbitas
 
@@ -38,23 +46,19 @@ Todas las vistas heredan las reglas R01–R08: rutas exclusivas, cuadros ajenos 
 
 - La distribución se calcula sin modificar datos.
 - El Worker de P1 recibe rectángulos medidos, posiciones y jerarquía propias de la vista.
-- El enrutador utiliza preferencias de salida de puertos acordes al contexto geométrico: columnas en 01–02 y orientación espacial en 03–04.
-- Antes de considerar válida una vista se ejecuta el mismo validador independiente: **cero cuadros solapados, cero rutas inválidas, cero puertos repetidos, cero vínculos pendientes**, y jerarquías radiales correctas.
+- El motor experimental **02 no vuelve a enrutar**: transforma todas las rutas existentes de 01 mediante deformaciones ambientales certificadas; puede producir tramos oblicuos. 01, 03 y 04 conservan sus enrutamientos y controles particulares.
+- Antes de declarar válida una vista se exige **cero cuadros solapados, cero rutas inválidas, cero puertos repetidos y cero vínculos pendientes**. Para **02**, además: inmersión topológica idéntica a 01, sectores completos, radios estrictos en todos los niveles y rutas realmente más cortas. Su auditoría admite trayectos oblicuos.
 - Si alguna conexión no se puede resolver, su relación conceptual sigue existiendo, pero no se dibuja una ruta ficticia. La vista anuncia expresamente **«En revisión»** y los vínculos pendientes.
 
 ### Registro topológico por vista
 
-Se distingue entre la **topología conceptual** (identidades de nodos y vínculos), que es idéntica en las cuatro representaciones, y la **topología de la inmersión gráfica** (orden de puertos, cruces, vecindades), que puede ser diferente al organizar el mismo grafo sobre un plano, un círculo o una espiral.
+La topología conceptual (identidad de nodos y vínculos) es igual en las cuatro vistas. La inmersión gráfica contiene adicionalmente puertos, continuidad de rutas, pares y secuencias de cruces.
 
-No es matemáticamente correcto exigir que todos los nodos conserven su orden izquierda/derecha entre una disposición lineal y otra circular. Por tanto:
+**02 tiene un requisito específico:** preservar **la inmersión original validada de 01** por una transformación completa del plano. Se permite cambiar la posición y el orden cartesiano X/Y de los cuadros, porque eso no es por sí solo un invariante topológico. No se permite reconstruir libremente rutas, cambiar pares u orden de cruces ni perder conexiones.
 
-1. La referencia topológica de **01** permanece protegida; los arrastres manuales que cambien sus relaciones o produzcan rutas inválidas se revierten.
-2. Cada representación derivada conserva su **propio registro topológico**, independiente del de 01.
-3. La edición está habilitada exclusivamente en 01: cambiar de pestaña no reestructura una vista existente.
-4. Los registros de vistas derivados se almacenan opcionalmente en \`derivedViews\` del JSON \`p1.graph.v1\`. La recuperación de puntos de control exige verificar identidad de grafo y fuente, geometría, reglas DRC y firma topológica antes de aceptar sus rutas.
-5. Las nuevas distribuciones que no cumplan todas las condiciones no se declaran validadas aunque se pueda visualizar su estado provisional.
+**03 y 04** conservan sus mecanismos y criterios topológicos particulares, sin importarles automáticamente la exigencia específica de 02.
 
-Este modelo **no transforma automáticamente un diseño planario en uno espiral preservando todos sus cruces originales**, pues puede ser incompatible con la disposición circular exigida. Es una restricción explícita y documentada, no una garantía falsa del motor.
+01 sigue siendo la única vista editable. Los checkpoints históricos de 02 son experimentales y no se restauran como representaciones aprobadas. Una vista visible «En revisión» no implica aceptación.
 
 ## Modo oscuro
 
@@ -62,12 +66,12 @@ El cambio de tema solo cambia variables de color CSS y colores de exportación d
 
 ## Archivos
 
-- \`js/geometry/ViewLayouts.js\`: posiciones puras de 02–04.
-- \`js/views/DerivedViews.js\`: control de vistas, Worker, cachés, topología, DRC, recuperación y visualización.
-- \`js/workers/initial-route.worker.js\`: enrutamiento según modalidad, sin cambiar la lógica de 01.
-- \`js/core/TopologyRegister.js\`: firma relacional independiente.
-- \`tests/views.test.js\` y \`tests/views_e2e.py\`: geometría formal, uso real del navegador y modo oscuro.
+- `js/geometry/AmbientIsotopy.js`, `EmbeddedTopology.js`, `AxisCorridorWarp.js`: transformaciones y auditoría topológicas de 02.
+- `js/geometry/CertifiedCompact02.js`, `CertifiedMovePlanner.js`, `CompactObjectives.js`, `CompactSectorOptimizer.js`, `CertifiedPreviewFallback.js`: planificador experimental y presentación provisional; no equivalen a 02 aprobada.
+- `js/workers/ambient-02.worker.js`, `js/views/DerivedViews.js`: cálculo y presentación de la vista experimental.
+- `js/geometry/ViewLayouts.js`, `js/workers/initial-route.worker.js`, `js/core/TopologyRegister.js`: componentes existentes de las demás vistas.
+- `tests/ambient-isotopy.test.js`, `tests/views_e2e.py`: pruebas parciales de topología, geometría y navegador; **no demuestran haber resuelto el objetivo completo de 02**.
 
 ## Requisitos de aprobación
 
-No basta con que se vean cuatro pestañas: las cuatro vistas deben representar todos los vínculos del caso PPR, no atravesar cuadros, conservar los puntos de control, respetar R01–R08 y pasar el test en navegador. La visualización de una vista **en revisión** no constituye su validación.
+No basta con cuatro pestañas ni con CI exitoso: cada vista debe cumplir **todas sus normas** y superar los controles de integridad. **02 todavía no satisface sus cuatro prioridades**. La previsualización «En revisión» no es su aprobación.

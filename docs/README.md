@@ -6,6 +6,8 @@
 **Etapas de trabajo:** `01 · Plano` y vistas derivadas `02 · Compactación`, `03 · Órbitas`, `04 · Espiral`  
 **Implementación de referencia al momento del corte:** `P1_Plano_R01_brazos_variables.html`
 
+> **Actualización de estado — 13 de noviembre de 2026:** el contenido siguiente es el registro general e histórico del proyecto; sus referencias antiguas a «02 implementada» **no indican aprobación de la vista Compacto**. Las decisiones vigentes de 02 están en [P1-ET-02.md](P1-ET-02.md), y su cierre sin resolver, con fallos y métricas, en [ESTADO_02_CONGELADO.md](ESTADO_02_CONGELADO.md). **Se detuvo la programación de 02 sin modificar 01, 03 ni 04.**
+
 > **Principio rector:** El sistema debe representar fielmente la estructura conceptual con el mínimo ruido gráfico posible y conservar los resultados geométricos ya validados para no repetir cálculos innecesarios.
 
 Este archivo documenta **lo acordado para P1**. Distingue las reglas normativas del proyecto, el funcionamiento acordado para el motor y las decisiones que siguen abiertas. **La habilitación de 02–04 y del modo oscuro procede de la solicitud expresa posterior al corte inicial. No autoriza otras funciones o etapas adicionales.**
@@ -43,7 +45,7 @@ Las etapas trabajan sobre **el mismo grafo conceptual**. Cambia la representaci�
 | Etapa | Función | Alcance / estado |
 |---|---|---|
 | **01 · Plano** | Crear y fractalear conceptos en 2D, conectar términos y visualizar progresivamente la estructura. | Editor de referencia; se conserva su geometría persistente. |
-| **02 · Reorganización** | Recolocar conceptos para disminuir las distancias entre términos vinculados y reducir ruido visual. | Implementación de compactación conservadora, con DRC y caché propios. |
+| **02 · Compacto** | J0 central, ramas J1 en sectores propios, crecimiento angular desde el núcleo, orden radial por jerarquía y recorridos más cortos con **inmersión de 01 intacta**. | **No resuelta.** Existe un prototipo de isotopía ambiental topológicamente certificado, pero su última representación fue rechazada por no cumplir sectores, radios y compacidad como conjunto. Véase [el cierre](ESTADO_02_CONGELADO.md). |
 | **03 · Órbitas** | Representar la jerarquía mediante radios iguales para conceptos del mismo nivel; ordenar angularmente según cercanía relacional. | Implementación orbital con jerarquía de distancia mínima en vínculos, validación radial y DRC. |
 | **04 · Espiral** | Transformar la organización previa en un sistema espiral de tantos brazos como términos `J1`, conservando la progresión jerárquica y la cercanía entre relacionados. | Implementación espiral plana de brazos variables, bandas estrictas y DRC. |
 
@@ -287,6 +289,8 @@ El registro se conserva en el campo opcional `topologyRegister` (`p1.topology.v1
 
 ## Extensión de implementación · 11 de noviembre de 2026
 
-Las representaciones 02–04 y el modo oscuro se documentan en [VISTAS_02_04.md](VISTAS_02_04.md). El mismo grafo conceptual se utiliza en las cuatro vistas; cada representación derivada conserva su geometría y registro topológico propios. Los arrastres manuales de 01 se someten a validación transaccional: los cambios que alteran relaciones fijadas o crean rutas inválidas se revierten.
+Las representaciones 02–04 y el modo oscuro se documentan en [VISTAS_02_04.md](VISTAS_02_04.md). **La sección histórica sobre 02 está subordinada a [P1-ET-02](P1-ET-02.md) y al [estado de cierre de 02](ESTADO_02_CONGELADO.md).** El mismo grafo conceptual se utiliza en las cuatro vistas; cada representación derivada conserva su geometría y registro topológico propios. Los arrastres manuales de 01 se someten a validación transaccional: los cambios que alteran relaciones fijadas o crean rutas inválidas se revierten.
 
-**Estado de validación:** la existencia de una vista no implica su aprobación. La pantalla marca explícitamente «En revisión» si aparecen conexiones pendientes o infracciones geométricas. No se declara terminada una vista hasta cumplir las comprobaciones de DRC, radios, topología y pruebas en navegador.
+**Estado de validación:** la existencia de una vista no implica su aprobación.
+
+**Estado de 02 al cierre documental:** experimentos #7, #8 y #9 no fusionados; PR #11 abierto en borrador. El motor preservó los 217 vínculos y sus 71 cruces en movimientos certificados, pero la figura completa de 02 no fue conseguida. Una compresión de 01 tampoco resuelve los sectores ni el crecimiento radial exigido. No reiniciar programación sin instrucción expresa. La pantalla marca explícitamente «En revisión» si aparecen conexiones pendientes o infracciones geométricas. No se declara terminada una vista hasta cumplir las comprobaciones de DRC, radios, topología y pruebas en navegador.

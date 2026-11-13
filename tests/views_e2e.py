@@ -31,7 +31,23 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
    if mode in ('03','04'):assert result['radialOrder'],result
    assert result['audit']['boxes']==0,result
    assert result['audit']['invalid']==0,result
-   assert result['valid'] and result['pending']==0,result
+   if mode=='02':
+    assert not result['valid'],result  # nunca certificar las cuatro normas aún
+    assert result['preservedTopology'] and result['topologyIssues']==0,result
+    assert result['certifiedMoves']>=1,result
+    assert result['audit']['drawn']==217 and result['pending']==0,result
+    assert result['crossings']==71 and result['sourceCrossings']==71,result
+    assert 'BASE COMPACTADA DE 01' in page.locator('#derivedStatus').inner_text(),result
+    assert result['previewSource']=='certified-global-compaction',result
+    assert result['reductionPercent']>0 and result['areaReductionPercent']>0,result
+    assert result['routeLength']<result['sourceRouteLength'],result
+    assert result['previewArea']<result['sourceArea'],result
+    assert result['zonePenalty']>=0 and result['radialPenalty']>=0,result
+    assert result['valid']==(result['sectorValid'] and result['radialValid'] and
+     result['reductionPercent']>0),result
+    assert 'EN REVISIÓN' in page.locator('#derivedStatus').inner_text(),result
+   else:
+    assert result['valid'] and result['pending']==0,result
    assert page.locator('#derivedLines circle').count()==result['audit']['crossings'],result
    assert result['topology']['hasReference'],result
    # El filtro de profundidad no vuelve a calcular el enrutamiento.
@@ -79,5 +95,19 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
   page.locator('[data-view="01"]').click()
   assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.pending')==0
   assert not errors,errors
+  # Acceso directo: primero construye 01, luego presenta 02 al completo.
+  preview=browser.new_page(viewport={'width':1440,'height':900})
+  preview.goto('http://127.0.0.1:'+str(srv.server_address[1])+
+   '/index.html?preview=02',wait_until='domcontentloaded')
+  preview.wait_for_function(
+   'window.P1_PLANO_DIAGNOSTICO?.views().mode==="02" && '+
+   'window.P1_PLANO_DIAGNOSTICO?.views().current?.mode==="02"',
+   timeout=90000)
+  previewState=preview.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current')
+  assert previewState['nodes']==210 and previewState['audit']['drawn']==217,previewState
+  assert previewState['crossings']==71 and previewState['topologyIssues']==0,previewState
+  assert 'BASE COMPACTADA DE 01' in preview.locator('#derivedStatus').inner_text()
+  print('PREVIEW_02',json.dumps(previewState,ensure_ascii=False)[:1200],flush=True)
+  preview.close()
   browser.close()
  srv.shutdown()
