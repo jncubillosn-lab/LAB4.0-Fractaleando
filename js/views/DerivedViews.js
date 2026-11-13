@@ -13,7 +13,7 @@ export class DerivedViews {
   this.cache=new Map();this.mode='01';this.version=0;
   this.pending=null;this.staged={};
   this.names={'01':['Plano conceptual / 01','Construcción y fractaleo','Núcleo · trayectorias editables'],
-   '02':['Compacto / 02','Isotopía ambiental certificada','Topología de 01 primero · crecimiento radial pendiente'],
+   '02':['Compacto experimental / 02','Deformación topológica','Vista en estudio: solo movimientos certificados'],
    '03':['Órbitas / 03','Jerarquías y cercanía','Mismo radio para cada jerarquía'],
    '04':['Espiral / 04','Crecimiento espiral','Un brazo por cada término J1 · T = 0']};
   this.derivedLines=sEl('g',{id:'derivedLines'});
@@ -318,10 +318,16 @@ export class DerivedViews {
    const change=s.reductionPercent>=0?
     ('-'+s.reductionPercent.toFixed(1)+' %'):
     ('+'+Math.abs(s.reductionPercent).toFixed(1)+' %');
-   this.status('02 · topología CERTIFICADA: '+current.audit.drawn+
+   const provisional=s.previewSource==='certified-global-compaction';
+   const head=provisional?'02 · BASE COMPACTADA DE 01 (aún no es 02)':
+    '02 · topología CERTIFICADA';
+   const area=Number.isFinite(s.areaReductionPercent)?
+    ' · superficie -'+s.areaReductionPercent.toFixed(1)+' %':'';
+   this.status(head+' · '+current.audit.drawn+
     ' vínculos, '+current.audit.crossings+' cruces, 0 diferencias'+
     ' · '+sectors+' · '+radial+
-    ' · longitud '+change+' · '+(current.valid?'VALIDADA':'EN REVISIÓN'),
+    ' · longitud '+change+area+
+    ' · '+(current.valid?'VALIDADA':'EN REVISIÓN'),
     !current.valid);
    return;
   }
