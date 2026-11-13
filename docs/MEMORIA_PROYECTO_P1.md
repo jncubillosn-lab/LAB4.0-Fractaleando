@@ -2,7 +2,7 @@
 
 Objetivos normas parámetros decisiones y estado de desarrollo
 
-Corte documental: 13 de noviembre de 2026. Versión 1.0 de la memoria. Proyecto PPR — LAB4.0 Fractaleando.
+Corte documental: 13 de noviembre de 2026. Versión 1.1 de la memoria. Proyecto PPR — LAB4.0 Fractaleando.
 
 ## 1 Propósito y estado al cierre
 
@@ -10,14 +10,21 @@ P1 es un editor de conceptos y relaciones para apoyar el fractaleo. Su objetivo 
 
 Esta memoria registra lo trabajado y deja la implementación en su estado comprobado. No inicia otra búsqueda geométrica ni declara resuelto el radial. Distingue normas del usuario, organización documental propuesta, decisiones de implementación y resultados de pruebas. El detalle normativo se conserva en NORMAS_JERARQUIZADAS_P1.md y en el documento Word de normas v0.1.
 
-### Objetivos conservados
+### Objetivo general
 
-- Representar todos los conceptos y vínculos, incluidos los transversales, sin inventar relaciones ni fusionar cuadros con textos iguales.
-- Obtener una lectura integrada del tema: más cuadros legibles en una vista y menos dispersión entre elementos vinculados.
-- Construir desde el núcleo, con tantas ramas como hijos J1 existan, sin limitar artificialmente la profundidad.
-- Preservar la topología una vez definida, permitiendo modificar la geometría.
-- Evitar solapes, contactos con cuadros ajenos y tramos compartidos; distinguir los cruces admitidos.
-- Conservar geometría válida mediante puntos de control y recalcular solamente lo afectado por una edición.
+Facilitar la comprensión de un tema mediante una representación visual de sus conceptos y relaciones, que permita reconocer tanto el conjunto como su desarrollo en detalle.
+
+### Objetivo de la distribución
+
+Lograr una representación más compacta e integrada, que permita observar más contenido legible en una misma vista y comprender cómo se relacionan sus partes.
+
+### Requisitos y normas aplicables
+
+La integridad exige representar todos los conceptos y vínculos, incluidos los transversales, sin inventar relaciones ni fusionar cuadros con textos iguales. El alcance exige admitir crecimiento sin un límite artificial de profundidad.
+
+Las normas de construcción y representación exigen avanzar desde el núcleo, con tantas ramas como hijos J1 existan; conservar la topología definida; evitar solapes, contactos con cuadros ajenos y tramos compartidos; y distinguir los cruces admitidos. Se desarrollan y jerarquizan en la sección 3.
+
+Los puntos de control y el recálculo de lo afectado por una edición son decisiones de implementación para conservar geometría válida y reducir trabajo de cálculo. Corresponden a la arquitectura descrita en la sección 4.
 
 ### Estado de las representaciones
 
