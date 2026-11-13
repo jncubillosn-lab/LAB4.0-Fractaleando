@@ -2,6 +2,7 @@ import {translateWholePlane} from './AmbientIsotopy.js';
 import {captureEmbeddedTopology,compareEmbeddedTopology} from './EmbeddedTopology.js';
 import {TopologyRegister} from '../core/TopologyRegister.js';
 import {planCertifiedCompact02} from './CertifiedMovePlanner.js';
+import {makeCertifiedCompactFallback} from './CertifiedPreviewFallback.js';
 
 // 02 SOLO puede transformar la inmersión íntegra de 01.
 // Nunca calcula conexiones nuevas. El planificador únicamente solicita
@@ -48,25 +49,30 @@ export function computeCertified02(input){
   maxProposals:input.maxProposals??24000,
   allowAxisCompression:true
  });
- if(!plan.certified||!plan.topologyPreserved||!plan.snapshot)
-  return fail(plan.reason||'El planificador no certificó la topología',
-   {issues:plan.failures});
- const final=plan.topology,verified=compareEmbeddedTopology(
-  initial.signature,final.signature);
+ // El ensayo angular incompleto NO se publica como «compacto» si
+ // alarga las rutas o agranda la superficie. La alternativa se obtiene
+ // de 01 mediante isotopías globales monotónicas, sin reenrutar.
+ const presentation=makeCertifiedCompactFallback({
+  centered:centered.snapshot,plan,initialSignature:initial.signature,
+  nodes,edges
+ });
+ if(!presentation.valid)return fail('No hay una representación geométrica segura',
+  {issues:[presentation.reason]});
+ const final=presentation.audit,verified=presentation.report;
  if(!verified.valid||!final.valid||final.audit.drawn!==edges.length)
-  return fail('La última auditoría de topología falló',
+  return fail('La presentación no conserva la inmersión de 01',
    {issues:[...verified.issues,...final.problems]});
- const snap=plan.snapshot,m=plan.metrics;
- const initLength=plan.initialLength;
+ const snap=presentation.snapshot,m=presentation.metrics,
+  initLength=presentation.initialLength,
+  shownLength=presentation.routeLength;
  const steps=[
   {kind:'global-translation',id:'p1',dx:-origin.x,dy:-origin.y,
    certificate:'global-translation',bound:0,
    members:nodes.length,crossings:initial.audit.crossings},
-  ...plan.moves.map(move=>({...move,
-   kind:move.phase==='corridor'?'axis-warp':'local'}))
+  ...presentation.steps
  ];
- const valid=plan.valid&&plan.sectorValid&&plan.radialValid&&
-  plan.lengthValid&&verified.valid;
+ const valid=Boolean(plan.valid&&presentation.source==='certified-sector-plan'&&
+  m.zoneValid&&m.radialValid&&shownLength<initLength&&verified.valid);
  const firstBand=m.radialBands.find(x=>x.level===1),
   nextBand=m.radialBands.find(x=>x.level===2);
  return {
@@ -74,23 +80,29 @@ export function computeCertified02(input){
   sectorValid:plan.sectorValid,radialValid:plan.radialValid,
   lengthValid:plan.lengthValid,
   reason:valid?'Las cuatro normas de 02 están verificadas':
-   'Topología conservada. Organización geométrica aún en revisión.',
+   presentation.source==='certified-global-compaction'?
+    'Solo se muestra 01 compactado mediante isotopía, no una 02 sectorial aprobada.':
+    'Topología conservada. Organización geométrica aún en revisión.',
   steps,rejections:plan.failures,positions:[...snap.positions],
   rects:[...snap.rects],routes:[...snap.routes],
   levels:m.levels,audit:final.audit,report:verified,
   crossingEvents:final.events,
   stats:{mode:'02',nodes:nodes.length,arms:m.arms,
    sourceCrossings:initial.audit.crossings,crossings:final.audit.crossings,
-   sourceRouteLength:initLength,routeLength:plan.routeLength,
-   reductionPercent:(initLength-plan.routeLength)/initLength*100,
+   sourceRouteLength:initLength,routeLength:shownLength,
+   reductionPercent:(initLength-shownLength)/initLength*100,
    radialValid:m.radialValid,radialBands:m.radialBands,
    radialPenalty:m.radialPenalty,radialViolations:m.radialViolations,
    sectorValid:m.zoneValid,zonePenalty:m.zonePenalty,
    zoneViolations:m.zoneViolations,zoneByArm:m.zoneByArm,
    j1MaxRadius:m.j1MaxRadius,j2MinRadius:nextBand?.min??null,
    firstRingValid:Boolean(firstBand&&nextBand&&firstBand.max<nextBand.min),
+   previewSource:presentation.source,
+   previewArea:presentation.area,sourceArea:presentation.initialArea,
+   areaReductionPercent:(presentation.initialArea-presentation.area)/presentation.initialArea*100,
+   angularAttempt:presentation.angularAttempt,
    topologyIssues:verified.issueCount,graphComplete:true,
-   preservedTopology:true,certifiedMoves:plan.moves.length,
+   preservedTopology:true,certifiedMoves:presentation.steps.length,
    certifiedSteps:steps.length,proposals:plan.stats.proposed,
    plannerMs:plan.stats.elapsedMs,planTimeline:plan.timeline,
    area:null}
