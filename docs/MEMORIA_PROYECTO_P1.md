@@ -2,37 +2,36 @@
 
 Objetivos normas parámetros decisiones y estado de desarrollo
 
-Corte documental: 13 de noviembre de 2026. Versión 1.1 de la memoria. Proyecto PPR — LAB4.0 Fractaleando.
+Corte documental: 13 de noviembre de 2026. Versión 1.2 de la memoria. Proyecto PPR — LAB4.0 Fractaleando.
 
 ## 1 Propósito y estado al cierre
 
-P1 es un editor de conceptos y relaciones para apoyar el fractaleo. Su objetivo es representar el desarrollo de ideas de manera legible, fiel a su estructura y estable durante la interacción. La interfaz ya está definida; el trabajo reciente se concentra en el motor de representación y su validación.
+P1 es un graficador de fractales con una interfaz de construcción y edición definida. El trabajo reciente se concentra en la transformación geométrica y su validación.
 
-Esta memoria registra lo trabajado y deja la implementación en su estado comprobado. No inicia otra búsqueda geométrica ni declara resuelto el radial. Distingue normas del usuario, organización documental propuesta, decisiones de implementación y resultados de pruebas. El detalle normativo se conserva en NORMAS_JERARQUIZADAS_P1.md y en el documento Word de normas v0.1.
+Esta memoria registra objetivos, normas, decisiones, resultados y pendientes. El objetivo general incluye las disposiciones rectangular, circular radial y espiral de múltiples brazos; su formulación no implica que todas las transformaciones estén resueltas. El detalle normativo se conserva en NORMAS_JERARQUIZADAS_P1.md y en el documento Word de normas v0.1.
 
 ### Objetivo general
 
-Facilitar la comprensión de un tema mediante una representación visual de sus conceptos y relaciones, que permita reconocer tanto el conjunto como su desarrollo en detalle.
+Desarrollar un graficador de fractales que permita construirlos, editarlos y transformar automáticamente su geometría desde una disposición rectangular hacia una disposición circular radial —como rayos de sol— o una espiral de múltiples brazos, para facilitar su comprensión y obtener representaciones más compactas, conservando la topología del diagrama.
 
-### Objetivo de la distribución
+### Objetivos específicos
 
-Lograr una representación más compacta e integrada, que permita observar más contenido legible en una misma vista y comprender cómo se relacionan sus partes.
+1. Facilitar la comprensión de un tema mediante una representación visual de sus conceptos y relaciones, que permita reconocer tanto el conjunto como su desarrollo en detalle.
+2. Lograr una representación más compacta e integrada, que permita observar más contenido legible en una misma vista y comprender cómo se relacionan sus partes.
 
 ### Requisitos y normas aplicables
 
-La integridad exige representar todos los conceptos y vínculos, incluidos los transversales, sin inventar relaciones ni fusionar cuadros con textos iguales. El alcance exige admitir crecimiento sin un límite artificial de profundidad.
+Integridad y alcance: representar todos los conceptos y vínculos, incluidos los transversales, sin inventar relaciones, fusionar cuadros con textos iguales ni limitar artificialmente la profundidad.
 
-Las normas de construcción y representación exigen avanzar desde el núcleo, con tantas ramas como hijos J1 existan; conservar la topología definida; evitar solapes, contactos con cuadros ajenos y tramos compartidos; y distinguir los cruces admitidos. Se desarrollan y jerarquizan en la sección 3.
+Normas de construcción y representación: avanzar desde el núcleo según sus hijos J1, conservar la topología, evitar solapes, contactos con cuadros ajenos y tramos compartidos, y distinguir los cruces admitidos. Su jerarquía se desarrolla en la sección 3.
 
-Los puntos de control y el recálculo de lo afectado por una edición son decisiones de implementación para conservar geometría válida y reducir trabajo de cálculo. Corresponden a la arquitectura descrita en la sección 4.
+Implementación: conservar geometría válida mediante puntos de control y recalcular lo afectado por una edición. La arquitectura se describe en la sección 4.
 
 ### Estado de las representaciones
 
 01 Plano continúa como editor y referencia. 02 Compactación y 03 Órbitas se abandonan como enfoques para el nuevo objetivo; su reemplazo por 02 Radial acotado está en una rama experimental. 04 Espiral permanece en el código de esa rama; no se abrió un nuevo trabajo de optimización sobre ella.
 
 El PR 12 está abierto y en borrador, sin integrar. La rama work/02-radial-acotado-reintento contiene el intento radial. El commit de código revisado es afa75461e77b134aa78e3d85b2d737ef99578685. Su base main es ff74bab3500d017571ac52faf3098d17854844d1. Esta documentación no publica el radial en Pages ni convierte el borrador en una solución terminada.
-
-La interfaz conserva edición, selección, creación y eliminación de vínculos, deshacer, profundidad, zoom, desplazamiento, movimiento manual y exportación según la vista. El programa no debe depender del contenido específico del ejemplo PPR para cumplir sus reglas.
 
 <!-- page -->
 ## 2 Proceso y decisiones acumuladas
@@ -93,6 +92,8 @@ El detalle de cada norma, su prueba y los estados CUMPLE, INCUMPLE, PENDIENTE DE
 
 <!-- page -->
 ## 4 Arquitectura y parámetros del intento
+
+La interfaz conserva edición, selección, creación y eliminación de vínculos, deshacer, profundidad, zoom, desplazamiento, movimiento manual y exportación según la vista. El programa no debe depender del contenido específico del ejemplo PPR para cumplir sus reglas.
 
 Grafo, topología y geometría son estados distintos. GraphDocument consulta relaciones y jerarquías; PlaneCheckpoint conserva posiciones y rutas; TopologyRegister registra relaciones cualitativas. PcbRouter busca recorridos, GeometryValidator los audita y SvgRenderer los dibuja. app.js coordina edición, cambios y exportación. seeds.js contiene los datos ilustrativos PPR.
 
