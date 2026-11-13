@@ -37,8 +37,11 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
     assert result['certifiedMoves']>=1,result
     assert result['audit']['drawn']==217 and result['pending']==0,result
     assert result['crossings']==71 and result['sourceCrossings']==71,result
-    assert 'topología CERTIFICADA' in page.locator('#derivedStatus').inner_text(),result
-    assert result['firstRingValid'],result
+    assert 'BASE COMPACTADA DE 01' in page.locator('#derivedStatus').inner_text(),result
+    assert result['previewSource']=='certified-global-compaction',result
+    assert result['reductionPercent']>0 and result['areaReductionPercent']>0,result
+    assert result['routeLength']<result['sourceRouteLength'],result
+    assert result['previewArea']<result['sourceArea'],result
     assert result['zonePenalty']>=0 and result['radialPenalty']>=0,result
     assert result['valid']==(result['sectorValid'] and result['radialValid'] and
      result['reductionPercent']>0),result
@@ -103,7 +106,7 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
   previewState=preview.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current')
   assert previewState['nodes']==210 and previewState['audit']['drawn']==217,previewState
   assert previewState['crossings']==71 and previewState['topologyIssues']==0,previewState
-  assert 'topología CERTIFICADA' in preview.locator('#derivedStatus').inner_text()
+  assert 'BASE COMPACTADA DE 01' in preview.locator('#derivedStatus').inner_text()
   print('PREVIEW_02',json.dumps(previewState,ensure_ascii=False)[:1200],flush=True)
   preview.close()
   browser.close()
