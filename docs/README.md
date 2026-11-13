@@ -3,7 +3,7 @@
 **Documento inicial de referencia · Requerimientos, normas y arquitectura del motor gráfico**  
 **Corte de referencia:** 10 de noviembre de 2026  
 **Versión del documento:** 0.1  
-**Etapas de trabajo:** `01 · Plano` y vistas derivadas `02 · Compactación`, `03 · Órbitas`, `04 · Espiral`  
+**Etapas de trabajo:** `01 · Plano`, `02 · Radial acotado` experimental y `04 · Espiral`; `03` retirado
 **Implementación de referencia al momento del corte:** `P1_Plano_R01_brazos_variables.html`
 
 > **Principio rector:** El sistema debe representar fielmente la estructura conceptual con el mínimo ruido gráfico posible y conservar los resultados geométricos ya validados para no repetir cálculos innecesarios.
@@ -285,8 +285,12 @@ El registro se conserva en el campo opcional `topologyRegister` (`p1.topology.v1
 
 ---
 
-## Extensión de implementación · 11 de noviembre de 2026
+## Extensión de implementación · 11 de noviembre de 2026 (histórico)
 
 Las representaciones 02–04 y el modo oscuro se documentan en [VISTAS_02_04.md](VISTAS_02_04.md). El mismo grafo conceptual se utiliza en las cuatro vistas; cada representación derivada conserva su geometría y registro topológico propios. Los arrastres manuales de 01 se someten a validación transaccional: los cambios que alteran relaciones fijadas o crean rutas inválidas se revierten.
 
 **Estado de validación:** la existencia de una vista no implica su aprobación. La pantalla marca explícitamente «En revisión» si aparecen conexiones pendientes o infracciones geométricas. No se declara terminada una vista hasta cumplir las comprobaciones de DRC, radios, topología y pruebas en navegador.
+
+## Reintento radial · 12 de noviembre de 2026
+
+Esta rama sustituye 02 y 03 por el radial acotado descrito en [VISTAS_02_04.md](VISTAS_02_04.md). Las referencias anteriores a compactación y órbitas son históricas. **El caso completo PPR sigue pendiente de aceptación; esta rama no está lista para integrarse en main.**

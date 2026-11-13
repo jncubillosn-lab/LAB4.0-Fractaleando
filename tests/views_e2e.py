@@ -1,5 +1,5 @@
-"""Ensayos E2E de las tres vistas reales en navegador y tema oscuro."""
-import http.server, socketserver, threading, json
+"""Ensayos E2E: radial aceptado/rechazado, vista 04 y persistencia."""
+import http.server, socketserver, threading, json, os
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
@@ -9,7 +9,7 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
 with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
  threading.Thread(target=srv.serve_forever,daemon=True).start()
  with sync_playwright() as p:
-  browser=p.chromium.launch(channel='chrome', headless=True)
+  browser=p.chromium.launch(**({'executable_path':os.environ['P1_BROWSER_PATH']} if os.environ.get('P1_BROWSER_PATH') else {'channel':'chrome'}), headless=True)
   page=browser.new_page(viewport={'width':1440,'height':900},accept_downloads=True)
   page.on('dialog',lambda dialog:dialog.accept())
   errors=[];page.on('pageerror',lambda exc:errors.append(str(exc)))
@@ -21,7 +21,17 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
   original=page.locator('#nodes [data-node-id="p1"]').get_attribute('transform')
   assert baseline['valid'] and baseline['crossings']==71
   # Visitas conservan el grafo y puntos de control independientes.
-  for mode in ('02','03','04'):
+  # PPR is still an unresolved acceptance case: preserve 01 rather than
+  # display an invalid radial layout, and never export it as validated.
+  page.locator('[data-view="02"]').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().rejected!==null',timeout=60000)
+  rejected=page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().rejected')
+  assert not rejected['constraintsValid'] and rejected['maxAllowedGap']==106,rejected
+  assert page.locator('#derivedNodes .node').count()==0
+  assert page.locator('#nodes').evaluate('(el)=>getComputedStyle(el).display')!='none'
+  assert 'Se muestra 01 Plano' in page.locator('#derivedStatus').inner_text()
+  assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.topology()')==baseline
+  for mode in ('04',):
    page.locator('[data-view="'+mode+'"]').click()
    page.wait_for_function('(mode)=>window.P1_PLANO_DIAGNOSTICO.views().mode===mode && window.P1_PLANO_DIAGNOSTICO.views().current?.mode===mode',arg=mode,timeout=90000)
    result=page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current')
@@ -62,16 +72,25 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().current!==null',timeout=60000)
   four=page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current')
   assert four['arms']==4 and four['nodes']==5 and four['radialOrder'] and four['overlaps']==0 and four['valid'],four
+  # Four-arm radial must actually route and validate, not just reject.
+  page.locator('[data-view="02"]').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().current?.mode==="02"',timeout=60000)
+  radial=page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current')
+  assert radial['valid'] and radial['constraintsValid'],radial
+  assert radial['maxGap']<=radial['maxAllowedGap']+.001 and radial['arms']==4,radial
+  assert radial['pending']==0 and radial['audit']['invalid']==0,radial
+  assert not page.locator('[data-view="03"]').count()
   # Persistencia completa: recuperar vista válida sin computar rutas nuevas.
   page.locator('[data-view="01"]').click()
   with page.expect_download() as dl:page.locator('#jsonBtn').click()
   filename=dl.value.path()
   saved=json.loads(Path(filename).read_text(encoding='utf8'))
-  assert saved['derivedViews']['04']['topology']['schema']=='p1.topology.v1'
+  assert saved['derivedViews']['02']['topology']['schema']=='p1.topology.v1'
+  assert '03' not in saved['derivedViews']
   page.locator('#fileInput').set_input_files(filename)
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===4',timeout=60000)
-  page.locator('[data-view="04"]').click()
-  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().current?.mode==="04"',timeout=60000)
+  page.locator('[data-view="02"]').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().current?.mode==="02"',timeout=60000)
   restored=page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current')
   assert restored['valid'] and restored['restored'] and restored['calculations']==0,restored
 

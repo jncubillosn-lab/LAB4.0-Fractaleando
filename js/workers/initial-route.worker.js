@@ -28,7 +28,7 @@ export function computeInitialRoutes({nodes,edges,positions,rects,levels,mode='0
  let attempts=ordered.length;
  const missing=routes.filter(([key,r])=>!r.points);
  const retryBudget=mode==='01'?120:Math.min(1400,Math.max(180,missing.length*18));
- const routeBudgetMs=mode==='01'?2900:mode==='02'?6800:mode==='03'?2500:4700;
+ const routeBudgetMs=mode==='01'?2900:mode==='02'?6800:4700;
  const retryDeadline=performance.now()+(mode==='01'?12000:24000);
  if(missing.length){
   const used=new Map();
