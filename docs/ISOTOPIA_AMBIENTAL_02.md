@@ -1,6 +1,6 @@
 # P1 · 02 — Motor de isotopía ambiental certificada
 
-**Estado:** motor funcional de conservación topológica; **02 Compacto todavía no está aprobado**.  
+**Estado de cierre (13 de noviembre de 2026):** motor experimental que preservó la inmersión de 01 durante ciertos movimientos certificados; **02 Compacto NO se resolvió y su desarrollo está detenido**. Este archivo conserva pruebas e hitos **históricos**, no certifica la vista final. Véanse [P1-ET-02.md](P1-ET-02.md) y [ESTADO_02_CONGELADO.md](ESTADO_02_CONGELADO.md).  
 **Alcance:** exclusivamente la representación 02, sin cambios de cálculo en 01, 03 ni 04.
 
 ## 1. La primera norma es estructural
@@ -11,7 +11,7 @@ Cada desplazamiento solo se adopta si existe un certificado de inyectividad y ad
 
 ## 2. Certificado matemático
 
-Sea `u(p)` un campo de desplazamiento **continuo y afín por triángulos**. Para una deformación `H_t(p)=p+t u(p)` con `t∈[0,1]`, imponemos la cota estricta:
+Sea `u(p)` un campo de desplazamiento **continuo y afín por triángulos**. Para una deformación `H_t(p)=p+t u(p)` con `t∈[0,1]`, **uno de los certificados suficientes implementados** exige la cota estricta:
 
 ```text
 Lip(u) ≤ max( ||Du|| en cada triángulo ) < 1
@@ -25,7 +25,9 @@ Entonces, para dos puntos distintos p y q:
 
 Ningún par de puntos coincide durante el movimiento. Fuera de la región de influencia el campo es cero, por lo que la aplicación es un homeomorfismo del plano para todo `t`. La concatenación finita de pasos certificados conserva esta propiedad.
 
-La función se representa en una retícula local de 3×3 rectángulos, subdivididos en **18 triángulos**. Los valores del campo son constantes sobre una meseta que contiene íntegramente los cuadros del grupo y su perímetro, incluyendo los stubs de 19 unidades. Las cajas que no pertenecen al grupo deben quedar completamente fuera del soporte. Así, **cada cuadro permanece rectangular y todos sus puertos se trasladan rígidamente**.
+También se implementaron **cizallamientos monótonos por eje**, certificados cuando la coordenada desplazada es estrictamente creciente durante toda la deformación, aunque la cota global de Lipschitz no sea menor que uno. Los corredores X/Y se comprimen mediante transformaciones monótonas que conservan rígidos los perímetros. **Son condiciones suficientes de algunos movimientos; no resuelven por sí solas el crecimiento radial global.**
+
+La función local de parches se representa en una retícula de 3×3 rectángulos, subdivididos en **18 triángulos**. Los valores del campo son constantes sobre una meseta que contiene íntegramente los cuadros del grupo y su perímetro, incluyendo los stubs de 19 unidades. Las cajas que no pertenecen al grupo deben quedar completamente fuera del soporte. Así, **cada cuadro permanece rectangular y todos sus puertos se trasladan rígidamente**.
 
 ## 3. Transformación exacta de los recorridos
 
@@ -84,7 +86,7 @@ El ensayo usa el ejemplo PPR con **210 conceptos, 217 vínculos y 71 cruces orig
 
 Los primeros movimientos hacen una traslación global y ensayan deformaciones locales o de ramas. Aunque los movimientos geométricos pueden ser todavía pequeños, el objetivo es demostrar **la primera norma de forma independiente del algoritmo de distribución**.
 
-Solo después debe añadirse un planificador de movimientos para que las ramas crezcan angularmente desde J0, cumplan `max r(Jk) < min r(J(k+1))` y minimicen longitud real. Ese planificador no podrá escribir directamente posiciones o rutas: únicamente solicitar operaciones certificadas a este motor.
+Después de las primeras pruebas **se añadió** `CertifiedMovePlanner.js`, que propuso movimientos certificados para acercar J1, mejorar sectores y ordenar radios. **No logró un resultado que cumpliera las cuatro normas simultáneamente**: una candidata angular aumentó un 35,43 % la longitud de conexiones y conservó escalones radiales incorrectos. El sistema terminó mostrando una compresión de 01 como alternativa provisional, que el usuario rechazó por no ser la vista radial buscada. El planificador no se considera una solución aprobada y queda detenido.
 
 **La garantía de la primera norma es condición de entrada y de cada movimiento, no una reparación posterior.**
 
@@ -109,3 +111,11 @@ La vista E2E del PPR verificó:
 Esto **no satisface aún la distribución radial ni la pertenencia sectorial exigidas para 02**. La interfaz muestra expresamente `BASE COMPACTADA DE 01 (aún no es 02)` y `EN REVISIÓN`. El sistema nunca interpreta reducción de recorrido como evidencia suficiente de validez total.
 
 El resultado mejora la disciplina de aceptación, pero no se debe confundir con una solución al diseño radial angular. Para completar la vista es necesario producir una inmersión simultáneamente sectorial, radial y de menor longitud mediante transformaciones homeomorfas certificadas. El PR continúa en borrador.
+
+## Nota final de alcance, 13 de noviembre de 2026
+
+**No hay una vista 02 aprobada.** La capacidad de conservar todas las rutas y cruces durante deformaciones del plano es un avance del motor, pero **no** acredita las normas N2, N3 ni N4 de [P1-ET-02](P1-ET-02.md). Las pruebas anteriores (incluidas las tablas de longitud) se mantienen como hitos cronológicos, no como el estado final.
+
+La última alternativa visible registrada en el caso PPR del navegador tenía 217 vínculos y 71 cruces conservados, menor longitud y menor superficie que 01; sin embargo, dejó **80 conceptos fuera de sus sectores y 4 escalones radiales incumplidos**, con el J1 más lejano a unos **1564,83** desde J0 y un J2 a apenas **685,71**. **El usuario rechazó explícitamente el resultado visual**: es una compresión de columnas, no el crecimiento angular desde J0 acordado.
+
+Esta es la conclusión del documento: **motor parcial comprobado; planificador geométrico incompleto; desarrollo detenido; no fusionar en producción**. Consultar [ESTADO_02_CONGELADO.md](ESTADO_02_CONGELADO.md) antes de cualquier eventual reanudación.
