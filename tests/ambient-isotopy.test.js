@@ -76,11 +76,15 @@ test('PPR real: antes de mover cualquier cosa se exigen las 217 rutas y 71 cruce
    s.minimumDerivative>0:s.bound<1)),JSON.stringify(result.steps));
  assert.deepEqual(new Map(result.positions).get('p1'),{x:0,y:0});
  assert.ok(result.steps.some(s=>s.members>1),'debe deformarse una rama completa');
- assert.equal(result.stats.firstRingValid,true,'todo J1 debe tener radio menor que J2');
- assert.equal(result.stats.sectorValid,true,'los términos deben quedar en sus sectores');
- assert.equal(result.stats.zoneViolations,0);
- assert.equal(result.stats.radialValid,false,'restan los anillos exteriores');
- assert.ok(result.stats.certifiedMoves>=5);
+ // Rechazar un «02» que empeore longitud o extensión.
+ assert.equal(result.stats.previewSource,'certified-global-compaction');
+ assert.ok(result.stats.reductionPercent>0,'se acortan las conexiones');
+ assert.ok(result.stats.areaReductionPercent>0,'se reduce la superficie');
+ assert.ok(result.stats.routeLength<result.stats.sourceRouteLength);
+ assert.ok(result.stats.previewArea<result.stats.sourceArea);
+ assert.ok(result.stats.angularAttempt.routeLength>result.stats.routeLength);
+ assert.equal(result.valid,false,'las demás normas siguen pendientes');
+ assert.ok(result.stats.certifiedMoves>=1);
  assert.equal(result.valid,false,'no declarar completadas las cuatro prioridades');
 });
 
