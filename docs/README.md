@@ -1,5 +1,7 @@
 # P1 — Diagramador de relaciones conceptuales
 
+**Lectura actualizada al 13 de noviembre de 2026:** consultar [Memoria del proyecto](MEMORIA_PROYECTO_P1.md) y [Normas jerarquizadas v0.1](NORMAS_JERARQUIZADAS_P1.md). Este archivo conserva cortes históricos; las afirmaciones sobre etapas futuras, estado observacional o cuatro vistas deben leerse con sus fechas. El radial sigue en borrador y no está aprobado.
+
 **Documento inicial de referencia · Requerimientos, normas y arquitectura del motor gráfico**  
 **Corte de referencia:** 10 de noviembre de 2026  
 **Versión del documento:** 0.1  

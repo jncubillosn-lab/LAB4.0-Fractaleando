@@ -1,5 +1,7 @@
 # P1 — Radial acotado 02 y Espiral 04
 
+**Actualización documental del 13 de noviembre de 2026:** los valores H mínima global, 14 px de margen y orden vertical convertido en angular son decisiones del intento, no normas definitivas. Las aclaraciones posteriores se recogen en [normas v0.1](NORMAS_JERARQUIZADAS_P1.md). GitHub Actions completó correctamente la [ejecución 145](https://github.com/jncubillosn-lab/LAB4.0-Fractaleando/actions/runs/43355519745); esto no resuelve el PPR, cuya prueba verifica el rechazo. Véase la [memoria completa](MEMORIA_PROYECTO_P1.md).
+
 **Estado del reintento, 12 de noviembre de 2026: experimental. El caso PPR completo sigue sin resolver.**
 
 02 Compactación y 03 Órbitas se sustituyen por 02 Radial acotado. 01 conserva su geometría y edición; 04 no cambia de alcance.

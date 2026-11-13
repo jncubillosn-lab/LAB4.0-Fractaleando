@@ -1,5 +1,7 @@
 # P1 / 01 Plano — Arquitectura de implementación
 
+**Nota del 13 de noviembre de 2026:** descripción de la arquitectura base de 01. Las vistas derivadas y el control transaccional posterior se registran en la [memoria](MEMORIA_PROYECTO_P1.md). La nueva semántica de orden circular con libertad de lado está definida en las [normas v0.1](NORMAS_JERARQUIZADAS_P1.md), pero no se declara implementada.
+
 **Alcance:** programa existente de diagramas conceptuales, etapa 01. No contiene vistas futuras ni una migración de datos conceptual.
 
 ## Invariantes

@@ -1,5 +1,7 @@
 # Registro topológico paralelo — P1 / 01 · Plano
 
+**Nota del 13 de noviembre de 2026:** este documento describe el registro histórico. Fijar caras de puertos y precedencias absolutas no equivale a la aclaración posterior: los puertos pueden cambiar de lado conservando orden circular. La adaptación del código sigue pendiente. Véanse [normas v0.1](NORMAS_JERARQUIZADAS_P1.md) y [memoria](MEMORIA_PROYECTO_P1.md). La afirmación de validación solo observacional corresponde a la primera intervención; después se incorporó control transaccional en arrastres de 01.
+
 **Objeto:** verificar que la estructura relativa del dibujo permanezca reconocible aunque cambien las distancias, tamaños o proporciones del plano.
 
 Este registro es **independiente del punto de control geométrico**. El registro de geometría guarda coordenadas, rectángulos, puertos y polilíneas. El registro topológico guarda **identidades, precedencias y relaciones** de esos elementos. Uno no sustituye al otro.
