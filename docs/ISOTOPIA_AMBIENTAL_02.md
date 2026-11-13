@@ -87,3 +87,25 @@ Los primeros movimientos hacen una traslación global y ensayan deformaciones lo
 Solo después debe añadirse un planificador de movimientos para que las ramas crezcan angularmente desde J0, cumplan `max r(Jk) < min r(J(k+1))` y minimicen longitud real. Ese planificador no podrá escribir directamente posiciones o rutas: únicamente solicitar operaciones certificadas a este motor.
 
 **La garantía de la primera norma es condición de entrada y de cada movimiento, no una reparación posterior.**
+
+## Corrección de la vista preliminar tras inspección visual (12 de noviembre de 2026)
+
+Las capturas comparativas evidenciaron que el intento angular conservaba la topología pero **no compactaba**: las rutas crecieron aproximadamente **35,43 %**, con tres transiciones de radio incumplidas. El motor privilegiaba mejoras de sectores mientras podía empeorar excesivamente el recorrido real. Esa candidata se conserva para diagnóstico, pero **no puede exhibirse como representación compacta**.
+
+Se añadió `CertifiedPreviewFallback.js`, una barrera para la presentación de geometrías incompletas. Desde el checkpoint íntegro de 01, realiza compresiones globales y continuas de corredores en X e Y; solo acepta una etapa si **reducen simultáneamente** el recorrido real y la superficie envolvente, con idénticos 217 vínculos y 71 cruces. Después recentra J0 mediante traslación global certificada, sin mover J0 aisladamente ni deshacer la topología.
+
+La vista E2E del PPR verificó:
+
+| Variable | 01 | Previsualización corregida |
+|---|---:|---:|
+| Recorrido total | 174985,028 | 156657,646 |
+| Superficie envolvente | 34573061,4 | 27699893,45 |
+| Vínculos completos | 217 | 217 |
+| Cruces preservados | 71 | 71 |
+| Diferencias topológicas | — | 0 |
+| Reducción del recorrido | — | **10,47 %** |
+| Reducción de superficie | — | **19,88 %** |
+
+Esto **no satisface aún la distribución radial ni la pertenencia sectorial exigidas para 02**. La interfaz muestra expresamente `BASE COMPACTADA DE 01 (aún no es 02)` y `EN REVISIÓN`. El sistema nunca interpreta reducción de recorrido como evidencia suficiente de validez total.
+
+El resultado mejora la disciplina de aceptación, pero no se debe confundir con una solución al diseño radial angular. Para completar la vista es necesario producir una inmersión simultáneamente sectorial, radial y de menor longitud mediante transformaciones homeomorfas certificadas. El PR continúa en borrador.
