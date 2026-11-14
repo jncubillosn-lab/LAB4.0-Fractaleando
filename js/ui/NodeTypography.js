@@ -53,9 +53,10 @@ export function fitNodeLabel(text,{w,h},measure,{preferred=24,paddingX=14,paddin
 
 export function paintNodeLabel(textEl,node,box,ctx){
  const preferred=node.id==='p1'?30:node.parent==='p1'?25:24;
- const measure=(text,size)=>{ctx.font=`700 ${size}px ${NODE_FONT},Arial,sans-serif`;return ctx.measureText(text).width;};
- const verticalMetrics=(text,size)=>{ctx.font=`700 ${size}px ${NODE_FONT},Arial,sans-serif`;const m=ctx.measureText(text);
-  return {ascent:m.actualBoundingBoxAscent,descent:m.actualBoundingBoxDescent};};
+ const metrics=(text,size)=>['600','700'].map(weight=>{ctx.font=`${weight} ${size}px ${NODE_FONT},Arial,sans-serif`;return ctx.measureText(text);});
+ const measure=(text,size)=>Math.max(...metrics(text,size).map(m=>m.width));
+ const verticalMetrics=(text,size)=>{const both=metrics(text,size);
+  return {ascent:Math.max(...both.map(m=>m.actualBoundingBoxAscent)),descent:Math.max(...both.map(m=>m.actualBoundingBoxDescent))};};
  const fit=fitNodeLabel(node.text,box,measure,{preferred,verticalMetrics});
  textEl.replaceChildren();textEl.style.setProperty('--node-font-size',fit.size+'px');
  textEl.setAttribute('data-font-size',fit.size);textEl.setAttribute('data-padding-x',fit.paddingX);textEl.setAttribute('data-padding-y',fit.paddingY);
