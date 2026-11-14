@@ -21,7 +21,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   print('E2E: abriendo sitio construido',flush=True)
   page.goto('http://127.0.0.1:'+str(srv.server_address[1])+'/index.html',wait_until='domcontentloaded')
   build=page.locator('meta[name="application-build"]').get_attribute('content')
-  assert '0.2.11' in page.locator('meta[name="application-version"]').get_attribute('content')
+  assert '0.2.12' in page.locator('meta[name="application-version"]').get_attribute('content')
   page.wait_for_function('[...document.fonts].filter(f=>f.family==="Rajdhani"&&f.status==="loaded").length===2')
   def check_labels(selector):
    labels=page.locator(selector).evaluate_all("""els=>els.map(el=>{
@@ -119,7 +119,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    output=os.environ.get('P1_SCREENSHOTS')
    if output:
     Path(output).mkdir(parents=True,exist_ok=True)
-    page.screenshot(path=str(Path(output)/('Fractaleando_0_2_11_'+mode+'.png')))
+    page.screenshot(path=str(Path(output)/('Fractaleando_0_2_12_'+mode+'.png')))
   assert results['04']['baseBounds']==results['02']['bounds']
   assert results['04']['baseMeanGap']==results['02']['meanGap']
   assert results['04']['W']==.25 and results['04']['armWidthFactor']==.85 and results['04']['T']==0

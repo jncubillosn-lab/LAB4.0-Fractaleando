@@ -27,8 +27,9 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   d0=page.evaluate('({...window.P1_PLANO_DIAGNOSTICO,audit:window.P1_PLANO_DIAGNOSTICO.audit()})')
   initial_picture=page.locator('#nodes .node,#lines .svgline').evaluate_all('(els)=>els.map(el=>[el.getAttribute("transform"),el.getAttribute("d"),el.getAttribute("aria-label"),el.querySelector("rect")?.outerHTML,[...el.querySelectorAll("tspan")].map(t=>t.outerHTML)])')
   print('PERFORMANCE_STARTUP',json.dumps({**page.evaluate('({startupMs:performance.now(),textMeasures:window.__textMeasures})'),
-   'routingMs':d0['lastDurationMs'],'attempts':d0['routeCalculations'],
+   'attempts':d0['routeCalculations'],
    'pictureSHA256':hashlib.sha256(json.dumps(initial_picture,ensure_ascii=False,separators=(',',':')).encode()).hexdigest()}),flush=True)
+  assert hashlib.sha256(json.dumps(initial_picture,ensure_ascii=False,separators=(',',':')).encode()).hexdigest()=='143ae8e33864b4d0af8b16a5f31bca685e370f3662f90775e05bfb57de4a83b6'
   print('DIAGNOSTICO_NAVEGADOR', {k:d0[k] for k in ['visible','routes','pending','lastOperation','lastDurationMs','initialBuilds','routeCalculations']},d0['audit'],errors,flush=True)
   assert d0['routes']==217 and d0['pending']==0, d0
   d=page.evaluate('window.P1_PLANO_DIAGNOSTICO.audit()')
