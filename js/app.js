@@ -596,7 +596,7 @@ function refreshNodeLabel(n){
  el.setAttribute('aria-label',n.text);
 }
 function selectNode(id){
- if(derived.mode!=='01'){state.selected=id;updatePanel();derived.switchVisibility(derived.mode);derived.paintSelection();$('editHint').textContent='Selección: ascendencia hasta J0 y conexiones al siguiente nivel.';return;}
+ if(derived.mode!=='01'){state.selected=id;updatePanel();derived.switchVisibility(derived.mode);derived.paintSelection();$('editHint').textContent='Selección: ascendencia hasta J0 y todos los vínculos adyacentes.';return;}
  const changingEdges=Boolean(state.unlinkFrom||state.linkFrom);
  if(state.unlinkFrom){const first=state.unlinkFrom;if(first===id){state.unlinkFrom=null;toast('Eliminación cancelada.');}else if(removeLink(first,id)){state.unlinkFrom=null;} }
  else if(state.linkFrom){if(state.linkFrom===id){state.linkFrom=null;toast('Conexión cancelada.');}else if(state.linkFrom==='p1'||id==='p1'){state.linkFrom=null;toast('Para crear otro brazo J1, selecciona P1 y utiliza «+ Concepto».');}else if(!state.edges.some(e=>(e.from===state.linkFrom&&e.to===id)||(e.from===id&&e.to===state.linkFrom))){saveUndo();state.edges.push({from:state.linkFrom,to:id,style:state.linkStyle});state.linkFrom=null;toast('Conceptos vinculados.');}else{state.linkFrom=null;toast('Este vínculo ya existe.');}}
