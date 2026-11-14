@@ -37,10 +37,19 @@ jobs:
       - name: Probar la página modular real y el worker
         env:
           P1_SITE_ROOT: _site
+          P1_SCREENSHOTS: artifacts/views
         run: |
           python tests/pages_e2e.py
           python tests/views_e2e.py
           python tests/topology_guard_e2e.py
+
+      - name: Conservar evidencia de las vistas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-vistas-0.2.3
+          path: artifacts/views/
+          if-no-files-found: ignore
 
   deploy-pages:
     name: Publicar P1 en GitHub Pages

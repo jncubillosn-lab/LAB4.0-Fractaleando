@@ -1,4 +1,5 @@
 import {routeSegments,segmentAxis,segmentIntersection,segmentEntersRect,leavesRect} from './SegmentGeometry.js';
+import {circuitRelation} from './CircuitGeometry.js';
 // Routing of individual semantic links on a single 2D plane.
 // The class is instantiated for the active document; its algorithms are
 // extracted from the last approved R01 implementation, not a retired engine.
@@ -76,6 +77,7 @@ export class PcbRouter {
   }
   function onSegmentVal(z,a,b,eps=0){return z>=Math.min(a,b)-eps&&z<=Math.max(a,b)+eps;}
   function segmentRelation(a,b,c,d){
+   if(mode!=='01')return circuitRelation(a,b,c,d,ROUTE_SEPARATION);
    const ah=segmentAxis(a,b)==='h',bh=segmentAxis(c,d)==='h';
    if(ah===bh){
     const dist=ah?Math.abs(a.y-c.y):Math.abs(a.x-c.x);
@@ -316,5 +318,6 @@ export class PcbRouter {
   this.clearance=ROUTE_CLEAR;
   this.separation=ROUTE_SEPARATION;
   this.portStub=PORT_STUB;
+  this.circuit45=mode!=='01';
  }
 }

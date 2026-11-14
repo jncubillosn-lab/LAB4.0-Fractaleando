@@ -1,4 +1,5 @@
-import {segmentAxis,segmentEntersRect,leavesRect} from './SegmentGeometry.js';
+import {segmentAxis,segmentEntersRect,leavesRect,segmentIntersection} from './SegmentGeometry.js';
+import {circuitAxis} from './CircuitGeometry.js';
 // Independent DRC-like checks. Cannot approve a path merely because
 // it avoids third-party boxes: endpoints, ports, and continuity matter (H02).
 export class GeometryValidator {
@@ -25,12 +26,17 @@ export class GeometryValidator {
    if((usedPorts.get(id)||[]).some(p=>Math.hypot(p.x-port.x,p.y-port.y)<8))return {ok:false,reason:'Puerto repetido'};
   }
   const segments=this.router.allSegments(points);
-  if(segments.length!==points.length-1||segments.some(s=>!segmentAxis(s.a,s.b)))return {ok:false,reason:'Segmento no ortogonal o vacío'};
+  if(segments.length!==points.length-1||segments.some(s=>!(this.router.circuit45?circuitAxis:segmentAxis)(s.a,s.b)))return {ok:false,reason:'Segmento fuera de H/V/45 o vacío'};
+  if(this.router.circuit45)for(let i=0;i<segments.length;i++)for(let j=0;j<i-1;j++){
+   const a=segments[i],b=segments[j];
+   if(segmentIntersection(a.a,a.b,b.a,b.b)||this.router.segmentRelation(a.a,a.b,b.a,b.b).overlap)
+    return {ok:false,reason:'La ruta se cruza o solapa consigo misma'};
+  }
   if(!leavesRect(segments[0].a,segments[0].b,first)||
      !leavesRect(segments.at(-1).b,segments.at(-1).a,last))
    return {ok:false,reason:'La ruta no sale o llega por la cara de su puerto'};
   // Independent acceptance: do not inherit the router's endpoint exemptions.
-  let crossings=0;
+  let crossings=0;const crossPoints=[];
   for(const [i,s] of segments.entries()){
    for(const r of rects){
     if(r.id===edge.from&&i===0||r.id===edge.to&&i===segments.length-1)continue;
@@ -39,7 +45,11 @@ export class GeometryValidator {
    }
    for(const old of occupied){const q=this.router.segmentRelation(s.a,s.b,old.a,old.b);
     if(q.overlap)return {ok:false,reason:'Ruta invade obstáculo o solapa otra ruta'};
-    crossings+=q.cross;
+    if(q.cross){
+     if(!this.router.circuit45||!crossPoints.some(p=>p.key===old.routeKey&&Math.hypot(p.x-q.at.x,p.y-q.at.y)<1e-6)){
+      crossings+=q.cross;if(this.router.circuit45)crossPoints.push({...q.at,key:old.routeKey});
+     }
+    }
    }
   }
   return {ok:true,crossings};
@@ -52,7 +62,7 @@ export class GeometryValidator {
    const v=this.validateRoute(rt,rects,occupied,ports);
    if(!v.ok){invalid++;details.push({edge:rt.edge,reason:v.reason});if(v.reason==='Puerto repetido')portsRepeated++;}
    else crossings+=v.crossings;
-   occupied.push(...this.router.allSegments(rt.points));
+   occupied.push(...this.router.allSegments(rt.points).map(s=>({...s,routeKey:[rt.edge.from,rt.edge.to].sort().map(encodeURIComponent).join('|')})));
    for(const [id,p] of [[rt.edge.from,rt.fromPort],[rt.edge.to,rt.toPort]])if(p){if(!ports.has(id))ports.set(id,[]);ports.get(id).push(p);}
   }
   return {boxes,invalid,crossings,portsRepeated,drawn,details};

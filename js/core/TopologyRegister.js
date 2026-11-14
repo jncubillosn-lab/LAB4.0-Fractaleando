@@ -1,7 +1,8 @@
 // Registro topológico independiente de la geometría métrica de P1.
 // Conserva órdenes y cruces, no coordenadas ni distancias absolutas.
 // No modifica rutas ni cuadros: describe, compara y valida puntos de control.
-import {segmentIntersection} from '../geometry/SegmentGeometry.js';
+import {segmentIntersection,segmentAxis} from '../geometry/SegmentGeometry.js';
+import {routeCrossings} from '../geometry/CircuitGeometry.js';
 
 export class TopologyRegister {
  constructor({edgeKey}) {
@@ -116,10 +117,11 @@ export class TopologyRegister {
    }
   }
   const crossEvents=new Map(keys.map(k=>[k,[]]));
+  const circuit=[...routed.values()].some(r=>r.style==='circuit45');
   const sortedPair=(a,b)=>a<b?[a,b]:[b,a];
   // Cada cruce se reconoce por las dos rutas y por su posición relativa
   // a lo largo de cada una; no se guarda la coordenada del cruce.
-  for(let i=0;i<segments.length;i++){
+  if(!circuit)for(let i=0;i<segments.length;i++){
    const u=segments[i];
    for(let j=0;j<i;j++){
     const v=segments[j];
@@ -144,6 +146,17 @@ export class TopologyRegister {
     crossEvents.get(v.key).push({other:u.key,at:atV});
    }
   }
+  if(circuit){
+   const all=[...routed];
+   for(let i=0;i<all.length;i++)for(let j=0;j<i;j++){
+    const [u,ru]=all[i],[v,rv]=all[j],events=routeCrossings(ru.points,rv.points);
+    if(!events.length)continue;
+    const [a,b]=sortedPair(u,v);
+    crossingPairs.set(JSON.stringify([a,b]),{a,b,count:events.length,over:keys.indexOf(a)>keys.indexOf(b)?a:b});
+    crossEvents.get(u).push(...events.map(e=>({other:v,at:e.at})));
+    crossEvents.get(v).push(...routeCrossings(rv.points,ru.points).map(e=>({other:u,at:e.at})));
+   }
+  }
   for(const [key,events] of crossEvents){
    events.sort((a,b)=>a.at-b.at||a.other.localeCompare(b.other));
    crossingOrders[key]=events.map(e=>e.other);
@@ -157,11 +170,13 @@ export class TopologyRegister {
   const corridor=new Map();
   for(let i=0;i<segments.length;i++){
    const u=segments[i];
+   if(circuit&&!segmentAxis(u.a,u.b))continue;
    const best={positive:null,negative:null};
    const pu=u.h?u.a.y:u.a.x;
    for(let j=0;j<segments.length;j++){
     if(i===j)continue;
     const v=segments[j];
+    if(circuit&&!segmentAxis(v.a,v.b))continue;
     if(v.key===u.key||v.h!==u.h)continue;
     const pv=u.h?v.a.y:v.a.x;
     const dist=pv-pu,delta=Math.abs(dist);
