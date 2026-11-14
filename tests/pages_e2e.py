@@ -158,6 +158,28 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
     page.locator('#derivedNodes [data-node-id="'+endpoint+'"]').click()
     assert 'hierarchy-focus' in page.locator('#derivedLines [data-edge-key="f0|t0"]').get_attribute('class')
   print('El vínculo nuevo entre pares aparece y se resalta desde cualquiera de sus puntas en las tres vistas',flush=True)
+  # Real 0.2.10 export: a split word and a freely moved root below its children.
+  # Migration must enlarge the box locally, preserving the edited positions.
+  page.locator('[data-view="01"]').click()
+  fixture=Path(__file__).parent/'fixtures'/'word-wrap-0.2.10.json'
+  previous=json.loads(fixture.read_text(encoding='utf8'))
+  page.locator('#fileInput').set_input_files(fixture)
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===3&&document.querySelectorAll("#nodes .node").length===4',timeout=30000)
+  word=page.locator('#nodes [data-node-id="b0"]')
+  assert word.locator('tspan').all_text_contents()==['Especialización']
+  assert float(word.locator('rect').get_attribute('width'))>170
+  assert word.locator('text').evaluate('(el)=>getComputedStyle(el).fontSize')=='24px'
+  with page.expect_download() as migrated:page.locator('#jsonBtn').click()
+  current=json.loads(Path(migrated.value.path()).read_text(encoding='utf8'))
+  assert [(n['id'],n['x'],n['y']) for n in current['nodes']]==[(n['id'],n['x'],n['y']) for n in previous['nodes']]
+  # Changing only the required width must also update geometry while typing.
+  word.click()
+  old_width=float(word.locator('rect').get_attribute('width'))
+  page.locator('#nodeText').fill('Electroencefalografista')
+  page.wait_for_function('(old)=>+document.querySelector("#nodes [data-node-id=b0] rect").getAttribute("width")>old',arg=old_width,timeout=30000)
+  assert word.locator('tspan').all_text_contents()==['Electroencefalografista']
+  assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.pending')==0
+  print('Palabras completas: ancho automático, edición y posiciones de 0.2.10 conservadas',flush=True)
   assert not errors,errors
   b.close()
  srv.shutdown()

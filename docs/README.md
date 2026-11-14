@@ -2,7 +2,11 @@
 
 **[▶ Abrir la aplicación en GitHub Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/)**
 
-**Implementación actual 0.2.10:** [editor libre y espiral estable recuperada de 0.2.8](EDITOR_LIBRE_0_2_10.md).
+**Implementación actual 0.2.11:** [palabras completas y ancho automático](PALABRAS_COMPLETAS_0_2_11.md).
+Los cuadros se ensanchan para contener la palabra más larga, con letra fija de
+24 px y márgenes. Las frases siguen repartiendo renglones entre palabras.
+
+**Base 0.2.10:** [editor libre y espiral estable recuperada de 0.2.8](EDITOR_LIBRE_0_2_10.md).
 El Editor permite reordenar cuadros y adaptar sus puertos sin bloquearlos por
 cambios de cruces. Compacto y Espiral conservan sus controles de 0.2.8.
 El experimento W–D–T se retira; se mantiene la exportación 4K y los demás ajustes.
