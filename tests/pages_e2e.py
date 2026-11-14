@@ -150,9 +150,13 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   page.wait_for_function("""()=>document.querySelector('#lines [data-edge-key="f0|t0"] .svgline')?.getAttribute('stroke-dasharray')==='0 5'""",timeout=30000)
   assert page.locator('#lines [data-edge-key="f0|n13"] .svgline').get_attribute('stroke-dasharray')=='7 5'
   print('Cruces unificados; letra fija y cuadro creciente; tres estilos guardados y restaurados',flush=True)
+  metrics=page.locator('#nodes .node').evaluate_all('(els)=>els.map(el=>[el.dataset.nodeId,{w:+el.querySelector("rect").getAttribute("width"),h:+el.querySelector("rect").getAttribute("height")}])')
   for mode in ('02','04'):
    page.locator('[data-view="'+mode+'"]').click()
-   page.wait_for_function('(m)=>window.P1_PLANO_DIAGNOSTICO.views().current?.mode===m',arg=mode,timeout=120000)
+   page.wait_for_function('(m)=>window.P1_PLANO_DIAGNOSTICO.views().current?.mode===m||document.querySelector("#derivedStatus").textContent.startsWith("No se completó")',arg=mode,timeout=120000)
+   if page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current?.mode')!=mode:
+    print('DERIVED_INPUT',json.dumps({'nodes':styled_graph['nodes'],'edges':styled_graph['edges'],'metrics':metrics,'sourcePositions':[[n['id'],{'x':n['x'],'y':n['y']}] for n in styled_graph['nodes']],'topologyReference':styled_graph['topologyRegister'],'mode':mode}),flush=True)
+    raise AssertionError(page.locator('#derivedStatus').inner_text())
    assert page.locator('#derivedLines .svgline').count()==17
    for endpoint in ('f0','t0'):
     page.locator('#derivedNodes [data-node-id="'+endpoint+'"]').click()
