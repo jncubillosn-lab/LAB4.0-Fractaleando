@@ -21,7 +21,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   print('E2E: abriendo sitio construido',flush=True)
   page.goto('http://127.0.0.1:'+str(srv.server_address[1])+'/index.html',wait_until='domcontentloaded')
   build=page.locator('meta[name="application-build"]').get_attribute('content')
-  assert '0.2.5' in page.locator('meta[name="application-version"]').get_attribute('content')
+  assert '0.2.6' in page.locator('meta[name="application-version"]').get_attribute('content')
   page.wait_for_function('[...document.fonts].filter(f=>f.family==="Rajdhani"&&f.status==="loaded").length===2')
   def check_labels(selector):
    labels=page.locator(selector).evaluate_all("""els=>els.map(el=>{
@@ -69,9 +69,10 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
     const scale=+document.querySelector('#derivedLines').dataset.crossingScale;
     const dash=5/scale;
     return {same:el.getAttribute('d')===upper.getAttribute('d'),width:(+el.getAttribute('stroke-width'))*scale,
+     crossedWidth:parseFloat(getComputedStyle(upper).strokeWidth),
      dashed:el.getAttribute('stroke-dasharray')===(upper.classList.contains('transverse')?dash+' '+dash:null)};
    })""")
-   assert cuts and all(c['same'] and c['dashed'] and c['width']<=3.4001 for c in cuts),cuts
+   assert cuts and all(c['same'] and c['dashed'] and abs(c['width']-3*c['crossedWidth'])<.001 for c in cuts),cuts
    # Select J3 by click: actual ancestry plus its J4 neighbours, with no reroute.
    before_selection=page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current.calculations')
    positions=page.locator('#derivedNodes .node').evaluate_all('(els)=>els.map(el=>el.getAttribute("transform"))')
@@ -86,16 +87,17 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    assert page.locator('#derivedNodes .node').evaluate_all('(els)=>els.map(el=>el.getAttribute("transform"))')==positions
    page.locator('#derivedNodes [data-node-id="b42"]').press('Enter')
    assert page.locator('#derivedNodes [data-node-id="b42"]').get_attribute('aria-pressed')=='true'
+   widths=page.locator('#derivedLines .svgline').evaluate_all('(els)=>els.map(el=>[el.dataset.hierarchyLevel,el.style.getPropertyValue("--hierarchy-width")])')
+   values=[float(row[1]) for row in widths]
+   assert min(values)==1.35 and max(values)==2.05,values
+   assert page.locator('#derivedLines .hierarchy-focus .svgline').evaluate_all('(els)=>els.every(el=>Math.abs(parseFloat(getComputedStyle(el).strokeWidth)-parseFloat(el.style.getPropertyValue("--hierarchy-width"))-.75)<.001)')
    if mode=='02':
     assert result['coreSpacing']['factor']==.5,result
     assert all(not link['constrained'] and abs(link['ratio']-.5)<.001 for link in result['coreSpacing']['links']),result['coreSpacing']
-    widths=page.locator('#derivedLines .svgline').evaluate_all('(els)=>els.map(el=>[el.dataset.hierarchyLevel,el.style.getPropertyValue("--hierarchy-width")])')
-    values=[float(row[1]) for row in widths]
-    assert min(values)==1.35 and max(values)==2.05,values
     normal_core=page.locator('#derivedLines g:not(.hierarchy-focus) > path[data-hierarchy-level="1"]').first
     assert abs(float(normal_core.evaluate('(el)=>parseFloat(getComputedStyle(el).strokeWidth)'))-2.05)<.001
     focused=page.locator('#derivedLines .hierarchy-focus .svgline').first
-    assert abs(float(focused.evaluate('(el)=>parseFloat(getComputedStyle(el).strokeWidth)'))-2.8)<.001
+    assert abs(float(focused.evaluate('(el)=>parseFloat(getComputedStyle(el).strokeWidth)-parseFloat(el.style.getPropertyValue("--hierarchy-width"))'))-.75)<.001
     with page.expect_download() as weighted_svg:page.locator('#svgBtn').click()
     weighted=Path(weighted_svg.value.path()).read_text(encoding='utf8')
     assert '@font-face' in weighted and 'data:font/ttf;base64,' in weighted and 'SIL OPEN FONT LICENSE' in weighted
@@ -112,7 +114,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    output=os.environ.get('P1_SCREENSHOTS')
    if output:
     Path(output).mkdir(parents=True,exist_ok=True)
-    page.screenshot(path=str(Path(output)/('Fractaleando_0_2_5_'+mode+'.png')))
+    page.screenshot(path=str(Path(output)/('Fractaleando_0_2_6_'+mode+'.png')))
   assert results['04']['baseBounds']==results['02']['bounds']
   assert results['04']['baseMeanGap']==results['02']['meanGap']
   page.locator('#themeBtn').click()
@@ -161,8 +163,8 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
     for(let x=0;x<30;x++){let ink=false;for(let y=0;y<3;y++)if(pixels[(y*30+x)*4]<230)ink=true;
      run=ink?0:run+1;longest=Math.max(longest,run);}return longest;
    }""",base64.b64encode(raster).decode())
-   assert gap<=3,{'zoom':zoom,'white_gap_pixels':gap}
+   assert gap<=5,{'zoom':zoom,'white_gap_pixels':gap}
   page.locator('#crossing-probe').evaluate('(el)=>el.remove()')
-  print('Cruces rasterizados: cortes de hasta 3 px en cuatro escalas',flush=True)
+  print('Cruces rasterizados: halo proporcional estable en cuatro escalas',flush=True)
   browser.close()
  srv.shutdown()

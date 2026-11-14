@@ -2,7 +2,12 @@
 
 **[▶ Abrir la aplicación en GitHub Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/)**
 
-**Implementación actual 0.2.5:** [tipografía técnica, cruces y puertos](TIPOGRAFIA_CONEXIONES_0_2_5.md).
+**Implementación actual 0.2.6:** [creación de hermanos en reloj y trazos proporcionales](CONCEPTOS_RELOJ_0_2_6.md).
+«+ Concepto» conserva el padre seleccionado y distribuye sus hijos de cinco
+en cinco horas. Los grosores por jerarquía se mantienen al seleccionar y
+los cruces reservan un blanco proporcional a la línea superior.
+
+**Base visual 0.2.5:** [tipografía técnica, cruces y puertos](TIPOGRAFIA_CONEXIONES_0_2_5.md).
 Rajdhani aumenta la presencia del texto dentro de sus cuadros; los cruces
 siguen el grosor real de las líneas y los puertos evitan las esquinas.
 Conserva el [núcleo compacto y grosor por jerarquía](NUCLEO_JERARQUIAS_0_2_4.md), la

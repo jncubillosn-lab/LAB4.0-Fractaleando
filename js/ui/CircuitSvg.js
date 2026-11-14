@@ -1,7 +1,8 @@
 import {routeCrossings} from '../geometry/CircuitGeometry.js';
 import {hierarchyStrokeProfile} from './HierarchyStroke.js';
 
-const HALO=.6,EMPHASIS=3.4;
+const EMPHASIS_DELTA=.75;
+const crossingWidth=stroke=>Number((3*stroke).toFixed(4));
 function scaleCut(cut,scale){
  cut.setAttribute('stroke-width',Number(cut.dataset.screenStroke||cut.dataset.baseStroke)/scale);
  if(cut.dataset.overDashed==='true')cut.setAttribute('stroke-dasharray',(5/scale)+' '+(5/scale));
@@ -12,7 +13,7 @@ export function scaleCrossings(linesEl,scale=1){
 }
 export function emphasizeCrossings(linesEl,keys){
  for(const cut of linesEl.querySelectorAll('[data-over-edge-key]')){
-  cut.dataset.screenStroke=keys.has(cut.dataset.overEdgeKey)?String(EMPHASIS):cut.dataset.baseStroke;
+  cut.dataset.screenStroke=keys.has(cut.dataset.overEdgeKey)?String(crossingWidth(Number(cut.dataset.overWidth)+EMPHASIS_DELTA)):cut.dataset.baseStroke;
   scaleCut(cut,Number(linesEl.dataset.crossingScale)||1);
  }
 }
@@ -35,7 +36,7 @@ export function drawCircuitSvg({ordered,routes,linesEl,sEl,edgeKey,mode,nodes,le
  for(const [index,{e,key,r,d,cuts}] of entries.entries()){
   const group=sEl('g',{'data-edge-key':key}),points=r.points;
   const attrs={d,class:'svgline'+(e.kind==='transversal'?' transverse':''),'data-link-from':e.from,'data-link-to':e.to};
-  if(mode==='02'){
+  {
    const stroke=strokeFor(e);attrs.style='--hierarchy-width:'+stroke.width;attrs['data-hierarchy-level']=stroke.depth;
   }
   if(cuts.length){
@@ -49,9 +50,9 @@ export function drawCircuitSvg({ordered,routes,linesEl,sEl,edgeKey,mode,nodes,le
     // Windows limit the copied stroke; the windows themselves erase nothing.
     for(const p of events)clip.append(sEl('circle',{cx:p.x,cy:p.y,r:128,'data-crossing':'true'}));
     defs.append(clip);
-    const base=Number((strokeFor(upper.e).width+HALO).toFixed(3));
+    const overWidth=strokeFor(upper.e).width,base=crossingWidth(overWidth);
     const cutAttrs={d:upper.d,fill:'none',stroke:'black','stroke-width':base,'stroke-linecap':'round','stroke-linejoin':'round',
-     'clip-path':'url(#'+clipId+')','data-over-edge-key':upper.key,'data-base-stroke':base};
+     'clip-path':'url(#'+clipId+')','data-over-edge-key':upper.key,'data-over-width':overWidth,'data-base-stroke':base};
     if(upper.e.kind==='transversal'){cutAttrs['stroke-dasharray']='5 5';cutAttrs['data-over-dashed']='true';}
     const cut=sEl('path',cutAttrs);mask.append(cut);
     if(!cutsByUpper.has(upper.key))cutsByUpper.set(upper.key,[]);cutsByUpper.get(upper.key).push(cut);
@@ -60,7 +61,7 @@ export function drawCircuitSvg({ordered,routes,linesEl,sEl,edgeKey,mode,nodes,le
   }
   group.append(sEl('path',attrs));linesEl.append(group);elements.set(key,group);
   const hover=active=>{for(const cut of cutsByUpper.get(key)||[]){
-   cut.dataset.screenStroke=active||group.classList.contains('hierarchy-focus')?String(EMPHASIS):cut.dataset.baseStroke;
+   cut.dataset.screenStroke=active||group.classList.contains('hierarchy-focus')?String(crossingWidth(Number(cut.dataset.overWidth)+EMPHASIS_DELTA)):cut.dataset.baseStroke;
    scaleCut(cut,Number(linesEl.dataset.crossingScale)||1);
   }};
   group.addEventListener('pointerenter',()=>hover(true));
