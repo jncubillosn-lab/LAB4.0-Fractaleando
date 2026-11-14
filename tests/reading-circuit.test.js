@@ -39,6 +39,13 @@ test('los cruces de derivadas admiten distancia cero al giro y se cuentan una so
  assert.equal(router.segmentRelation(path[0],path[1],cross[0],cross[1]).cross,1);
  assert.equal(router.segmentRelation(path[1],path[2],cross[0],cross[1]).overlap,false);
 });
+
+test('el editor con franjas blancas permite cruces junto al giro y conserva la prohibición de compartir carriles',()=>{
+ const edit=new PcbRouter({state:{nodes:[],edges:[]},nodeById:()=>null,mode:'01',allowBendCrossings:true});
+ assert.equal(edit.segmentRelation({x:0,y:0},{x:50,y:0},{x:49,y:-20},{x:49,y:20}).cross,1);
+ assert.equal(edit.segmentRelation({x:0,y:0},{x:50,y:0},{x:10,y:2},{x:40,y:2}).overlap,true);
+ assert.equal(edit.circuit45,false);
+});
 test('auditor acepta H/V/45 y rechaza la diagonal si invade un cuadro',()=>{
  const a=rect('a',0,0),b=rect('b',200,100);
  const route={edge:{from:'a',to:'b'},fromPort:{side:'right',x:30,y:0,sx:49,sy:0},toPort:{side:'left',x:170,y:100,sx:151,sy:100},

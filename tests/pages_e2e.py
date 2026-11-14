@@ -75,7 +75,12 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   parent_text=page.locator('#nodeText').input_value()
   # Repeated clicks in one frame must create siblings, with independent slots.
   page.locator('#addBtn').evaluate('(el)=>{for(let i=0;i<12;i++)el.click()}')
-  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===15',timeout=30000)
+  page.wait_for_function('document.querySelectorAll("#nodes .node").length===16',timeout=30000)
+  with page.expect_download() as siblings:page.locator('#jsonBtn').click()
+  graph=json.loads(Path(siblings.value.path()).read_text(encoding='utf8'))
+  pending=[r['key'] for r in graph['planeCheckpoint']['routes'] if not r['points']]
+  assert not pending,{'pending':pending,'nodes':[{k:n.get(k) for k in ['id','x','y','clockStep']} for n in graph['nodes']]}
+  assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.routes')==15
   assert page.locator('#nodes .selected').get_attribute('data-node-id')=='b0'
   assert page.locator('#nodeText').input_value()==parent_text
   assert page.evaluate('document.activeElement.id')!='nodeText'
@@ -84,8 +89,6 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    old_xy=[float(v) for v in re.findall(r'-?\d+(?:\.\d+)?',transform)]
    new_xy=[float(v) for v in re.findall(r'-?\d+(?:\.\d+)?',actual)]
    assert all(abs(a-b)<.011 for a,b in zip(old_xy,new_xy)),{'id':node_id,'before':transform,'after':actual}
-  with page.expect_download() as siblings:page.locator('#jsonBtn').click()
-  graph=json.loads(Path(siblings.value.path()).read_text(encoding='utf8'))
   parent=next(n for n in graph['nodes'] if n['id']=='b0')
   children=[n for n in graph['nodes'] if n['parent']=='b0']
   assert len(children)==12 and all(n['branch']==parent['branch'] for n in children),children

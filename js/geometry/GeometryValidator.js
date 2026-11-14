@@ -48,8 +48,8 @@ export class GeometryValidator {
    for(const old of occupied){const q=this.router.segmentRelation(s.a,s.b,old.a,old.b);
     if(q.overlap)return {ok:false,reason:'Ruta invade obstáculo o solapa otra ruta'};
     if(q.cross){
-     if(!this.router.circuit45||!crossPoints.some(p=>p.key===old.routeKey&&Math.hypot(p.x-q.at.x,p.y-q.at.y)<1e-6)){
-      crossings+=q.cross;if(this.router.circuit45)crossPoints.push({...q.at,key:old.routeKey});
+     if(!this.router.circuit45&&!this.router.allowBendCrossings||!crossPoints.some(p=>p.key===old.routeKey&&Math.hypot(p.x-q.at.x,p.y-q.at.y)<1e-6)){
+      crossings+=q.cross;if(this.router.circuit45||this.router.allowBendCrossings)crossPoints.push({...q.at,key:old.routeKey});
      }
     }
    }

@@ -119,7 +119,7 @@ function layoutPlane(visible){
  lastLayoutBounds={left:left-mid,right:right-mid,top:Math.min(...entries.map(p=>p.y-p.h/2)),bottom:Math.max(...entries.map(p=>p.y+p.h/2))};
  return {positions,metrics,rects};
 }
-const router=new PcbRouter({state,nodeById,clamp});
+const router=new PcbRouter({state,nodeById,clamp,allowBendCrossings:true});
 const {prefSide,assignPorts,allSegments,segmentHitsRect,onSegmentVal,segmentRelation,routeShapeValid,simplify,fastCandidates,findRouteGrid,routeEdge,linePath,intersections}=router;
 // P1/01: geometría persistente. Una versión se consolida tras cada modificación.
 // El filtrado de profundidad NO invoca este motor.
@@ -269,7 +269,7 @@ function chooseRoute(edge,occupied,original=null,previousRects=new Map()){
  if(!original?.points){
   const facing=routeFacingLink({edge,a,b,fromPorts:optionsA,toPorts:optionsB,makePort:portAt,
    usedFrom:portsAtNode(edge.from),usedTo:portsAtNode(edge.to),router,obstacles:[...plane.rects.values()],occupied,
-   onAttempt:()=>diag.routeCalculations++,deadline:began+950});
+   allowCrossings:true,onAttempt:()=>diag.routeCalculations++,deadline:began+950});
   if(facing)return {edge:{...edge},points:facing.points,crosses:facing.crosses,fromPort:facing.fromPort,toPort:facing.toPort};
  }
  const pA=ar?[ar,...optionsA]:optionsA;

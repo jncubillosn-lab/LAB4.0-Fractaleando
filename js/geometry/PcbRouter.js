@@ -5,7 +5,7 @@ import {assignOrderedPorts} from './OrderedPorts.js';
 // The class is instantiated for the active document; its algorithms are
 // extracted from the last approved R01 implementation, not a retired engine.
 export class PcbRouter {
- constructor({state,nodeById,clamp,mode='01',deadline=Infinity}){
+ constructor({state,nodeById,clamp,mode='01',deadline=Infinity,allowBendCrossings=false}){
   const ROUTE_CLEAR=9, ROUTE_SEPARATION=mode==='01'?6:3, PORT_STUB=19;
   const CROSS_CLEAR=mode==='01'?9:3;
   const expired=()=>performance.now()>=deadline;
@@ -79,7 +79,7 @@ export class PcbRouter {
   }
   function onSegmentVal(z,a,b,eps=0){return z>=Math.min(a,b)-eps&&z<=Math.max(a,b)+eps;}
   function segmentRelation(a,b,c,d){
-   if(mode!=='01')return circuitRelation(a,b,c,d,ROUTE_SEPARATION);
+   if(mode!=='01'||allowBendCrossings)return circuitRelation(a,b,c,d,ROUTE_SEPARATION);
    const ah=segmentAxis(a,b)==='h',bh=segmentAxis(c,d)==='h';
    if(ah===bh){
     const dist=ah?Math.abs(a.y-c.y):Math.abs(a.x-c.x);
@@ -349,5 +349,6 @@ export class PcbRouter {
   this.separation=ROUTE_SEPARATION;
   this.portStub=PORT_STUB;
   this.circuit45=mode!=='01';
+  this.allowBendCrossings=allowBendCrossings;
  }
 }

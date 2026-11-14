@@ -37,6 +37,8 @@ avanza 3:30: 12, 3:30, 7, 10:30, 2, 5:30… Se calcula el primer espacio libre d
 cada dirección y se elige el más cercano. Se avanza desde la posición elegida.
 `clockStep` conserva ese paso al guardar, importar o deshacer; los conceptos
 anteriores siguen siendo compatibles. No se desplazan cuadros ni rutas existentes.
+La edición usa la misma política de cruces junto al giro que las franjas blancas
+de las otras vistas. Las referencias históricas conservan su cálculo original.
 
 ## Espiral W–D–T
 
