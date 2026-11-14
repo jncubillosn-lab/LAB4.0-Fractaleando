@@ -12,8 +12,19 @@ test('tipografía fija: crece el cuadro y se conservan contenido y márgenes',()
  for(const text of ['Autopercepción','Optimización de recursos','Tecnologías rurales y capacidades locales','ÁÉÍÓÚ ñ ü','UnConceptoLargoSinEspaciosQueDebeConservarse']){
   const fitted=fitNodeLabel(text,{w:178,h:69},measure);
   assert.ok(fitted.fits,text);assert.equal(fitted.size,NODE_FONT_SIZE,text);assert.ok(fitted.h>=69);
-  assert.equal(fitted.wrapped.join('').replaceAll(' ',''),text.replaceAll(' ',''));
-  assert.ok(fitted.wrapped.every(s=>measure(s,fitted.size)<=150.001));
+  assert.deepEqual(fitted.wrapped.flatMap(line=>line.split(/\s+/)),text.split(/\s+/));
+  assert.ok(fitted.wrapped.every(s=>measure(s,fitted.size)<=fitted.w-2*fitted.paddingX+.001));
+ }
+});
+
+test('Intrascendencia y Especialización ensanchan la caja sin cortar letras ni reducir la fuente',()=>{
+ const measure=(text,size)=>text.length*size*.48;
+ for(const text of ['Intrascendencia','Especialización']){
+  const current=fitNodeLabel(text,{w:170,h:53},measure);
+  assert.deepEqual(current.wrapped,[text]);assert.ok(current.w>170);assert.equal(current.size,24);
+  assert.ok(current.w-measure(text,24)>=28);
+  const previous=fitNodeLabel(text,{w:170,h:53},measure,{growToWords:false});
+  assert.equal(previous.w,170);assert.ok(previous.wrapped.length>1);
  }
 });
 test('un término largo aumenta la altura, nunca reduce el tamaño de letra',()=>{

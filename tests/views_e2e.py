@@ -21,7 +21,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   print('E2E: abriendo sitio construido',flush=True)
   page.goto('http://127.0.0.1:'+str(srv.server_address[1])+'/index.html',wait_until='domcontentloaded')
   build=page.locator('meta[name="application-build"]').get_attribute('content')
-  assert '0.2.10' in page.locator('meta[name="application-version"]').get_attribute('content')
+  assert '0.2.11' in page.locator('meta[name="application-version"]').get_attribute('content')
   page.wait_for_function('[...document.fonts].filter(f=>f.family==="Rajdhani"&&f.status==="loaded").length===2')
   def check_labels(selector):
    labels=page.locator(selector).evaluate_all("""els=>els.map(el=>{
@@ -33,10 +33,13 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
      const m=ctx.measureText(t.textContent),ty=+t.getAttribute('y');
      return [-m.actualBoundingBoxLeft-x,x+w-m.actualBoundingBoxRight,ty-m.actualBoundingBoxAscent-y,y+h-ty-m.actualBoundingBoxDescent];
     }).flat();
-    return {id:el.dataset.nodeId,family:style.fontFamily,size:parseFloat(style.fontSize),margin:Math.min(...margins)};
+    const words=value=>value.trim().split(/\s+/).join('|');
+    return {id:el.dataset.nodeId,family:style.fontFamily,size:parseFloat(style.fontSize),margin:Math.min(...margins),
+     wholeWords:words([...text.querySelectorAll('tspan')].map(t=>t.textContent).join(' '))===words(el.getAttribute('aria-label'))};
    })""")
    assert all('Rajdhani' in label['family'] and label['margin']>=8.5 for label in labels),[l for l in labels if l['margin']<8.5]
    assert {l['size'] for l in labels}=={24},labels
+   assert all(l['wholeWords'] for l in labels),[l for l in labels if not l['wholeWords']]
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===217',timeout=60000)
   page.locator('#showAllBtn').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===217',timeout=60000)
@@ -116,7 +119,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    output=os.environ.get('P1_SCREENSHOTS')
    if output:
     Path(output).mkdir(parents=True,exist_ok=True)
-    page.screenshot(path=str(Path(output)/('Fractaleando_0_2_10_'+mode+'.png')))
+    page.screenshot(path=str(Path(output)/('Fractaleando_0_2_11_'+mode+'.png')))
   assert results['04']['baseBounds']==results['02']['bounds']
   assert results['04']['baseMeanGap']==results['02']['meanGap']
   assert results['04']['W']==.25 and results['04']['armWidthFactor']==.85 and results['04']['T']==0

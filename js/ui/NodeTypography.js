@@ -22,14 +22,19 @@ export function loadNodeTypography(){
 }
 export const exportedNodeFonts=()=>embeddedCss;
 
-export function fitNodeLabel(text,{w,h=53},measure,{paddingX=14,paddingY=9,verticalMetrics=(s,size)=>({ascent:size*.8,descent:size*.2})}={}){
- const width=Math.max(1,w-2*paddingX),size=NODE_FONT_SIZE;
+export function fitNodeLabel(text,{w,h=53},measure,{paddingX=14,paddingY=9,growToWords=true,verticalMetrics=(s,size)=>({ascent:size*.8,descent:size*.2})}={}){
+ const size=NODE_FONT_SIZE;
+ // A word defines the minimum box width. Keep the requested width for
+ // wrapping phrases, but never split a word to satisfy that preference.
+ if(growToWords)w=Math.ceil(Math.max(w,2*paddingX,...String(text||' ').split(/\s+/).map(word=>measure(word,size)+2*paddingX)));
+ const width=Math.max(1,w-2*paddingX);
  const wrap=size=>{
   const lines=[];
   for(const paragraph of String(text||' ').split(/\r?\n/)){
    let line='';
    for(const word of (paragraph.trim()||' ').split(/\s+/)){
-    if(measure(word,size)>width){
+    // The old character wrapping is used only to read earlier checkpoints.
+    if(!growToWords&&measure(word,size)>width){
      if(line){lines.push(line);line='';}
      for(const char of word){if(line&&measure(line+char,size)>width){lines.push(line);line='';}line+=char;}
     }else{
@@ -48,12 +53,12 @@ export function fitNodeLabel(text,{w,h=53},measure,{paddingX=14,paddingY=9,verti
   baseline:ascent-blockHeight/2,fits:wrapped.every(s=>measure(s,size)<=width+.001)};
 }
 
-export function nodeGeometry(node,ctx,box={w:node.width,h:node.id==='p1'?67:53}){
+export function nodeGeometry(node,ctx,box={w:node.width,h:node.id==='p1'?67:53},{growToWords=true}={}){
  const metrics=(text,size)=>['600','700'].map(weight=>{ctx.font=`${weight} ${size}px ${NODE_FONT},Arial,sans-serif`;return ctx.measureText(text);});
  const measure=(text,size)=>Math.max(...metrics(text,size).map(m=>m.width));
  const verticalMetrics=(text,size)=>{const both=metrics(text,size);
   return {ascent:Math.max(...both.map(m=>m.actualBoundingBoxAscent)),descent:Math.max(...both.map(m=>m.actualBoundingBoxDescent))};};
- return fitNodeLabel(node.text,box,measure,{verticalMetrics});
+ return fitNodeLabel(node.text,box,measure,{verticalMetrics,growToWords});
 }
 export function paintNodeLabel(textEl,node,box,ctx){
  const fit=nodeGeometry(node,ctx,box);

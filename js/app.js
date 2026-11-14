@@ -41,6 +41,9 @@ function textLines(text,width,fontsize=14){
 }
 function legacyGeometry(n){const size=n.id==='p1'?20:isFirstLevel(n)?15:14;const wrapped=textLines(n.text,n.width,size);const lineheight=size===20?25:21;return{w:n.width,h:Math.max(n.id==='p1'?67:53,wrapped.length*lineheight+27),wrapped,size,lineheight};}
 const geometry=n=>nodeGeometry(n,ctx);
+// Read 0.2.8–0.2.10 checkpoints at their original dimensions, then resize
+// locally with current geometry, keeping the user's edited positions.
+const previousTypographyGeometry=n=>nodeGeometry(n,ctx,undefined,{growToWords:false});
 // La profundidad es propiedad del grafo. No existe un máximo de seis generaciones.
 // Model-level operations are separate from drawing and route finding.
 const treeChildren=(id,branch)=>graph.treeChildren(id,branch);
@@ -521,7 +524,7 @@ function schedule(){syncDepth();if(state.renderQueued)return;state.renderQueued=
 function selected(){return nodeById(state.selected);}
 function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(state.toastTimer);state.toastTimer=setTimeout(()=>el.classList.remove('show'),3500);}
 function updatePanel(){const n=selected();$('selectionInfo').textContent=n?`${n.id==='p1'?'NÚCLEO':'RAMA '+String(n.branch+1).padStart(2,'0')} · ${linksOf(n.id).length} vínculos`:'Selecciona un recuadro para editarlo.';
- $('sourceInfo').textContent=n?.source||'';$('nodeText').disabled=!n;$('nodeText').value=n?.text||'';$('widthOut').textContent=n?`${n.width} px`:'—';$('narrowBtn').disabled=!n;$('widenBtn').disabled=!n;
+ $('sourceInfo').textContent=n?.source||'';$('nodeText').disabled=!n;$('nodeText').value=n?.text||'';$('widthOut').textContent=n?`${geometry(n).w} px`:'—';$('narrowBtn').disabled=!n;$('widenBtn').disabled=!n;
  $('deleteBtn').disabled=!n||n.id==='p1';$('linkBtn').disabled=!n||n.id==='p1';$('linkBtn').classList.toggle('on',state.linkFrom!==null);
  $('unlinkBtn').disabled=!n||!linksOf(n.id).some(e=>e.from!=='p1'&&e.to!=='p1');
  $('unlinkBtn').classList.toggle('on',state.unlinkFrom!==null);
@@ -642,9 +645,16 @@ for(const button of document.querySelectorAll('button[data-link-style]'))
  button.addEventListener('click',()=>setLinkStyle(button.dataset.linkStyle));
 $('linkBtn').onclick=()=>{state.unlinkFrom=null;if(state.linkFrom){state.linkFrom=null;toast('Conexión cancelada.');}else if(selected()){state.linkFrom=state.selected;toast('Ahora selecciona el concepto de destino.');}updatePanel();};
 $('unlinkBtn').onclick=()=>{state.linkFrom=null;if(state.unlinkFrom){state.unlinkFrom=null;toast('Eliminación cancelada.');}else if(selected()){state.unlinkFrom=state.selected;toast('Ahora selecciona el concepto conectado cuyo vínculo quieres retirar.');}updatePanel();};
-let typingStarted=false,geometryTypingTimer=null;$('nodeText').addEventListener('focus',()=>typingStarted=false);$('nodeText').addEventListener('input',e=>{const n=selected();if(!n)return;if(!typingStarted){saveUndo();typingStarted=true;}const oldH=geometry(n).h;n.text=e.target.value||' ';if(geometry(n).h===oldH)refreshNodeLabel(n);else{refreshNodeLabel(n);clearTimeout(geometryTypingTimer);geometryTypingTimer=setTimeout(schedule,240);}});
+let typingStarted=false,geometryTypingTimer=null;$('nodeText').addEventListener('focus',()=>typingStarted=false);
+$('nodeText').addEventListener('input',e=>{
+ const n=selected();if(!n)return;if(!typingStarted){saveUndo();typingStarted=true;}
+ const shown=plane.metrics.get(n.id)||geometry(n);n.text=e.target.value||' ';const next=geometry(n);
+ $('widthOut').textContent=next.w+' px';clearTimeout(geometryTypingTimer);geometryTypingTimer=null;
+ if(next.w===shown.w&&next.h===shown.h)refreshNodeLabel(n);
+ else geometryTypingTimer=setTimeout(()=>{geometryTypingTimer=null;schedule();},240);
+});
 $('nodeText').addEventListener('blur',()=>{typingStarted=false;if(geometryTypingTimer){clearTimeout(geometryTypingTimer);geometryTypingTimer=null;schedule();}});
-function changeWidth(delta){const n=selected();if(!n)return;saveUndo();n.width=clamp(n.width+delta,n.id==='p1'?96:125,350);$('widthOut').textContent=n.width+' px';schedule();}
+function changeWidth(delta){const n=selected();if(!n)return;saveUndo();n.width=clamp(geometry(n).w+delta,n.id==='p1'?96:125,350);$('widthOut').textContent=geometry(n).w+' px';schedule();}
 $('narrowBtn').onclick=()=>changeWidth(-20);$('widenBtn').onclick=()=>changeWidth(20);
 $('depth').addEventListener('input',e=>{state.depth=Number(e.target.value);scheduleVisibility();});
 // El filtro es solo visibilidad: conserva coordenadas, zoom y cámara.
@@ -654,7 +664,7 @@ function download(filename,data,mime){const blob=new Blob([data],{type:mime});co
 $('jsonBtn').onclick=()=>{download('p1-grafo.json',JSON.stringify({schema:'p1.graph.v1',nodes:state.nodes,edges:state.edges,planeCheckpoint:saveCheckpoint(),topologyRegister:topology.reference,derivedViews:derived.exportData()},null,2),'application/json;charset=utf-8');toast('Se exportó el grafo completo, independiente de la vista.');};
 $('loadBtn').onclick=()=>$('fileInput').click();
 $('fileInput').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!Array.isArray(data.nodes)||!Array.isArray(data.edges))throw Error('Formato de grafo no reconocido');const ids=new Set(data.nodes.map(n=>n.id));if(ids.size!==data.nodes.length||!ids.has('p1'))throw Error('Debe existir un núcleo P1 único.');if(!data.nodes.every(n=>typeof n.id==='string'&&typeof n.text==='string'&&Number.isFinite(n.width)&&n.width>=90&&n.width<=500&&Number.isInteger(n.branch)&&n.branch>=-1&&Number.isFinite(n.x)&&Number.isFinite(n.y))||!data.edges.every(o=>ids.has(o.from)&&ids.has(o.to)&&(o.style===undefined||validLinkStyle(o.style)))||!data.nodes.filter(n=>n.parent==='p1').every(n=>data.edges.some(e=>e.from==='p1'&&e.to===n.id))||data.edges.some(e=>e.to==='p1'||(e.from==='p1'&&data.nodes.find(n=>n.id===e.to)?.parent!=='p1'))||!data.nodes.every(n=>n.parent==null||ids.has(n.parent)))throw Error('Hay nodos, conexiones o vínculos del núcleo inválidos.');
- cancelInitialBuild();saveUndo();derived.reset();derived.restoreData(data.derivedViews);topology.reset();stagedTopology=data.topologyRegister??null;state.nodes=data.nodes.map(n=>({...n}));state.focusRoot='p1';state.edges=data.edges.map(e=>({...e}));state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;state.depth=maximumDepth();setLinkStyle('solid');state.idSerial=Math.max(0,...state.nodes.map(n=>Number(n.id.match(/^n(\d+)$/)?.[1]||0)));plane.ready=false;plane.nodeEls.clear();plane.routeEls.clear();linesEl.replaceChildren();nodesEl.replaceChildren();if(!validateSavedCheckpoint(data.planeCheckpoint)&&!validateSavedCheckpoint(data.planeCheckpoint,legacyGeometry)){plane.ready=false;}pendingAutoFit=true;updatePanel();schedule();toast('Grafo importado.');}catch(error){toast('No se pudo importar: '+error.message);}finally{e.target.value='';}});
+ cancelInitialBuild();saveUndo();derived.reset();derived.restoreData(data.derivedViews);topology.reset();stagedTopology=data.topologyRegister??null;state.nodes=data.nodes.map(n=>({...n}));state.focusRoot='p1';state.edges=data.edges.map(e=>({...e}));state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;state.depth=maximumDepth();setLinkStyle('solid');state.idSerial=Math.max(0,...state.nodes.map(n=>Number(n.id.match(/^n(\d+)$/)?.[1]||0)));plane.ready=false;plane.nodeEls.clear();plane.routeEls.clear();linesEl.replaceChildren();nodesEl.replaceChildren();if(!validateSavedCheckpoint(data.planeCheckpoint)&&!validateSavedCheckpoint(data.planeCheckpoint,previousTypographyGeometry)&&!validateSavedCheckpoint(data.planeCheckpoint,legacyGeometry)){plane.ready=false;}pendingAutoFit=true;updatePanel();schedule();toast('Grafo importado.');}catch(error){toast('No se pudo importar: '+error.message);}finally{e.target.value='';}});
 // Exportación sin cambiar el modelo, el zoom ni la posición del lienzo.
 // SVG autónomo: incluye los estilos de los nodos, las líneas y las máscaras.
 const themeButton=$('themeBtn');
