@@ -1,5 +1,7 @@
 # Memoria del proyecto P1
 
+**Actualización 0.2.2:** [motor compacto, resultados y límites](MOTOR_COMPACTO_0_2_2.md). Las descripciones del intento anterior que siguen se conservan como registro histórico.
+
 Objetivos normas parámetros decisiones y estado de desarrollo
 
 Corte documental: 13 de noviembre de 2026. Versión 1.2 de la memoria. Proyecto PPR — LAB4.0 Fractaleando.

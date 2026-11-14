@@ -4,7 +4,8 @@ import {routeSegments,segmentAxis,segmentIntersection,segmentEntersRect,leavesRe
 // extracted from the last approved R01 implementation, not a retired engine.
 export class PcbRouter {
  constructor({state,nodeById,clamp,mode='01',deadline=Infinity}){
-  const ROUTE_CLEAR=9, ROUTE_SEPARATION=6, PORT_STUB=19;
+  const ROUTE_CLEAR=9, ROUTE_SEPARATION=mode==='01'?6:3, PORT_STUB=19;
+  const CROSS_CLEAR=mode==='01'?9:3;
   const expired=()=>performance.now()>=deadline;
   function prefSide(node,other,edge,box,otherBox){
    if(mode==='02'||mode==='04'){
@@ -89,8 +90,8 @@ export class PcbRouter {
     // Una intersección a menos de 7 px de un giro no admite un salto legible.
     const d1=Math.min(Math.hypot(x-a.x,y-a.y),Math.hypot(x-b.x,y-b.y));
     const d2=Math.min(Math.hypot(x-c.x,y-c.y),Math.hypot(x-d.x,y-d.y));
-    if(d1<9||d2<9)return {overlap:true,cross:0};
-    return {overlap:false,cross:1,at:{x,y}};
+    if(d1<CROSS_CLEAR||d2<CROSS_CLEAR)return {overlap:true,cross:0};
+    return {overlap:false,cross:1,at:{x,y,clearance:Math.min(d1,d2)}};
    }
    return {overlap:false,cross:0};
   }
@@ -109,7 +110,7 @@ export class PcbRouter {
   }
   function simplify(points){
    const out=[];
-   for(const p of points){if(out.length&&Math.hypot(out.at(-1).x-p.x,out.at(-1).y-p.y)<.05)continue;
+   for(const p of points){if(out.length&&Math.hypot(out.at(-1).x-p.x,out.at(-1).y-p.y)<1e-7)continue;
     out.push(p);
     while(out.length>=3){const [a,b,c]=out.slice(-3),axis=segmentAxis(a,b);
      if(axis&&axis===segmentAxis(b,c)&&axis===segmentAxis(a,c))out.splice(out.length-2,1);else break;}
@@ -295,12 +296,13 @@ export class PcbRouter {
    for(let i=1;i<coords.length;i++){
     const a=coords[i-1],b=coords[i];
     const isH=Math.abs(a.y-b.y)<.01;
-    const p=jumps.filter(c=>isH?Math.abs(c.y-a.y)<.05&&onSegmentVal(c.x,a.x,b.x,-8):Math.abs(c.x-a.x)<.05&&onSegmentVal(c.y,a.y,b.y,-8))
+    const endMargin=mode==='01'?8:2;
+    const p=jumps.filter(c=>isH?Math.abs(c.y-a.y)<.05&&onSegmentVal(c.x,a.x,b.x,-endMargin):Math.abs(c.x-a.x)<.05&&onSegmentVal(c.y,a.y,b.y,-endMargin))
      .sort((x,y)=>isH?((x.x-a.x)*Math.sign(b.x-a.x)-(y.x-a.x)*Math.sign(b.x-a.x)):((x.y-a.y)*Math.sign(b.y-a.y)-(y.y-a.y)*Math.sign(b.y-a.y)));
     for(const c of p){
      const sign=isH?Math.sign(b.x-a.x):Math.sign(b.y-a.y);
      const near=p.filter(v=>v!==c).reduce((v,q)=>Math.min(v,Math.hypot(q.x-c.x,q.y-c.y)),Infinity);
-     const r=Math.max(1.25,Math.min(7,near/3.3));
+     const r=Math.max(1.25,Math.min(7,near/3.3,(c.clearance??9)-.75,c.maxRadius??Infinity));
      c.radius=r;
      if(isH)d+=` L ${fmt(c.x-r*sign)} ${fmt(a.y)} Q ${fmt(c.x)} ${fmt(c.y-r*1.28)} ${fmt(c.x+r*sign)} ${fmt(a.y)}`;
      else d+=` L ${fmt(a.x)} ${fmt(c.y-r*sign)} Q ${fmt(c.x+r*1.28)} ${fmt(c.y)} ${fmt(a.x)} ${fmt(c.y+r*sign)}`;

@@ -1,15 +1,16 @@
 """Validación transaccional: el arrastre no puede invertir relaciones topológicas de 01."""
 import http.server,socketserver,threading
+import os
 from pathlib import Path
 from playwright.sync_api import sync_playwright
-ROOT=Path(__file__).resolve().parents[1]
+ROOT=Path(os.environ.get('P1_SITE_ROOT',Path(__file__).resolve().parents[1]))
 class Quiet(http.server.SimpleHTTPRequestHandler):
  def log_message(self,*args):pass
  def __init__(self,*args,**kwargs):super().__init__(*args,directory=str(ROOT),**kwargs)
-with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
+with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
  threading.Thread(target=srv.serve_forever,daemon=True).start()
  with sync_playwright() as p:
-  browser=p.chromium.launch(channel='chrome', headless=True)
+  browser=p.chromium.launch(**({'executable_path':os.environ['P1_BROWSER_PATH']} if os.environ.get('P1_BROWSER_PATH') else {'channel':'chrome'}), headless=True)
   page=browser.new_page(viewport={'width':1440,'height':900})
   errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
   page.goto('http://127.0.0.1:'+str(srv.server_address[1])+'/index.html',wait_until='domcontentloaded')

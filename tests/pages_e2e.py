@@ -1,16 +1,17 @@
 """Browser acceptance tests against the actual relative ES module URLs of GitHub Pages."""
 import http.server, socketserver, threading, time, json
+import os
 from pathlib import Path
 from playwright.sync_api import sync_playwright
-ROOT=Path(__file__).resolve().parents[1]
+ROOT=Path(os.environ.get('P1_SITE_ROOT',Path(__file__).resolve().parents[1]))
 class Quiet(http.server.SimpleHTTPRequestHandler):
  def log_message(self,*args):pass
  def __init__(self,*args,**kwargs):super().__init__(*args,directory=str(ROOT),**kwargs)
-with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
+with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
  threading.Thread(target=srv.serve_forever,daemon=True).start()
  url=f'http://127.0.0.1:{srv.server_address[1]}/index.html'
  with sync_playwright() as p:
-  b=p.chromium.launch(channel='chrome', headless=True)
+  b=p.chromium.launch(**({'executable_path':os.environ['P1_BROWSER_PATH']} if os.environ.get('P1_BROWSER_PATH') else {'channel':'chrome'}), headless=True)
   page=b.new_page(viewport={'width':1360,'height':820},accept_downloads=True)
   errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
   page.goto(url,wait_until='domcontentloaded');page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes === 3',timeout=30000)

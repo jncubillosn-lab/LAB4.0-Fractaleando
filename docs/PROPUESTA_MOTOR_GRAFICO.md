@@ -1,5 +1,7 @@
 # Ronda propositiva del motor gráfico de Fractaleando
 
+**Actualización 0.2.2:** [motor compacto, resultados y límites](MOTOR_COMPACTO_0_2_2.md). Las descripciones del intento anterior que siguen se conservan como registro histórico.
+
 13 de noviembre de 2026. Base examinada: PR 12, commit `382bac6e66386963fafe7da80a22c32408f44ba9`. Esta ronda registra el prototipo y sus mediciones previas a la implementación directa; su aplicación se documenta en [Motor gráfico 0.2.1](IMPLEMENTACION_MOTOR_0_2_1.md). La referencia topológica 01 se conserva.
 
 La propuesta es conservar SVG y la interfaz, corregir la aceptación geométrica y topológica, y sustituir gradualmente la búsqueda radial por una construcción que conserve la organización de 01 desde el inicio. ELKjs aporta una alternativa real para calcular posiciones y rutas; los ensayos todavía no justifican adoptarlo como solución completa del radial.
