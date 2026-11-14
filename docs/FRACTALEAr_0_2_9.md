@@ -46,7 +46,7 @@ Se reemplaza el giro lineal de la versión anterior por un muestreo del modelo
 de Raup con abertura circular de forma fija. Los controles W, D y T de la vista
 03 se aplican juntos y sus valores se conservan en el JSON. El rótulo muestra
 los valores aplicados al resultado, no una descripción subjetiva.
-Los valores iniciales son W = 8192, D = 0,2 y T = 0. Se muestrea una fracción
+Los valores iniciales son W = 16384, D = 0,2 y T = 0. Se muestrea una fracción
 de vuelta; W es un factor por vuelta completa, no un ángulo ni el coeficiente
 0,25 de la versión anterior.
 

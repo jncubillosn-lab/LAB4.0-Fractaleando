@@ -2,7 +2,7 @@
 // W grows lengths per revolution; D = inner/outer aperture radius; T is axial
 // translation. See Araki & Noshita (2023), Evolution 77(8), equation 1.
 // This is a graph sampling of the generating surface, not a shell mesh.
-export const RAUP_DEFAULTS=Object.freeze({W:8192,D:.2,T:0});
+export const RAUP_DEFAULTS=Object.freeze({W:16384,D:.2,T:0});
 export function validateRaup({W,D,T}){
  if(!Number.isFinite(W)||W<=1||!Number.isFinite(D)||D<0||D>=1||!Number.isFinite(T))
   throw Error('La espiral requiere W > 1, 0 ≤ D < 1 y T finito.');
