@@ -48,8 +48,9 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   restored=page.evaluate('window.P1_PLANO_DIAGNOSTICO.topology()')
   assert restored['valid'] and restored['crossings']==after['crossings'],restored
   page.on('dialog',lambda dialog:dialog.accept())
+  builds_before=page.evaluate('window.P1_PLANO_DIAGNOSTICO.initialBuilds')
   page.locator('#newBtn').click()
-  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===3',timeout=30000)
+  page.wait_for_function('(previous)=>window.P1_PLANO_DIAGNOSTICO.initialBuilds>previous&&window.P1_PLANO_DIAGNOSTICO.routes===3&&document.querySelectorAll("#nodes .node").length===4',arg=builds_before,timeout=30000)
   page.locator('#nodes [data-node-id="b0"]').click()
   original=page.locator('#nodes .node').evaluate_all('(els)=>Object.fromEntries(els.map(el=>[el.dataset.nodeId,el.getAttribute("transform")]))')
   parent_text=page.locator('#nodeText').input_value()
@@ -59,7 +60,9 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   assert page.locator('#nodes .selected').get_attribute('data-node-id')=='b0'
   assert page.locator('#nodeText').input_value()==parent_text
   assert page.evaluate('document.activeElement.id')!='nodeText'
-  for node_id,transform in original.items():assert page.locator('#nodes [data-node-id="'+node_id+'"]').get_attribute('transform')==transform
+  for node_id,transform in original.items():
+   actual=page.locator('#nodes [data-node-id="'+node_id+'"]').get_attribute('transform')
+   assert actual==transform,{'id':node_id,'before':transform,'after':actual}
   with page.expect_download() as siblings:page.locator('#jsonBtn').click()
   graph=json.loads(Path(siblings.value.path()).read_text(encoding='utf8'))
   parent=next(n for n in graph['nodes'] if n['id']=='b0')
