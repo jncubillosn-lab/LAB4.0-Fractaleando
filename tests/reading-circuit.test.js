@@ -10,14 +10,18 @@ import {bevelRoutes} from '../js/geometry/CircuitRoutes.js';
 const router=new PcbRouter({state:{nodes:[],edges:[]},nodeById:()=>null,mode:'02',clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});
 const validator=new GeometryValidator({router,rectOverlap:(a,b)=>a.l<b.r&&a.r>b.l&&a.t<b.b&&a.b>b.t});
 const rect=(id,x,y,w=60,h=50)=>({id,x,y,w,h,l:x-w/2,r:x+w/2,t:y-h/2,b:y+h/2});
-test('J3 resalta J0–J3 y solo vecinos de la siguiente generación; transversales no acortan la ascendencia',()=>{
+test('J3 resalta su ascendencia y todos sus vínculos adyacentes sin inventar otras ascendencias',()=>{
  const nodes=[{id:'p1'},{id:'a',parent:'p1'},{id:'b',parent:'a'},{id:'c',parent:'b'},
   {id:'d',parent:'c'},{id:'e',parent:'d'},{id:'sibling',parent:'b'},{id:'next',parent:'sibling'}];
  const edges=nodes.filter(n=>n.parent).map(n=>({from:n.parent,to:n.id}));
  edges.push({from:'p1',to:'c',kind:'transversal'},{from:'c',to:'next',kind:'transversal'});
  const focus=hierarchySelection({nodes,edges,selectedId:'c',levels:{p1:0,a:1,b:2,c:3,d:4,e:5,sibling:3,next:4}});
  assert.deepEqual([...focus.nodeIds].sort(),['p1','a','b','c','d','next'].sort());
- assert.deepEqual([...focus.edgeKeys].sort(),['a|p1','a|b','b|c','c|d','c|next'].sort());
+ assert.deepEqual([...focus.edgeKeys].sort(),['a|p1','a|b','b|c','c|d','c|next','c|p1'].sort());
+ edges.push({from:'sibling',to:'c',style:'dotted'});
+ const adjacent=hierarchySelection({nodes,edges,selectedId:'c'});
+ assert.ok(adjacent.edgeKeys.has('c|sibling'));assert.ok(adjacent.nodeIds.has('sibling'));
+ assert.equal(adjacent.nodeIds.has('e'),false);
  const orphan=hierarchySelection({nodes:[{id:'p1'},{id:'x',parent:'p1'}],edges:[],selectedId:'x'});
  assert.deepEqual([...orphan.nodeIds],['x']);assert.equal(orphan.edgeKeys.size,0);
 });
@@ -34,6 +38,13 @@ test('los cruces de derivadas admiten distancia cero al giro y se cuentan una so
  assert.equal(routeCrossings(path,cross).length,1);
  assert.equal(router.segmentRelation(path[0],path[1],cross[0],cross[1]).cross,1);
  assert.equal(router.segmentRelation(path[1],path[2],cross[0],cross[1]).overlap,false);
+});
+
+test('el editor con franjas blancas permite cruces junto al giro y conserva la prohibición de compartir carriles',()=>{
+ const edit=new PcbRouter({state:{nodes:[],edges:[]},nodeById:()=>null,mode:'01',allowBendCrossings:true});
+ assert.equal(edit.segmentRelation({x:0,y:0},{x:50,y:0},{x:49,y:-20},{x:49,y:20}).cross,1);
+ assert.equal(edit.segmentRelation({x:0,y:0},{x:50,y:0},{x:10,y:2},{x:40,y:2}).overlap,true);
+ assert.equal(edit.circuit45,false);
 });
 test('auditor acepta H/V/45 y rechaza la diagonal si invade un cuadro',()=>{
  const a=rect('a',0,0),b=rect('b',200,100);

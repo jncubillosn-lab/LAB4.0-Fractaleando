@@ -2,7 +2,7 @@
 // A single-level graph keeps the existing minimum; extra depth never adds
 // unbounded thickness. Transversals do not acquire a false parent hierarchy.
 export function hierarchyStrokeProfile({mode,nodes=[],levels={}}){
- const minimum=1.35,maximum=2.05;
+ const minimum=1.35,maximum=3.15;
  const byId=new Map(nodes.map(n=>[n.id,n]));
  const maxDepth=Math.max(0,...Object.values(levels).filter(Number.isFinite));
  return edge=>{

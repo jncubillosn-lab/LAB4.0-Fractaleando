@@ -49,7 +49,7 @@ test('PPR completo: rayos compactos, 217 rutas seguras y 04 derivada de la misma
  assert.deepEqual(spiral.layout.stats.baseBounds,base.layout.stats.bounds);
  assert.equal(spiral.layout.stats.baseMeanGap,base.layout.stats.meanGap);
  assert.ok(spiral.layout.stats.W>0);assert.equal(spiral.layout.stats.T,0);
- assert.ok(spiral.layout.stats.armWidthFactor<1);
+ assert.equal(spiral.layout.stats.model,'raup');assert.ok(spiral.layout.stats.D>=0&&spiral.layout.stats.D<1);
  assert.ok(spiral.layout.stats.rotationRange>Math.PI/2);
  const moved=[...base.layout.positions].filter(([id,p])=>Math.hypot(p.x-spiral.layout.positions.get(id).x,p.y-spiral.layout.positions.get(id).y)>1);
  assert.ok(moved.length>190);

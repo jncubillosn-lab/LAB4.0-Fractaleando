@@ -1,5 +1,5 @@
 """Acceptance against the built Pages modules, worker and local WASM."""
-import http.server, threading, json, os, re, base64
+import http.server, threading, json, os, re, base64, struct
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(os.environ.get('P1_SITE_ROOT',Path(__file__).resolve().parents[1]/'_site'))
@@ -21,7 +21,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   print('E2E: abriendo sitio construido',flush=True)
   page.goto('http://127.0.0.1:'+str(srv.server_address[1])+'/index.html',wait_until='domcontentloaded')
   build=page.locator('meta[name="application-build"]').get_attribute('content')
-  assert '0.2.8' in page.locator('meta[name="application-version"]').get_attribute('content')
+  assert '0.2.9' in page.locator('meta[name="application-version"]').get_attribute('content')
   page.wait_for_function('[...document.fonts].filter(f=>f.family==="Rajdhani"&&f.status==="loaded").length===2')
   def check_labels(selector):
    labels=page.locator(selector).evaluate_all("""els=>els.map(el=>{
@@ -37,7 +37,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    })""")
    assert all('Rajdhani' in label['family'] and label['margin']>=8.5 for label in labels),[l for l in labels if l['margin']<8.5]
    assert {l['size'] for l in labels}=={24},labels
-  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===3',timeout=60000)
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===217',timeout=60000)
   page.locator('#showAllBtn').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===217',timeout=60000)
   print('E2E: 01 completo',flush=True)
@@ -79,9 +79,9 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    positions=page.locator('#derivedNodes .node').evaluate_all('(els)=>els.map(el=>el.getAttribute("transform"))')
    page.locator('#derivedNodes [data-node-id="b42"]').click()
    focused=page.locator('#derivedNodes .hierarchy-focus').evaluate_all('(els)=>els.map(el=>el.dataset.nodeId).sort()')
-   assert focused==sorted(['p1','b0','b4','b42','b421','b422','b423']),focused
+   assert focused==sorted(['p1','b0','b4','b42','b421','b422','b423','t10']),focused
    bold_edges=page.locator('#derivedLines .hierarchy-focus').evaluate_all('(els)=>els.map(el=>el.dataset.edgeKey).sort()')
-   assert bold_edges==sorted(['b0|p1','b0|b4','b4|b42','b42|b421','b42|b422','b42|b423']),bold_edges
+   assert bold_edges==sorted(['b0|p1','b0|b4','b4|b42','b42|b421','b42|b422','b42|b423','b42|t10']),bold_edges
    assert page.locator('#nodeText').is_disabled()
    assert page.locator('#addBtn').is_disabled()
    assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current.calculations')==before_selection
@@ -90,19 +90,20 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    assert page.locator('#derivedNodes [data-node-id="b42"]').get_attribute('aria-pressed')=='true'
    widths=page.locator('#derivedLines .svgline').evaluate_all('(els)=>els.map(el=>[el.dataset.hierarchyLevel,el.style.getPropertyValue("--hierarchy-width")])')
    values=[float(row[1]) for row in widths]
-   assert min(values)==1.35 and max(values)==2.05,values
+   assert min(values)==1.35 and max(values)==3.15,values
    assert page.locator('#derivedLines .hierarchy-focus .svgline').evaluate_all('(els)=>els.every(el=>Math.abs(parseFloat(getComputedStyle(el).strokeWidth)-parseFloat(el.style.getPropertyValue("--hierarchy-width"))-.75)<.001)')
    if mode=='02':
     assert result['coreSpacing']['factor']==.5,result
     assert all(not link['constrained'] and abs(link['ratio']-.5)<.001 for link in result['coreSpacing']['links']),result['coreSpacing']
     normal_core=page.locator('#derivedLines g:not(.hierarchy-focus) > path[data-hierarchy-level="1"]').first
-    assert abs(float(normal_core.evaluate('(el)=>parseFloat(getComputedStyle(el).strokeWidth)'))-2.05)<.001
+    assert abs(float(normal_core.evaluate('(el)=>parseFloat(getComputedStyle(el).strokeWidth)'))-3.15)<.001
     focused=page.locator('#derivedLines .hierarchy-focus .svgline').first
     assert abs(float(focused.evaluate('(el)=>parseFloat(getComputedStyle(el).strokeWidth)-parseFloat(el.style.getPropertyValue("--hierarchy-width"))'))-.75)<.001
     with page.expect_download() as weighted_svg:page.locator('#svgBtn').click()
     weighted=Path(weighted_svg.value.path()).read_text(encoding='utf8')
+    assert page.evaluate('(svg)=>!new DOMParser().parseFromString(svg,"image/svg+xml").querySelector("parsererror")',weighted)
     assert '@font-face' in weighted and 'data:font/ttf;base64,' in weighted and 'SIL OPEN FONT LICENSE' in weighted
-    assert re.search(r'--hierarchy-width:\s*2\.05',weighted) and re.search(r'--hierarchy-width:\s*1\.35',weighted)
+    assert re.search(r'--hierarchy-width:\s*3\.15',weighted) and re.search(r'--hierarchy-width:\s*1\.35',weighted)
    before=page.evaluate('window.P1_PLANO_DIAGNOSTICO.routeCalculations')
    page.locator('#depth').evaluate('(el)=>{el.value="1";el.dispatchEvent(new Event("input",{bubbles:true}))}')
    assert page.locator('#derivedLines [data-over-edge-key]').evaluate_all("""els=>els.every(el=>{
@@ -115,9 +116,18 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    output=os.environ.get('P1_SCREENSHOTS')
    if output:
     Path(output).mkdir(parents=True,exist_ok=True)
-    page.screenshot(path=str(Path(output)/('Fractaleando_0_2_8_'+mode+'.png')))
+    page.screenshot(path=str(Path(output)/('Fractaleando_0_2_9_'+mode+'.png')))
   assert results['04']['baseBounds']==results['02']['bounds']
   assert results['04']['baseMeanGap']==results['02']['meanGap']
+  assert results['04']['model']=='raup' and results['04']['W']>1 and 0<=results['04']['D']<1
+  caption=page.locator('.mapcaption').inner_text()
+  assert all(k+' =' in caption for k in ['W','D','T']),caption
+  with page.expect_download() as spiral_png:page.locator('#pngBtn').click()
+  raster=Path(spiral_png.value.path()).read_bytes()
+  assert max(struct.unpack('>II',raster[16:24]))==4096
+  info=page.evaluate('window.P1_PLANO_DIAGNOSTICO.pngExport')
+  assert info['nodes']==210 and info['edges']==217,info
+  print('PNG 4K de la espiral con todos los conceptos y conexiones',flush=True)
   page.locator('#themeBtn').click()
   assert page.locator('#themeBtn').get_attribute('aria-pressed')=='true'
   with page.expect_download() as exp_svg:page.locator('#svgBtn').click()
