@@ -1,10 +1,11 @@
 # P1 — Diagramador de relaciones conceptuales
 
+**[▶ Abrir la aplicación en GitHub Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/)**
+
 **Implementación actual 0.2.3:** [corte de lectura y trazado](CORTE_02_0_2_3.md).
 Incluye selección jerárquica en 02/04, puertos alineados y ensayo de trazado
 con biseles de 45° y cruces junto a giros. Continúa la
 [base compacta de 0.2.2](MOTOR_COMPACTO_0_2_2.md), integrada mediante el PR #14.
-[Aplicación en Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/?v=0.2.3).
 Las vistas siguen **EN REVISIÓN** por cruces frente a 01 y cota 2H.
 El documento del corte explica también W, D y T como preparación de 04.
 Los cortes históricos que siguen no sustituyen este estado ni las normas vigentes.
