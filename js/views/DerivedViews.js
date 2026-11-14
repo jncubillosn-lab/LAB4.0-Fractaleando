@@ -317,7 +317,7 @@ export class DerivedViews {
    unfinished:0,valid:true,calculations:0,restored:true};
  }
  exportData(){
-  const output={spiralParameters:{...this.spiralParameters}};
+  const output=this.spiralParameters?{spiralParameters:{...this.spiralParameters}}:{};
   const identity=this.graphKey()+this.sourceKey()+this.referenceKey();
   for(const [mode,c] of this.cache)if(c.valid&&c.identity===identity)
    output[mode]={layoutVersion:SCENE_VERSION,nodeClearances:c.layout.stats.nodeClearances,baseNodeClearances:c.layout.stats.baseNodeClearances,

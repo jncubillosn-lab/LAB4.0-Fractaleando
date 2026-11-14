@@ -64,10 +64,11 @@ test('la recuperación local ignora ejes lejanos sin perder la validación de la
  assert.ok(points);assert.notEqual(router.routeShapeValid(points,boxes,[],occupied,true),null);
 });
 test('la búsqueda acotada cruza carriles permitidos y sigue comprobando toda la geometría',()=>{
- const occupied=Array.from({length:80},(_,i)=>router.allSegments([{x:i*10,y:-500},{x:i*10,y:500}])).flat();
+ const compact=new PcbRouter({state:{nodes:[],edges:[]},nodeById:()=>null,mode:'02',clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});
+ const occupied=Array.from({length:80},(_,i)=>compact.allSegments([{x:i*10,y:-500},{x:i*10,y:500}])).flat();
  const boxes=[{id:'obstacle',l:360,r:430,t:-40,b:40}];
- const points=router.findRouteGrid({x:-50,y:0},{x:850,y:0},boxes,occupied,true,100,300);
- assert.ok(points);assert.notEqual(router.routeShapeValid(points,boxes,[],occupied,true),null);
+ const points=compact.findRouteGrid({x:-50,y:0},{x:850,y:0},boxes,occupied,true,100,300);
+ assert.ok(points);assert.notEqual(compact.routeShapeValid(points,boxes,[],occupied,true),null);
  assert.ok(points.some(p=>Math.abs(p.y)>40));
 });
 

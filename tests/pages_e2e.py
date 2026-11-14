@@ -14,6 +14,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   b=p.chromium.launch(**({'executable_path':os.environ['P1_BROWSER_PATH']} if os.environ.get('P1_BROWSER_PATH') else {'channel':'chrome'}), headless=True)
   page=b.new_page(viewport={'width':1360,'height':820},accept_downloads=True)
   errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+  page.on('console',lambda message:print('NAVEGADOR',message.type,message.text,flush=True) if message.type=='error' else None)
   page.goto(url,wait_until='domcontentloaded');page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===217',timeout=30000)
   assert page.locator('#depth').input_value()==page.locator('#depth').get_attribute('max')
   assert page.locator('[data-view="01"]').inner_text()=='01 · Editor'
