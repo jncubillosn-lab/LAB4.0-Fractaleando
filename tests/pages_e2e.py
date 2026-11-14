@@ -1,5 +1,5 @@
 """Browser acceptance tests against the actual relative ES module URLs of GitHub Pages."""
-import http.server, socketserver, threading, time, json, math, re, struct
+import http.server, socketserver, threading, time, json, math, re, struct, hashlib
 import os
 from pathlib import Path
 from playwright.sync_api import sync_playwright
@@ -13,6 +13,8 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
  with sync_playwright() as p:
   b=p.chromium.launch(**({'executable_path':os.environ['P1_BROWSER_PATH']} if os.environ.get('P1_BROWSER_PATH') else {'channel':'chrome'}), headless=True)
   page=b.new_page(viewport={'width':1360,'height':820},accept_downloads=True)
+  page.add_init_script('''window.__textMeasures=0;const measure=CanvasRenderingContext2D.prototype.measureText;
+   CanvasRenderingContext2D.prototype.measureText=function(...args){window.__textMeasures++;return measure.apply(this,args)};''')
   errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
   page.on('console',lambda message:print('NAVEGADOR',message.type,message.text,flush=True) if message.type=='error' else None)
   page.goto(url,wait_until='domcontentloaded');page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===217',timeout=30000)
@@ -23,6 +25,11 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   page.locator('#showAllBtn').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.visible === 210',timeout=30000)
   d0=page.evaluate('({...window.P1_PLANO_DIAGNOSTICO,audit:window.P1_PLANO_DIAGNOSTICO.audit()})')
+  initial_picture=page.locator('#nodes .node,#lines .svgline').evaluate_all('(els)=>els.map(el=>[el.getAttribute("transform"),el.getAttribute("d"),el.getAttribute("aria-label"),el.querySelector("rect")?.outerHTML,[...el.querySelectorAll("tspan")].map(t=>t.outerHTML)])')
+  print('PERFORMANCE_STARTUP',json.dumps({**page.evaluate('({startupMs:performance.now(),textMeasures:window.__textMeasures})'),
+   'attempts':d0['routeCalculations'],
+   'pictureSHA256':hashlib.sha256(json.dumps(initial_picture,ensure_ascii=False,separators=(',',':')).encode()).hexdigest()}),flush=True)
+  assert hashlib.sha256(json.dumps(initial_picture,ensure_ascii=False,separators=(',',':')).encode()).hexdigest()=='143ae8e33864b4d0af8b16a5f31bca685e370f3662f90775e05bfb57de4a83b6'
   print('DIAGNOSTICO_NAVEGADOR', {k:d0[k] for k in ['visible','routes','pending','lastOperation','lastDurationMs','initialBuilds','routeCalculations']},d0['audit'],errors,flush=True)
   assert d0['routes']==217 and d0['pending']==0, d0
   d=page.evaluate('window.P1_PLANO_DIAGNOSTICO.audit()')

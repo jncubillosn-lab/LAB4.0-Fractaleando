@@ -1,0 +1,88 @@
+{
+  "schema": "fractalear.performance.v1",
+  "baselineRef": "e1ccd931f4f8b13e689d78a782609787df8021df",
+  "node": "v24.22.1",
+  "platform": "win32",
+  "fixture": {
+    "nodes": 210,
+    "edges": 217
+  },
+  "samples": 3,
+  "results": {
+    "baseline": [
+      {
+        "ms": 5281.3366,
+        "resolved": 217,
+        "attempts": 217,
+        "signature": "16495caf18e8450e49faf724420e4b46df38bc8ae63542399e16f9ff336a9a17"
+      },
+      {
+        "ms": 5181.8377,
+        "resolved": 217,
+        "attempts": 217,
+        "signature": "16495caf18e8450e49faf724420e4b46df38bc8ae63542399e16f9ff336a9a17"
+      },
+      {
+        "ms": 5182.9344,
+        "resolved": 217,
+        "attempts": 217,
+        "signature": "16495caf18e8450e49faf724420e4b46df38bc8ae63542399e16f9ff336a9a17"
+      }
+    ],
+    "current": [
+      {
+        "ms": 3413.8940000000002,
+        "resolved": 217,
+        "attempts": 217,
+        "signature": "16495caf18e8450e49faf724420e4b46df38bc8ae63542399e16f9ff336a9a17"
+      },
+      {
+        "ms": 3420.7549,
+        "resolved": 217,
+        "attempts": 217,
+        "signature": "16495caf18e8450e49faf724420e4b46df38bc8ae63542399e16f9ff336a9a17"
+      },
+      {
+        "ms": 3366.6105000000002,
+        "resolved": 217,
+        "attempts": 217,
+        "signature": "16495caf18e8450e49faf724420e4b46df38bc8ae63542399e16f9ff336a9a17"
+      }
+    ]
+  },
+  "medianMs": {
+    "baseline": 5182.9344,
+    "current": 3413.8940000000002
+  },
+  "reductionPercent": 34.13202374315214,
+  "identicalRoutes": true,
+  "publishedBaselineRef": "78a22bb41737c5d24a8f94f8e1e5f20609959d90",
+  "baselineTree": "33bcfbac58935c8695a094cac1d33c1c77349913",
+  "browser": {
+    "baseline": {
+      "startupMs": 7545.4000000000015,
+      "textMeasures": 11110,
+      "attempts": 217,
+      "pictureSHA256": "143ae8e33864b4d0af8b16a5f31bca685e370f3662f90775e05bfb57de4a83b6"
+    },
+    "current": {
+      "startupMs": 2977.800000000003,
+      "textMeasures": 1126,
+      "attempts": 217,
+      "pictureSHA256": "143ae8e33864b4d0af8b16a5f31bca685e370f3662f90775e05bfb57de4a83b6"
+    },
+    "measureReductionPercent": 89.86498649864987,
+    "startupReductionPercent": 60.534895432979006,
+    "baselineRun": "https://github.com/jncubillosn-lab/LAB4.0-Fractaleando/actions/runs/43651646324",
+    "optimizedRun": "https://github.com/jncubillosn-lab/LAB4.0-Fractaleando/actions/runs/43652971277",
+    "optimizedCode": "fd510bde1f6be4158092075da25608631bc9b5b1",
+    "conditions": "One startup-and-audit sequence per revision, local static HTTP server, Chrome on separate GitHub-hosted runners. Timings are indicative; the deterministic comparison is measure count and picture signature."
+  },
+  "validation": {
+    "nodeTests": 75,
+    "browserSuites": 3,
+    "editorRoutesIdentical": true,
+    "editorPictureIdentical": true,
+    "geometryCases": 12000
+  }
+}

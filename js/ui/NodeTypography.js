@@ -2,6 +2,27 @@ export const NODE_FONT='Rajdhani';
 export const NODE_FONT_SIZE=24;
 let embeddedCss='';
 let fontReady;
+let measurementCaches=new WeakMap();
+const MEASUREMENT_LIMIT=2048;
+
+function measurementsFor(ctx){
+ // Include settings that can affect Canvas metrics, rather than reusing a
+ // measurement after a caller changes its text context.
+ const settings=[ctx.direction,ctx.fontKerning,ctx.fontStretch,ctx.fontVariantCaps,
+  ctx.letterSpacing,ctx.wordSpacing,ctx.textRendering,ctx.textBaseline,ctx.textAlign,ctx.lang].join('|');
+ let entry=measurementCaches.get(ctx);
+ if(!entry||entry.settings!==settings){entry={settings,values:new Map()};measurementCaches.set(ctx,entry);}
+ return (text,size)=>{
+  const key=size+'\0'+text,cached=entry.values.get(key);if(cached)return cached;
+  const both=['600','700'].map(weight=>{ctx.font=`${weight} ${size}px ${NODE_FONT},Arial,sans-serif`;return ctx.measureText(text);});
+  const value={width:Math.max(...both.map(m=>m.width)),ascent:Math.max(...both.map(m=>m.actualBoundingBoxAscent)),
+   descent:Math.max(...both.map(m=>m.actualBoundingBoxDescent))};
+  // Bound memory during long editing sessions; oversized text is measured
+  // normally without retaining its intermediate strings.
+  if(text.length<=512){if(entry.values.size>=MEASUREMENT_LIMIT)entry.values.delete(entry.values.keys().next().value);entry.values.set(key,value);}
+  return value;
+ };
+}
 
 // Font bytes are local assets, also embedded in standalone SVG/PNG exports.
 export function loadNodeTypography(){
@@ -13,6 +34,7 @@ export function loadNodeTypography(){
   const [buffers,license]=await Promise.all([Promise.all(assets.map(([,url])=>read(url,true))),read(licenseUrl,false)]);
   const faces=await Promise.all(assets.map(([weight],i)=>new FontFace(NODE_FONT,buffers[i],{weight}).load()));
   faces.forEach(face=>document.fonts.add(face));
+  measurementCaches=new WeakMap(); // Drop any fallback-font measurements.
   const base64=buffer=>{const bytes=new Uint8Array(buffer);let text='';
    for(let i=0;i<bytes.length;i+=8192)text+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(text);};
   embeddedCss='/* Rajdhani — fuente local.\n'+license.replaceAll('*/','* /')+'\n*/\n'+
@@ -54,10 +76,8 @@ export function fitNodeLabel(text,{w,h=53},measure,{paddingX=14,paddingY=9,growT
 }
 
 export function nodeGeometry(node,ctx,box={w:node.width,h:node.id==='p1'?67:53},{growToWords=true}={}){
- const metrics=(text,size)=>['600','700'].map(weight=>{ctx.font=`${weight} ${size}px ${NODE_FONT},Arial,sans-serif`;return ctx.measureText(text);});
- const measure=(text,size)=>Math.max(...metrics(text,size).map(m=>m.width));
- const verticalMetrics=(text,size)=>{const both=metrics(text,size);
-  return {ascent:Math.max(...both.map(m=>m.actualBoundingBoxAscent)),descent:Math.max(...both.map(m=>m.actualBoundingBoxDescent))};};
+ const metrics=measurementsFor(ctx),measure=(text,size)=>metrics(text,size).width;
+ const verticalMetrics=(text,size)=>metrics(text,size);
  return fitNodeLabel(node.text,box,measure,{verticalMetrics,growToWords});
 }
 export function paintNodeLabel(textEl,node,box,ctx){

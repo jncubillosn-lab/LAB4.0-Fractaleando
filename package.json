@@ -1,10 +1,11 @@
 {
   "name": "p1-fractaleando",
-  "version": "0.2.11",
+  "version": "0.2.12",
   "private": true,
   "type": "module",
   "scripts": {
     "test": "node --test --test-concurrency=1 tests/*.test.js",
+    "bench:performance": "node scripts/benchmark-performance.mjs",
     "bench:layouts": "node scripts/benchmark-layouts.mjs",
     "build": "node scripts/build-site.mjs"
   },
