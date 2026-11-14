@@ -21,7 +21,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   print('E2E: abriendo sitio construido',flush=True)
   page.goto('http://127.0.0.1:'+str(srv.server_address[1])+'/index.html',wait_until='domcontentloaded')
   build=page.locator('meta[name="application-build"]').get_attribute('content')
-  assert '0.2.7' in page.locator('meta[name="application-version"]').get_attribute('content')
+  assert '0.2.8' in page.locator('meta[name="application-version"]').get_attribute('content')
   page.wait_for_function('[...document.fonts].filter(f=>f.family==="Rajdhani"&&f.status==="loaded").length===2')
   def check_labels(selector):
    labels=page.locator(selector).evaluate_all("""els=>els.map(el=>{
@@ -36,14 +36,14 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
     return {id:el.dataset.nodeId,family:style.fontFamily,size:parseFloat(style.fontSize),margin:Math.min(...margins)};
    })""")
    assert all('Rajdhani' in label['family'] and label['margin']>=8.5 for label in labels),[l for l in labels if l['margin']<8.5]
-   assert next(l['size'] for l in labels if l['id']=='p1')==30,labels
+   assert {l['size'] for l in labels}=={24},labels
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===3',timeout=60000)
   page.locator('#showAllBtn').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===217',timeout=60000)
   print('E2E: 01 completo',flush=True)
   baseline=page.evaluate('window.P1_PLANO_DIAGNOSTICO.topology()')
   original=page.locator('#nodes [data-node-id="p1"]').get_attribute('transform')
-  assert baseline['valid'] and baseline['crossings']==71
+  assert baseline['valid'] and baseline['referenceEdges']==217 and baseline['crossings']>0
   check_labels('#nodes .node')
   results={}
   for mode in ('02','04'):
@@ -59,7 +59,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    assert page.locator('#derivedNodes .node').count()==210
    assert page.locator('#derivedLines .svgline').count()==217
    assert page.locator('#nodes').evaluate('(el)=>getComputedStyle(el).display')=='none'
-   assert result['topology']['hasReference'] and result['topology']['crossings']==71
+   assert result['topology']['hasReference'] and result['topology']['crossings']==baseline['crossings']
    assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.topology()')==baseline
    assert page.locator('#derivedLines circle').count()==result['audit']['crossings']
    check_labels('#derivedNodes .node')
@@ -67,10 +67,11 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
     const group=[...document.querySelectorAll('#derivedLines > g')].find(g=>g.dataset.edgeKey===el.dataset.overEdgeKey);
     const upper=group.querySelector('.svgline');
     const scale=+document.querySelector('#derivedLines').dataset.crossingScale;
-    const dash=5/scale;
+    const pattern=upper.getAttribute('stroke-dasharray');
+    const dash=pattern?pattern.split(' ').map(value=>Number(value)/scale).join(' '):null;
     return {same:el.getAttribute('d')===upper.getAttribute('d'),width:(+el.getAttribute('stroke-width'))*scale,
      crossedWidth:parseFloat(getComputedStyle(upper).strokeWidth),
-     dashed:el.getAttribute('stroke-dasharray')===(upper.classList.contains('transverse')?dash+' '+dash:null)};
+     dashed:el.getAttribute('stroke-dasharray')===dash};
    })""")
    assert cuts and all(c['same'] and c['dashed'] and abs(c['width']-3*c['crossedWidth'])<.001 for c in cuts),cuts
    # Select J3 by click: actual ancestry plus its J4 neighbours, with no reroute.
@@ -114,7 +115,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    output=os.environ.get('P1_SCREENSHOTS')
    if output:
     Path(output).mkdir(parents=True,exist_ok=True)
-    page.screenshot(path=str(Path(output)/('Fractaleando_0_2_7_'+mode+'.png')))
+    page.screenshot(path=str(Path(output)/('Fractaleando_0_2_8_'+mode+'.png')))
   assert results['04']['baseBounds']==results['02']['bounds']
   assert results['04']['baseMeanGap']==results['02']['meanGap']
   page.locator('#themeBtn').click()

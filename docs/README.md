@@ -2,7 +2,12 @@
 
 **[▶ Abrir la aplicación en GitHub Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/)**
 
-**Implementación actual 0.2.7:** [entradas enfrentadas al crear conexiones](ENTRADAS_REFLEJADAS_0_2_7.md).
+**Implementación actual 0.2.8:** [cruces unificados, letra fija y estilos de conexión](CIERRE_VISUAL_0_2_8.md).
+Las tres vistas comparten las franjas blancas. La letra se mantiene en
+24 px y los cuadros crecen en altura. Se pueden crear vínculos continuos,
+punteados o segmentados. 04 utiliza brazos más estrechos y mayor giro.
+
+**Base 0.2.7:** [entradas enfrentadas al crear conexiones](ENTRADAS_REFLEJADAS_0_2_7.md).
 La salida del padre y la entrada del hijo se eligen juntas, con reflexión
 entre caras opuestas y alineación directa cuando hay espacio libre.
 

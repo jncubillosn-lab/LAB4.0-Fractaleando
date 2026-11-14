@@ -23,7 +23,7 @@ export class DerivedViews {
   this.pending=null;this.staged={};this.rejected=null;
   this.names={'01':['Plano conceptual / 01','Construcción y fractaleo','Núcleo · trayectorias editables'],
    '02':['Rayos compactos / 02','Agrupación radial','Ramas próximas · radios según el espacio disponible'],
-   '04':['Espiral / 04','Crecimiento espiral','Giro de la distribución compacta 02 · T = 0']};
+   '04':['Espiral / 04','Crecimiento espiral','Brazos más estrechos · giro continuo · T = 0']};
   this.derivedLines=sEl('g',{id:'derivedLines'});
   this.derivedNodes=sEl('g',{id:'derivedNodes'});
   camera.append(this.derivedLines,this.derivedNodes);
@@ -35,7 +35,7 @@ export class DerivedViews {
  referenceKey(){return JSON.stringify(this.referenceTopology?.()??null);}
  graphKey(){
   return JSON.stringify({nodes:this.state.nodes.map(n=>[n.id,n.text,n.width,n.branch,n.parent]),
-   edges:this.state.edges.map(e=>[e.from,e.to,e.kind||''])});
+   edges:this.state.edges.map(e=>[e.from,e.to,e.kind||'',e.style||''])});
  }
  reset(){
   this.version++;

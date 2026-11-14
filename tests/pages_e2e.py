@@ -23,6 +23,9 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   d=page.evaluate('window.P1_PLANO_DIAGNOSTICO.audit()')
   assert d['boxes']==d['invalid']==d['portsRepeated']==0,d
   assert page.locator('#lines circle').count()==d['crossings']
+  assert page.locator('#lines mask').count()>0
+  assert page.locator('#lines .svgline').evaluate_all('(els)=>els.every(el=>!/[QC]/.test(el.getAttribute("d")))')
+  assert page.locator('#nodes .node text').evaluate_all('(els)=>new Set(els.map(el=>getComputedStyle(el).fontSize)).size===1&&getComputedStyle(els[0]).fontSize==="24px"')
   t=page.evaluate('window.P1_PLANO_DIAGNOSTICO.topology()')
   assert t['valid'] and t['crossings']==d['crossings'] and t['referenceEdges']==217,t
   assert t['ports']==434,t
@@ -86,6 +89,42 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   positions={n['id']:(n['x'],n['y']) for n in graph['nodes']}
   assert all(positions[n['id']]==(n['x'],n['y']) for n in undo_graph['nodes']),undo_graph
   print('Más concepto: doce hermanos, entradas por las cuatro caras y cardinales enfrentados; selección y deshacer estables',flush=True)
+  # The three controls affect new links only; relation semantics and boxes stay intact.
+  before_styles=page.evaluate('window.P1_PLANO_DIAGNOSTICO.routeCalculations')
+  node_positions=page.locator('#nodes .node').evaluate_all('(els)=>els.map(el=>el.getAttribute("transform"))')
+  page.locator('#lineDotted').click()
+  assert page.locator('#lineDotted').get_attribute('aria-pressed')=='true'
+  assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.routeCalculations')==before_styles
+  assert page.locator('#nodes .node').evaluate_all('(els)=>els.map(el=>el.getAttribute("transform"))')==node_positions
+  page.locator('#nodes [data-node-id="f0"]').click()
+  page.locator('#linkBtn').click()
+  page.locator('#nodes [data-node-id="t0"]').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.topology().referenceEdges===15',timeout=30000)
+  assert page.locator('#lines [data-edge-key="f0|t0"] .svgline').get_attribute('stroke-dasharray')=='0 5'
+  page.locator('#lineDashed').click()
+  page.locator('#nodes [data-node-id="f0"]').click()
+  page.locator('#addBtn').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.topology().referenceEdges===16',timeout=30000)
+  assert page.locator('#lines [data-edge-key="f0|n13"] .svgline').get_attribute('stroke-dasharray')=='7 5'
+  page.locator('#lineSolid').click()
+  page.locator('#addBtn').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.topology().referenceEdges===17',timeout=30000)
+  assert page.locator('#lines [data-edge-key="f0|n14"] .svgline').get_attribute('stroke-dasharray') is None
+  page.locator('#nodes [data-node-id="n14"]').click()
+  old_height=float(page.locator('#nodes [data-node-id="n14"] rect').get_attribute('height'))
+  page.locator('#nodeText').fill('Un concepto de prueba con una descripción suficientemente larga para crecer en altura sin reducir el tamaño de letra.')
+  page.locator('#nodeText').press('Tab')
+  page.wait_for_function('(old)=>+document.querySelector("#nodes [data-node-id=n14] rect").getAttribute("height")>old',arg=old_height,timeout=30000)
+  assert page.locator('#nodes [data-node-id="n14"] text').evaluate('(el)=>getComputedStyle(el).fontSize')=='24px'
+  with page.expect_download() as styled:page.locator('#jsonBtn').click()
+  styled_graph=json.loads(Path(styled.value.path()).read_text(encoding='utf8'))
+  assert next(e for e in styled_graph['edges'] if e['from']=='f0' and e['to']=='t0')['style']=='dotted'
+  assert next(e for e in styled_graph['edges'] if e['to']=='n13')['style']=='dashed'
+  assert next(e for e in styled_graph['edges'] if e['to']=='n14')['style']=='solid'
+  page.locator('#fileInput').set_input_files(styled.value.path())
+  page.wait_for_function("""()=>document.querySelector('#lines [data-edge-key="f0|t0"] .svgline')?.getAttribute('stroke-dasharray')==='0 5'""",timeout=30000)
+  assert page.locator('#lines [data-edge-key="f0|n13"] .svgline').get_attribute('stroke-dasharray')=='7 5'
+  print('Cruces unificados; letra fija y cuadro creciente; tres estilos guardados y restaurados',flush=True)
   assert not errors,errors
   b.close()
  srv.shutdown()

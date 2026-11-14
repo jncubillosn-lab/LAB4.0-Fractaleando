@@ -1,4 +1,5 @@
 export const NODE_FONT='Rajdhani';
+export const NODE_FONT_SIZE=24;
 let embeddedCss='';
 let fontReady;
 
@@ -21,8 +22,8 @@ export function loadNodeTypography(){
 }
 export const exportedNodeFonts=()=>embeddedCss;
 
-export function fitNodeLabel(text,{w,h},measure,{preferred=24,paddingX=14,paddingY=9,verticalMetrics=(s,size)=>({ascent:size*.8,descent:size*.2})}={}){
- const width=Math.max(1,w-2*paddingX),height=Math.max(1,h-2*paddingY);
+export function fitNodeLabel(text,{w,h=53},measure,{paddingX=14,paddingY=9,verticalMetrics=(s,size)=>({ascent:size*.8,descent:size*.2})}={}){
+ const width=Math.max(1,w-2*paddingX),size=NODE_FONT_SIZE;
  const wrap=size=>{
   const lines=[];
   for(const paragraph of String(text||' ').split(/\r?\n/)){
@@ -40,24 +41,22 @@ export function fitNodeLabel(text,{w,h},measure,{preferred=24,paddingX=14,paddin
   }
   return lines;
  };
- const evaluate=size=>{const wrapped=wrap(size),metrics=wrapped.map(s=>verticalMetrics(s,size));
-  const ascent=Math.max(...metrics.map(m=>m.ascent)),descent=Math.max(...metrics.map(m=>m.descent));
-  const lineheight=Math.max(size*1.12,ascent+descent+2),blockHeight=(wrapped.length-1)*lineheight+ascent+descent;
-  return {size,lineheight,wrapped,paddingX,paddingY,baseline:ascent-blockHeight/2,
-   fits:blockHeight<=height+.001&&wrapped.every(s=>measure(s,size)<=width+.001)};};
- if(evaluate(preferred).fits)return evaluate(preferred);
- let lo=10,hi=preferred;
- for(let i=0;i<18;i++){const mid=(lo+hi)/2;if(evaluate(mid).fits)lo=mid;else hi=mid;}
- return evaluate(Math.floor(lo*10)/10);
+ const wrapped=wrap(size),metrics=wrapped.map(s=>verticalMetrics(s,size));
+ const ascent=Math.max(...metrics.map(m=>m.ascent)),descent=Math.max(...metrics.map(m=>m.descent));
+ const lineheight=Math.max(size*1.12,ascent+descent+2),blockHeight=(wrapped.length-1)*lineheight+ascent+descent;
+ return {w,h:Math.ceil(Math.max(h,blockHeight+2*paddingY)),size,lineheight,wrapped,paddingX,paddingY,
+  baseline:ascent-blockHeight/2,fits:wrapped.every(s=>measure(s,size)<=width+.001)};
 }
 
-export function paintNodeLabel(textEl,node,box,ctx){
- const preferred=node.id==='p1'?30:node.parent==='p1'?25:24;
+export function nodeGeometry(node,ctx,box={w:node.width,h:node.id==='p1'?67:53}){
  const metrics=(text,size)=>['600','700'].map(weight=>{ctx.font=`${weight} ${size}px ${NODE_FONT},Arial,sans-serif`;return ctx.measureText(text);});
  const measure=(text,size)=>Math.max(...metrics(text,size).map(m=>m.width));
  const verticalMetrics=(text,size)=>{const both=metrics(text,size);
   return {ascent:Math.max(...both.map(m=>m.actualBoundingBoxAscent)),descent:Math.max(...both.map(m=>m.actualBoundingBoxDescent))};};
- const fit=fitNodeLabel(node.text,box,measure,{preferred,verticalMetrics});
+ return fitNodeLabel(node.text,box,measure,{verticalMetrics});
+}
+export function paintNodeLabel(textEl,node,box,ctx){
+ const fit=nodeGeometry(node,ctx,box);
  textEl.replaceChildren();textEl.style.setProperty('--node-font-size',fit.size+'px');
  textEl.setAttribute('data-font-size',fit.size);textEl.setAttribute('data-padding-x',fit.paddingX);textEl.setAttribute('data-padding-y',fit.paddingY);
  for(const [i,line] of fit.wrapped.entries()){
