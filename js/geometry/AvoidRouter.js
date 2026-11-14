@@ -100,7 +100,6 @@ export async function computeAvoidRoutes({nodes,edges,positions,rects,levels,top
    if(compactRecovery){
     consider(checker.fastCandidates(s,t,[...rectMap.values()],occupied,[e.from,e.to])?.points);
     if(!accepted)consider(checker.wideCandidates(start,s,t,end,[...rectMap.values()],occupied,[e.from,e.to])?.points);
-    if(!accepted)consider(checker.findRouteGrid(s,t,[...rectMap.values()],occupied,true,350,300));
    }
    // Resolve shared native lanes with an incremental obstacle search. Each
    // failed segment adds only its conflicting occupied lane as a wall; the
@@ -131,6 +130,7 @@ export async function computeAvoidRoutes({nodes,edges,positions,rects,levels,top
      }finally{local.delete();for(const object of values.reverse())object.delete();}
     }
    }
+   if(!accepted&&compactRecovery)consider(checker.findRouteGrid(s,t,[...rectMap.values()],occupied,true,350,300));
    if(!accepted&&!compactRecovery&&rejected.length<=3)consider(checker.fastCandidates(s,t,[...rectMap.values()],occupied,[e.from,e.to])?.points);
    for(const margin of !accepted&&!compactRecovery&&rejected.length<=3?[100,300,700]:[]){
     if(accepted)break;
@@ -190,13 +190,6 @@ export async function computeAvoidRoutes({nodes,edges,positions,rects,levels,top
     ports.set(index+':'+id,p);if(!used.has(id))used.set(id,[]);used.get(id).push(p);
    }
    const failure=failures.findIndex(f=>f.edge===key);if(failure>=0)failures.splice(failure,1);
-  }
-  // Every unresolved spiral corridor must request real capacity. A conflict
-  // far from a box can otherwise leave requestSpace empty and stop retries
-  // with the identical placement. Reserve space at both terminal nodes too.
-  if(compactRecovery)for(const [,route] of routes)if(!route.points){
-   for(const id of [route.edge.from,route.edge.to])clearanceRequests[id]=Math.max(clearanceRequests[id]||0,
-    (rectMap.get(id).routingClearance||24)+12);
   }
   onProgress('repairs-done');
   return {routes,calculations:connections.length+extraCalculations,engine:'libavoid-0.5.0-beta.5',failures,clearanceRequests,budgetExceeded:false};

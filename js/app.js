@@ -135,15 +135,6 @@ const topology=new TopologyRegister({edgeKey});
 const derived=new DerivedViews({state,plane,camera,linesEl,nodesEl,sEl,router,validator,
  edgeKey,readDepthMap,fit,geometry,toast,referenceTopology:()=>topology.reference,onSelect:selectNode});
 let stagedTopology=null;
-let guardedMove=null;
-// Solo los arrastres manuales son transacciones geométricas estrictas.
-// Un cambio de datos (crear o eliminar vínculos) tiene una semántica diferente.
-function beginGuardedMove(id){
- guardedMove={id,
-  positions:new Map([...plane.positions].map(([k,v])=>[k,{...v}])),
-  metrics:new Map(plane.metrics),rects:new Map(plane.rects),routes:new Map(plane.routes)};
-}
-
 function observeTopology(){
  if(!plane.ready)return;
  const levels=readDepthMap();
@@ -156,7 +147,7 @@ function observeTopology(){
   if(!topology.restore(imported))console.warn('Registro topológico importado no reconocido; se genera uno nuevo.');
  }
  const snapshot=topology.capture({positions:plane.positions,rects:plane.rects,routes:plane.routes,edges:ordered});
- const report=topology.observe(snapshot);
+ const report=topology.observe(snapshot,{editable:true});
  if(!report.valid)console.warn('Diferencia topológica respecto del punto validado:',report);
 }
 const rectAt=(id,p,m)=>({id,x:p.x,y:p.y,w:m.w,h:m.h,l:p.x-m.w/2,r:p.x+m.w/2,t:p.y-m.h/2,b:p.y+m.h/2});
@@ -245,11 +236,6 @@ function candidatePorts(id,other,edge){
  }
  return opts;
 }
-function moveOldPort(port,oldRect,newRect){
- if(!port||!oldRect)return null;
- const fraction=(port.side==='top'||port.side==='bottom')?(port.x-oldRect.l)/oldRect.w:(port.y-oldRect.t)/oldRect.h;
- return portAt(newRect,port.side,fraction);
-}
 // Prefer several faces of each box before exhausting all candidates on one face.
 // This stays local: existing valid routes and checkpoints are never displaced.
 function diversePorts(candidates){
@@ -258,25 +244,23 @@ function diversePorts(candidates){
  while(remaining){remaining=false;for(const group of sides.values())if(group.length){result.push(group.shift());remaining=true;}}
  return result;
 }
-function chooseRoute(edge,occupied,original=null,previousRects=new Map()){
+function chooseRoute(edge,occupied){
  const a=plane.rects.get(edge.from),b=plane.rects.get(edge.to);
  if(!a||!b)return null;
  const began=performance.now();
- const ar=original?.fromPort&&previousRects.has(edge.from)?moveOldPort(original.fromPort,previousRects.get(edge.from),a):original?.fromPort;
- const br=original?.toPort&&previousRects.has(edge.to)?moveOldPort(original.toPort,previousRects.get(edge.to),b):original?.toPort;
  const optionsA=diversePorts(candidatePorts(edge.from,edge.to,edge));
  const optionsB=diversePorts(candidatePorts(edge.to,edge.from,edge));
- if(!original?.points){
+ {
   const facing=routeFacingLink({edge,a,b,fromPorts:optionsA,toPorts:optionsB,makePort:portAt,
    usedFrom:portsAtNode(edge.from),usedTo:portsAtNode(edge.to),router,obstacles:[...plane.rects.values()],occupied,
    allowCrossings:true,onAttempt:()=>diag.routeCalculations++,deadline:began+950});
   if(facing)return {edge:{...edge},points:facing.points,crosses:facing.crosses,fromPort:facing.fromPort,toPort:facing.toPort};
  }
- const pA=ar?[ar,...optionsA]:optionsA;
- const pB=br?[br,...optionsB]:optionsB;
+ const pA=optionsA;
+ const pB=optionsB;
  // R01: al incorporar un brazo J1, probar primero el costado libre del núcleo.
  // Así el límite de intentos no se consume en salidas inferiores ya ocupadas.
- if(edge.from==='p1'&&nodeById(edge.to)?.parent==='p1'&&!ar){
+ if(edge.from==='p1'&&nodeById(edge.to)?.parent==='p1'){
   const side=plane.positions.get(edge.to).x>=plane.positions.get('p1').x?'right':'left';
   const preference=side==='right'?['right','top','left','bottom']:['left','top','right','bottom'];
   pA.sort((a,b)=>preference.indexOf(a.side)-preference.indexOf(b.side));
@@ -394,7 +378,7 @@ function reconcileCheckpoint(){
  if(!plane.ready){makeInitialCheckpoint();return plane.ready;}
  const start=performance.now(),calcsBefore=diag.routeCalculations;
  const active=new Set(state.nodes.map(n=>n.id)),edgeSet=new Map(state.edges.map(e=>[edgeKey(e),e]));
- const priorRects=new Map();const changed=new Set(),removed=new Set();let changedAnything=false;
+ const changed=new Set(),removed=new Set();let changedAnything=false;
  for(const [id,old] of [...plane.positions])if(!active.has(id)){
   plane.retired.set(id,old);plane.positions.delete(id);plane.metrics.delete(id);plane.rects.delete(id);
   removed.add(id);changedAnything=true;
@@ -404,7 +388,6 @@ function reconcileCheckpoint(){
   if(!prior){const hint=plane.retired.get(n.id)||((n.x||n.y)?{x:n.x,y:n.y}:null);
    setPosition(n,freshPosition(n,metric,hint),metric);changed.add(n.id);changedAnything=true;
   }else if(!last||last.w!==metric.w||last.h!==metric.h||Math.abs(prior.x-n.x)>.05||Math.abs(prior.y-n.y)>.05){
-   priorRects.set(n.id,plane.rects.get(n.id));
    let p={x:n.x,y:n.y};const proposal=rectAt(n.id,p,metric);
    if(!noBoxOverlaps(proposal,n.id))p=freshPosition(n,metric,prior);
    setPosition(n,p,metric);changed.add(n.id);changedAnything=true;
@@ -419,36 +402,18 @@ function reconcileCheckpoint(){
   else for(const id of changed){if(routeCollidesWithBox(rt,plane.rects.get(id))){dirty.add(key);break;}}
  }
  for(const [key] of edgeSet)if(!plane.routes.has(key))dirty.add(key);
- if(!changedAnything&&!dirty.size){diag.lastRouteCalculations=0;diag.lastDurationMs=0;diag.lastOperation='sin cambio geométrico';return false;}
- const oldRoutes=new Map(plane.routes);
+ if(!changedAnything&&!dirty.size){diag.lastRouteCalculations=0;diag.lastDurationMs=0;diag.lastOperation='sin cambio geométrico';diag.lastAffectedRoutes=0;return false;}
  for(const key of dirty)plane.routes.delete(key);
  const occupied=savedSegments();
  const levels=readDepthMap();const targets=[...dirty].map(key=>({key,e:edgeSet.get(key)})).filter(r=>r.e)
   .sort((a,b)=>pathPriority(a.e,levels)-pathPriority(b.e,levels));
+ diag.lastAffectedRoutes=targets.length;
  for(const {key,e} of targets){
-  const rt=chooseRoute(e,occupied,oldRoutes.get(key),priorRects);
+  const rt=chooseRoute(e,occupied);
   plane.routes.set(key,rt);if(rt.points)occupied.push(...allSegments(rt.points));
  }
  plane.revision++;diag.lastRouteCalculations=diag.routeCalculations-calcsBefore;
  diag.lastDurationMs=Math.round(performance.now()-start);diag.lastOperation='actualización localizada';diag.checkpoint=plane.revision;
- if(guardedMove){
-  const levels=readDepthMap(),ordered=state.edges.map((e,i)=>({...e,__index:i}))
-   .sort((a,b)=>pathPriority(a,levels)-pathPriority(b,levels)||a.__index-b.__index);
-  const candidate=topology.capture({positions:plane.positions,rects:plane.rects,routes:plane.routes,edges:ordered});
-  const check=topology.reference?topology.compare(topology.reference,candidate):{valid:true,issueCount:0};
-  const audit=validator.audit([...plane.rects.values()],[...plane.routes.values()]);
-  const pending=[...plane.routes.values()].filter(r=>!r?.points).length;
-  if(!check.valid||audit.invalid||audit.boxes||audit.portsRepeated||pending){
-   plane.positions=guardedMove.positions;plane.metrics=guardedMove.metrics;
-   plane.rects=guardedMove.rects;plane.routes=guardedMove.routes;
-   for(const n of state.nodes){const p=plane.positions.get(n.id);if(p){n.x=p.x;n.y=p.y;}}
-   if(state.undo.length)state.undo.pop();
-   $('undoBtn').disabled=!state.undo.length;
-   diag.lastOperation='movimiento rechazado por topología';diag.lastRouteCalculations=diag.routeCalculations-calcsBefore;
-   toast('Movimiento rechazado: alteraría el orden topológico, una conexión o sus distancias seguras.');
-  }
-  guardedMove=null;
- }
  observeTopology();
  return true;
 }
@@ -480,7 +445,7 @@ function nodeElement(n){
    el.setAttribute('transform',`translate(${d.startX} ${d.startY})`);
    toast('No es posible superponer conceptos. Mueve el cuadro a un espacio libre.');return;
   }
-  beginGuardedMove(n.id);saveUndo();n.x=dest.x;n.y=dest.y;
+  saveUndo();n.x=dest.x;n.y=dest.y;
   schedule();
  };
  el.addEventListener('pointerup',drop);
@@ -567,7 +532,7 @@ function updatePanel(){const n=selected();$('selectionInfo').textContent=n?`${n.
 
 }
 function saveUndo(){state.undo.push(JSON.stringify({nodes:state.nodes,edges:state.edges,selected:state.selected}));if(state.undo.length>36)state.undo.shift();$('undoBtn').disabled=false;}
-function undo(){if(derived.mode!=='01'){toast('Regresa a 01 · Plano para editar el grafo.');return;}if(!state.undo.length)return;const s=JSON.parse(state.undo.pop());state.nodes=s.nodes;state.edges=s.edges;state.selected=s.selected;state.linkFrom=null;state.unlinkFrom=null;updatePanel();schedule();$('undoBtn').disabled=!state.undo.length;toast('Cambio deshecho.');}
+function undo(){if(derived.mode!=='01'){toast('Regresa a 01 · Editor para editar el grafo.');return;}if(!state.undo.length)return;const s=JSON.parse(state.undo.pop());state.nodes=s.nodes;state.edges=s.edges;state.selected=s.selected;state.linkFrom=null;state.unlinkFrom=null;updatePanel();schedule();$('undoBtn').disabled=!state.undo.length;toast('Cambio deshecho.');}
 function removeLink(from,to){
  const edge=state.edges.find(e=>(e.from===from&&e.to===to)||(e.from===to&&e.to===from));
  if(!edge){toast('Estos conceptos no tienen un vínculo directo.');return false;}
@@ -689,7 +654,7 @@ function download(filename,data,mime){const blob=new Blob([data],{type:mime});co
 $('jsonBtn').onclick=()=>{download('p1-grafo.json',JSON.stringify({schema:'p1.graph.v1',nodes:state.nodes,edges:state.edges,planeCheckpoint:saveCheckpoint(),topologyRegister:topology.reference,derivedViews:derived.exportData()},null,2),'application/json;charset=utf-8');toast('Se exportó el grafo completo, independiente de la vista.');};
 $('loadBtn').onclick=()=>$('fileInput').click();
 $('fileInput').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!Array.isArray(data.nodes)||!Array.isArray(data.edges))throw Error('Formato de grafo no reconocido');const ids=new Set(data.nodes.map(n=>n.id));if(ids.size!==data.nodes.length||!ids.has('p1'))throw Error('Debe existir un núcleo P1 único.');if(!data.nodes.every(n=>typeof n.id==='string'&&typeof n.text==='string'&&Number.isFinite(n.width)&&n.width>=90&&n.width<=500&&Number.isInteger(n.branch)&&n.branch>=-1&&Number.isFinite(n.x)&&Number.isFinite(n.y))||!data.edges.every(o=>ids.has(o.from)&&ids.has(o.to)&&(o.style===undefined||validLinkStyle(o.style)))||!data.nodes.filter(n=>n.parent==='p1').every(n=>data.edges.some(e=>e.from==='p1'&&e.to===n.id))||data.edges.some(e=>e.to==='p1'||(e.from==='p1'&&data.nodes.find(n=>n.id===e.to)?.parent!=='p1'))||!data.nodes.every(n=>n.parent==null||ids.has(n.parent)))throw Error('Hay nodos, conexiones o vínculos del núcleo inválidos.');
- cancelInitialBuild();guardedMove=null;saveUndo();derived.reset();derived.restoreData(data.derivedViews);topology.reset();stagedTopology=data.topologyRegister??null;state.nodes=data.nodes.map(n=>({...n}));state.focusRoot='p1';state.edges=data.edges.map(e=>({...e}));state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;state.depth=maximumDepth();setLinkStyle('solid');state.idSerial=Math.max(0,...state.nodes.map(n=>Number(n.id.match(/^n(\d+)$/)?.[1]||0)));plane.ready=false;plane.nodeEls.clear();plane.routeEls.clear();linesEl.replaceChildren();nodesEl.replaceChildren();if(!validateSavedCheckpoint(data.planeCheckpoint)&&!validateSavedCheckpoint(data.planeCheckpoint,legacyGeometry)){plane.ready=false;}pendingAutoFit=true;updatePanel();schedule();toast('Grafo importado.');}catch(error){toast('No se pudo importar: '+error.message);}finally{e.target.value='';}});
+ cancelInitialBuild();saveUndo();derived.reset();derived.restoreData(data.derivedViews);topology.reset();stagedTopology=data.topologyRegister??null;state.nodes=data.nodes.map(n=>({...n}));state.focusRoot='p1';state.edges=data.edges.map(e=>({...e}));state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;state.depth=maximumDepth();setLinkStyle('solid');state.idSerial=Math.max(0,...state.nodes.map(n=>Number(n.id.match(/^n(\d+)$/)?.[1]||0)));plane.ready=false;plane.nodeEls.clear();plane.routeEls.clear();linesEl.replaceChildren();nodesEl.replaceChildren();if(!validateSavedCheckpoint(data.planeCheckpoint)&&!validateSavedCheckpoint(data.planeCheckpoint,legacyGeometry)){plane.ready=false;}pendingAutoFit=true;updatePanel();schedule();toast('Grafo importado.');}catch(error){toast('No se pudo importar: '+error.message);}finally{e.target.value='';}});
 // Exportación sin cambiar el modelo, el zoom ni la posición del lienzo.
 // SVG autónomo: incluye los estilos de los nodos, las líneas y las máscaras.
 const themeButton=$('themeBtn');
@@ -796,7 +761,7 @@ $('pngBtn').onclick=async()=>{
  }catch(err){console.error('Error exportando PNG completo:',err);toast('No se pudo exportar PNG: '+err.message);}
  finally{if(temporaryURL)URL.revokeObjectURL(temporaryURL);btn.disabled=false;btn.textContent='Exportar grafo completo · PNG 4K';}
 };
-function init(useDemo=true){cancelInitialBuild();guardedMove=null;plane.reset();derived.reset();topology.reset();stagedTopology=null;linesEl.replaceChildren();nodesEl.replaceChildren();const demo=useDemo?seed():blankSeed();state.nodes=demo.nodes;state.edges=demo.edges;state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;setLinkStyle('solid');state.focusRoot='p1';state.depth=maximumDepth();state.undo=[];state.idSerial=0;syncDepth();updatePanel();$('undoBtn').disabled=true;pendingAutoFit=true;schedule();}
+function init(useDemo=true){cancelInitialBuild();plane.reset();derived.reset();topology.reset();stagedTopology=null;linesEl.replaceChildren();nodesEl.replaceChildren();const demo=useDemo?seed():blankSeed();state.nodes=demo.nodes;state.edges=demo.edges;state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;setLinkStyle('solid');state.focusRoot='p1';state.depth=maximumDepth();state.undo=[];state.idSerial=0;syncDepth();updatePanel();$('undoBtn').disabled=true;pendingAutoFit=true;schedule();}
 const ro=new ResizeObserver(()=>{updateCamera();});ro.observe(stage);
 const bootButtons=[...document.querySelectorAll('button')];
 bootButtons.forEach(button=>button.disabled=true);

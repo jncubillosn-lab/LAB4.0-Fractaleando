@@ -21,7 +21,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   print('E2E: abriendo sitio construido',flush=True)
   page.goto('http://127.0.0.1:'+str(srv.server_address[1])+'/index.html',wait_until='domcontentloaded')
   build=page.locator('meta[name="application-build"]').get_attribute('content')
-  assert '0.2.9' in page.locator('meta[name="application-version"]').get_attribute('content')
+  assert '0.2.10' in page.locator('meta[name="application-version"]').get_attribute('content')
   page.wait_for_function('[...document.fonts].filter(f=>f.family==="Rajdhani"&&f.status==="loaded").length===2')
   def check_labels(selector):
    labels=page.locator(selector).evaluate_all("""els=>els.map(el=>{
@@ -116,12 +116,12 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    output=os.environ.get('P1_SCREENSHOTS')
    if output:
     Path(output).mkdir(parents=True,exist_ok=True)
-    page.screenshot(path=str(Path(output)/('Fractaleando_0_2_9_'+mode+'.png')))
+    page.screenshot(path=str(Path(output)/('Fractaleando_0_2_10_'+mode+'.png')))
   assert results['04']['baseBounds']==results['02']['bounds']
   assert results['04']['baseMeanGap']==results['02']['meanGap']
-  assert results['04']['model']=='raup' and results['04']['W']>1 and 0<=results['04']['D']<1
+  assert results['04']['W']==.25 and results['04']['armWidthFactor']==.85 and results['04']['T']==0
   caption=page.locator('.mapcaption').inner_text()
-  assert all(k+' =' in caption for k in ['W','D','T']),caption
+  assert all(k+' =' in caption for k in ['Giro','Apertura','T']),caption
   with page.expect_download() as spiral_png:page.locator('#pngBtn').click()
   raster=Path(spiral_png.value.path()).read_bytes()
   assert max(struct.unpack('>II',raster[16:24]))==4096

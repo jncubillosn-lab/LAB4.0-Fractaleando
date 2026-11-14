@@ -158,15 +158,6 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
     page.locator('#derivedNodes [data-node-id="'+endpoint+'"]').click()
     assert 'hierarchy-focus' in page.locator('#derivedLines [data-edge-key="f0|t0"]').get_attribute('class')
   print('El vínculo nuevo entre pares aparece y se resalta desde cualquiera de sus puntas en las tres vistas',flush=True)
-  page.locator('#spiralT').fill('0.1')
-  page.locator('#spiralControls button').click()
-  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().current?.T===.1',timeout=120000)
-  assert 'T = 0.1' in page.locator('.mapcaption').inner_text()
-  assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current.pending')==0
-  with page.expect_download() as parameters:page.locator('#jsonBtn').click()
-  saved=json.loads(Path(parameters.value.path()).read_text(encoding='utf8'))
-  assert saved['derivedViews']['spiralParameters']['T']==.1
-  print('W–D–T aplicables: T modifica la proyección y se conserva en JSON',flush=True)
   assert not errors,errors
   b.close()
  srv.shutdown()

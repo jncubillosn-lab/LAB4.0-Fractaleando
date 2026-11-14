@@ -2,10 +2,15 @@
 
 **[▶ Abrir la aplicación en GitHub Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/)**
 
-**Implementación actual 0.2.9:** [Fractalear, exportación 4K y modelo W–D–T](FRACTALEAr_0_2_9.md).
+**Implementación actual 0.2.10:** [editor libre y espiral estable recuperada de 0.2.8](EDITOR_LIBRE_0_2_10.md).
+El Editor permite reordenar cuadros y adaptar sus puertos sin bloquearlos por
+cambios de cruces. Compacto y Espiral conservan sus controles de 0.2.8.
+El experimento W–D–T se retira; se mantiene la exportación 4K y los demás ajustes.
+
+**Base 0.2.9:** [Fractalear y exportación 4K; experimento W–D–T retirado](FRACTALEAr_0_2_9.md).
 El grafo completo aparece al iniciar. La exportación PNG incluye todas las capas,
 con 4096 píxeles en el lado mayor y proporción propia del grafo. Las vistas son
-01 Editor, 02 Compacto y 03 Espiral. Esta última permite aplicar W, D y T.
+01 Editor, 02 Compacto y 03 Espiral.
 
 **Base 0.2.8:** [cruces unificados, letra fija y estilos de conexión](CIERRE_VISUAL_0_2_8.md).
 Las tres vistas comparten las franjas blancas. La letra se mantiene en

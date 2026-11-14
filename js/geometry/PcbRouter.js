@@ -151,23 +151,6 @@ export class PcbRouter {
    const localOccupied=limitMs===undefined?occupied:occupied.filter(z=>
     Math.max(z.a.x,z.b.x)>=minx-ROUTE_SEPARATION&&Math.min(z.a.x,z.b.x)<=maxx+ROUTE_SEPARATION&&
     Math.max(z.a.y,z.b.y)>=miny-ROUTE_SEPARATION&&Math.min(z.a.y,z.b.y)<=maxy+ROUTE_SEPARATION);
-   const horizontal=[],vertical=[],oblique=[];
-   if(limitMs!==undefined)for(const old of localOccupied){
-    const axis=segmentAxis(old.a,old.b);
-    if(axis==='h')horizontal.push({at:(old.a.y+old.b.y)/2,old});
-    else if(axis==='v')vertical.push({at:(old.a.x+old.b.x)/2,old});else oblique.push(old);
-   }
-   horizontal.sort((a,b)=>a.at-b.at);vertical.sort((a,b)=>a.at-b.at);
-   const range=(list,lo,hi)=>{
-    let left=0,right=list.length;while(left<right){const mid=(left+right)>>1;if(list[mid].at<lo)left=mid+1;else right=mid;}
-    const out=[];for(let i=left;i<list.length&&list[i].at<=hi;i++)out.push(list[i].old);return out;
-   };
-   const nearbySegments=(a,b)=>{
-    if(limitMs===undefined)return localOccupied;
-    const pad=ROUTE_SEPARATION+.02;
-    return Math.abs(a.y-b.y)<.01?[...range(horizontal,a.y-pad,a.y+pad),...range(vertical,Math.min(a.x,b.x)-pad,Math.max(a.x,b.x)+pad),...oblique]:
-     [...range(vertical,a.x-pad,a.x+pad),...range(horizontal,Math.min(a.y,b.y)-pad,Math.max(a.y,b.y)+pad),...oblique];
-   };
    const xs=[start.x,end.x,minx,maxx],ys=[start.y,end.y,miny,maxy];
    for(const r of near){xs.push(r.l-ROUTE_CLEAR-3,r.r+ROUTE_CLEAR+3);ys.push(r.t-ROUTE_CLEAR-3,r.b+ROUTE_CLEAR+3);}
    // Los cruces lejanos conservan los obstáculos, pero no multiplican los ejes
@@ -179,7 +162,7 @@ export class PcbRouter {
    const uniq=v=>[...new Set(v.filter(Number.isFinite).map(n=>Math.round(n*100)/100))].sort((a,b)=>a-b);
    const xx=uniq(limitMs===undefined?xs:xs.filter(x=>x>=minx&&x<=maxx));
    const yy=uniq(limitMs===undefined?ys:ys.filter(y=>y>=miny&&y<=maxy)),nx=xx.length,ny=yy.length;
-   if(nx*ny>(limitMs===undefined?60000:250000))return null;
+   if(nx*ny>60000)return null;
    const xi=xx.indexOf(Math.round(start.x*100)/100),yi=yy.indexOf(Math.round(start.y*100)/100),
          tx=xx.indexOf(Math.round(end.x*100)/100),ty=yy.indexOf(Math.round(end.y*100)/100);
    if(xi<0||yi<0||tx<0||ty<0)return null;
@@ -193,14 +176,8 @@ export class PcbRouter {
     if(performance.now()>=searchDeadline)return null;
     if(blocked.has(key))return blocked.get(key);
     let penalty=0;
-    for(const r of near){
-     if(Math.max(a.x,b.x)<r.l-ROUTE_CLEAR||Math.min(a.x,b.x)>r.r+ROUTE_CLEAR||Math.max(a.y,b.y)<r.t-ROUTE_CLEAR||Math.min(a.y,b.y)>r.b+ROUTE_CLEAR)continue;
-     if(segmentHitsRect(a,b,r)){blocked.set(key,null);return null;}
-    }
-    // A bounded recovery must be able to cross a permitted transverse line.
-    // An effectively infinite penalty exhausts the deadline before doing so.
-    const crossCost=limitMs===undefined?250000:80;
-    for(const old of nearbySegments(a,b)){const rel=segmentRelation(a,b,old.a,old.b);if(rel.overlap||rel.cross&&!allowCross){blocked.set(key,null);return null;}penalty+=rel.cross*crossCost;}
+    for(const r of near){if(segmentHitsRect(a,b,r)){blocked.set(key,null);return null;}}
+    for(const old of localOccupied){const rel=segmentRelation(a,b,old.a,old.b);if(rel.overlap||rel.cross&&!allowCross){blocked.set(key,null);return null;}penalty+=rel.cross*250000;}
     blocked.set(key,penalty);return penalty;
    }
    let expansions=0,goal=null;
