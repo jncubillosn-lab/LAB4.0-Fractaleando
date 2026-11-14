@@ -6,11 +6,15 @@ import {DerivedViews} from './views/DerivedViews.js';
 import {PcbRouter} from './geometry/PcbRouter.js';
 import {GeometryValidator} from './geometry/GeometryValidator.js';
 import {SvgRenderer} from './ui/SvgRenderer.js';
-import {loadNodeTypography,paintNodeLabel,exportedNodeFonts,nodeGeometry} from './ui/NodeTypography.js';
+import {loadNodeTypography,paintNodeLabel,nodeGeometry} from './ui/NodeTypography.js';
 import {scaleCrossings,emphasizeCrossings,visibleCrossings} from './ui/CircuitSvg.js';
-import {validLinkStyle} from './ui/LinkStyles.js';
 import {clockChildPosition,nextClockIndex} from './geometry/ClockPlacement.js';
-import {pngExportPlan,completeGraphClone,svgStyleTag} from './ui/PngExport.js';
+import {WorkerTask} from './core/WorkerTask.js';
+import {checkpointHasRecords} from './io/GraphFile.js';
+import {bindGraphFiles} from './ui/GraphFiles.js';
+import {bindDiagramExports} from './ui/DiagramExport.js';
+import {validLinkStyle} from './ui/LinkStyles.js';
+import {layoutPlane} from './geometry/PlaneLayout.js';
 import {routeFacingLink} from './geometry/FacingPorts.js';
 import {computeInitialRoutes} from './workers/initial-route.worker.js';
 // P1 application coordinator: preserves the approved HTML, controls and data model.
@@ -60,68 +64,8 @@ const currentNodes=()=>graph.currentNodes();
 // P1 01 Plano — motor de representación independiente, escrito desde cero.
 // Solo depende de los nodos/vínculos y funciones de medición de la interfaz vigente.
 const ROUTE_CLEAR=9, ROUTE_SEPARATION=6, PORT_STUB=19;
-let lastLayoutBounds=null;
 function sEl(tag,attrs={}){const e=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));return e;}
 function pathPriority(e,levels){const a=levels[e.from]??1000,b=levels[e.to]??1000;return Math.min(a,b)*10+(e.kind==='transversal'?5:0)+(Math.abs(a-b)>1?2:0);}
-function layoutPlane(visible){
- const byId=new Map(visible.map(n=>[n.id,n]));
- const metrics=new Map(visible.map(n=>[n.id,geometry(n)]));
- const children=new Map(visible.map(n=>[n.id,[]]));
- for(const n of visible)if(n.parent&&children.has(n.parent)&&n.id!==n.parent)children.get(n.parent).push(n);
- const topRoots=children.get('p1')||[];
- const positions=new Map();
- if(byId.has('p1'))positions.set('p1',{x:0,y:-214});
- let branchStart=0;
- const componentBounds=[];
- for(const root of topRoots){
-  // Las profundidades definen COLUMNAS, nunca órbitas: 01 sigue siendo plano.
-  const bands=new Map();const walked=new Set();
-  function record(node,level){if(walked.has(node.id))return;walked.add(node.id);const old=bands.get(level)||{w:0,count:0};old.w=Math.max(old.w,metrics.get(node.id).w);old.count++;bands.set(level,old);for(const c of children.get(node.id)||[])record(c,level+1);}
-  record(root,0);
-  const columns=[0];for(let i=1;i<bands.size;i++){
-   const a=bands.get(i-1),b=bands.get(i);const channel=Math.max(104,Math.min(230,50+a.count*7));
-   columns[i]=columns[i-1]+a.w/2+b.w/2+channel;
-  }
-  const extRight=Math.max(...[...bands].map(([j,b])=>columns[j]+b.w/2),metrics.get(root.id).w/2);
-  const extLeft=-metrics.get(root.id).w/2;
-  const xBase=branchStart-extLeft;
-  const minLeafPitch=70;
-  const heightMemo=new Map();
-  function measure(n,trail=new Set()){
-   if(heightMemo.has(n.id))return heightMemo.get(n.id);
-   if(trail.has(n.id))return minLeafPitch;
-   trail.add(n.id);const ch=children.get(n.id)||[];
-   const own=Math.max(minLeafPitch,metrics.get(n.id).h+18);
-   const childHeight=ch.length?ch.reduce((s,c)=>s+measure(c,trail),0)+(ch.length-1)*22:0;
-   trail.delete(n.id);const out=Math.max(own,childHeight);heightMemo.set(n.id,out);return out;
-  }
-  // El origen de la rama queda arriba; las generaciones crecen por debajo.
-  positions.set(root.id,{x:xBase,y:36});
-  let cursor=270;
-  const visit=new Set([root.id]);
-  function put(n,level,top){
-   if(visit.has(n.id))return;visit.add(n.id);
-   const h=measure(n);positions.set(n.id,{x:xBase+columns[level],y:top+h/2});
-   let yy=top;for(const c of children.get(n.id)||[]){const sub=measure(c);put(c,level+1,yy);yy+=sub+22;}
-  }
-  for(const c of children.get(root.id)||[]){const h=measure(c);put(c,1,cursor);cursor+=h+24;}
-  componentBounds.push({left:branchStart,right:branchStart+extRight-extLeft,top:-10,bottom:cursor});
-  branchStart+=extRight-extLeft+190;
- }
- // Los conceptos huérfanos se conservan sin inventar nuevas relaciones.
- const orphans=visible.filter(n=>!positions.has(n.id));
- if(orphans.length){let xx=branchStart+140,yy=36;for(const n of orphans){positions.set(n.id,{x:xx,y:yy});yy+=metrics.get(n.id).h+40;}}
- const entries=[...positions].map(([id,p])=>({id,...p,...metrics.get(id)}));
- if(!entries.length){lastLayoutBounds=null;return {positions,metrics,rects:new Map()};}
- const left=Math.min(...entries.map(p=>p.x-p.w/2)),right=Math.max(...entries.map(p=>p.x+p.w/2));
- const mid=(left+right)/2;
- // Mover el núcleo a la mitad de las tres ramas (o las que existan).
- if(byId.has('p1')){const r=topRoots.length?positions.get(topRoots[Math.floor((topRoots.length-1)/2)].id).x:mid;positions.get('p1').x=r;}
- const rects=new Map();
- for(const [id,p] of positions){p.x-=mid;const m=metrics.get(id);rects.set(id,{id,x:p.x,y:p.y,w:m.w,h:m.h,l:p.x-m.w/2,r:p.x+m.w/2,t:p.y-m.h/2,b:p.y+m.h/2});}
- lastLayoutBounds={left:left-mid,right:right-mid,top:Math.min(...entries.map(p=>p.y-p.h/2)),bottom:Math.max(...entries.map(p=>p.y+p.h/2))};
- return {positions,metrics,rects};
-}
 const router=new PcbRouter({state,nodeById,clamp,allowBendCrossings:true});
 const {prefSide,assignPorts,allSegments,segmentHitsRect,onSegmentVal,segmentRelation,routeShapeValid,simplify,fastCandidates,findRouteGrid,routeEdge,linePath,intersections}=router;
 // P1/01: geometría persistente. Una versión se consolida tras cada modificación.
@@ -295,15 +239,15 @@ function chooseRoute(edge,occupied){
 }
 // The initial routing is expensive; keep the browser's UI responsive (phase VI).
 // The Worker receives measured rectangles, never the DOM or guessed font metrics.
-let initialWorker=null,initialToken=0,initialBuilding=false,pendingAutoFit=false;
+const initialTask=new WorkerTask(()=>new Worker(new URL('./workers/initial-route.worker.js',import.meta.url),{type:'module'}));
+let initialToken=0,initialBuilding=false,pendingAutoFit=false;
 function cancelInitialBuild(){
- ++initialToken;initialBuilding=false;
- if(initialWorker){initialWorker.terminate();initialWorker=null;}
+ ++initialToken;initialBuilding=false;initialTask.cancel();
 }
 function graphFingerprint(){return JSON.stringify({nodes:state.nodes.map(n=>[n.id,n.text,n.parent,n.branch,n.width,n.x,n.y]),edges:state.edges});}
 function makeInitialCheckpoint(){
  if(initialBuilding)return false;
- const started=performance.now(),layout=layoutPlane(state.nodes);
+ const started=performance.now(),layout=layoutPlane(state.nodes,geometry);
  plane.positions=layout.positions;plane.metrics=layout.metrics;plane.rects=layout.rects;
  plane.routes=new Map();plane.retired.clear();
  for(const n of state.nodes){const p=plane.positions.get(n.id);if(p){n.x=p.x;n.y=p.y;}}
@@ -312,41 +256,28 @@ function makeInitialCheckpoint(){
  const initialFingerprint=graphFingerprint(),token=++initialToken;
  function complete(result){
   if(token!==initialToken)return;
-  initialBuilding=false;if(initialWorker){initialWorker.terminate();initialWorker=null;}
+  initialBuilding=false;
   if(graphFingerprint()!==initialFingerprint){schedule();return;}
   plane.routes=new Map(result.routes);
   plane.ready=true;plane.revision++;diag.initialBuilds++;
   diag.routeCalculations+=result.calculations;diag.lastRouteCalculations=result.calculations;
   diag.lastOperation='cálculo inicial';diag.lastDurationMs=Math.round(performance.now()-started);
   diag.checkpoint=plane.revision;
-  observeTopology();
-  schedule();
+  observeTopology();schedule();
  }
  const fallback=()=>{if(token!==initialToken)return;complete(computeInitialRoutes(payload));};
  if(typeof Worker==='undefined'){fallback();return true;}
- try{
-  initialBuilding=true;
-  initialWorker=new Worker('./js/workers/initial-route.worker.js',{type:'module'});
-  initialWorker.onmessage=event=>{
+ initialBuilding=true;
+ initialTask.run({...payload,token},{timeoutMs:35000,timeoutMessage:'El cálculo inicial no respondió en 35 s.'})
+  .then(complete,error=>{
    if(token!==initialToken)return;
-   if(event.data?.error){console.warn('Cálculo auxiliar no disponible:',event.data.error);fallback();return;}
-   complete(event.data.result);
-  };
-  initialWorker.onerror=event=>{
-   if(token!==initialToken)return;
-   console.warn('Worker geométrico no disponible. Calculando en este navegador.',event.message);
-   if(initialWorker){initialWorker.terminate();initialWorker=null;}
+   console.warn('Worker geométrico no disponible. Calculando en este navegador.',error.message);
    fallback();
-  };
-  initialWorker.postMessage({...payload,token});
-  return false;
- }catch(error){
-  if(initialWorker){initialWorker.terminate();initialWorker=null;}
-  initialBuilding=false;fallback();return true;
- }
+  });
+ return false;
 }
 function validateSavedCheckpoint(payload,measure=geometry){
- if(!payload||payload.version!==1||!Array.isArray(payload.positions)||!Array.isArray(payload.routes))return false;
+ if(!checkpointHasRecords(payload))return false;
  const saved=new Map(payload.positions.map(p=>[p.id,p]));
  if(saved.size!==state.nodes.length||state.nodes.some(n=>!saved.has(n.id)))return false;
  const positions=new Map(),metrics=new Map(),rects=new Map();
@@ -355,8 +286,9 @@ function validateSavedCheckpoint(payload,measure=geometry){
   positions.set(n.id,{x:p.x,y:p.y});metrics.set(n.id,m);rects.set(n.id,rectAt(n.id,p,m));}
  const all=[...rects.values()];for(let i=0;i<all.length;i++)for(let j=0;j<i;j++)if(rectOverlap(all[i],all[j],0))return false;
  const routeMap=new Map(),occupied=[],ports=new Map();
+ const edgesByKey=new Map(state.edges.map(e=>[edgeKey(e),e]));
  for(const r of payload.routes){
-  const edge=state.edges.find(e=>edgeKey(e)===r.key);if(!edge||routeMap.has(r.key))return false;
+  const edge=edgesByKey.get(r.key);if(!edge||routeMap.has(r.key))return false;
   if(r.points!==null){
    if(!Array.isArray(r.points)||r.points.length<2||r.points.length>150||
     r.points.some(p=>!Number.isFinite(p.x)||!Number.isFinite(p.y))||!r.fromPort||!r.toPort)return false;
@@ -646,6 +578,7 @@ for(const button of document.querySelectorAll('button[data-link-style]'))
 $('linkBtn').onclick=()=>{state.unlinkFrom=null;if(state.linkFrom){state.linkFrom=null;toast('Conexión cancelada.');}else if(selected()){state.linkFrom=state.selected;toast('Ahora selecciona el concepto de destino.');}updatePanel();};
 $('unlinkBtn').onclick=()=>{state.linkFrom=null;if(state.unlinkFrom){state.unlinkFrom=null;toast('Eliminación cancelada.');}else if(selected()){state.unlinkFrom=state.selected;toast('Ahora selecciona el concepto conectado cuyo vínculo quieres retirar.');}updatePanel();};
 let typingStarted=false,geometryTypingTimer=null;$('nodeText').addEventListener('focus',()=>typingStarted=false);
+function cancelPendingTyping(){clearTimeout(geometryTypingTimer);geometryTypingTimer=null;typingStarted=false;}
 $('nodeText').addEventListener('input',e=>{
  const n=selected();if(!n)return;if(!typingStarted){saveUndo();typingStarted=true;}
  const shown=plane.metrics.get(n.id)||geometry(n);n.text=e.target.value||' ';const next=geometry(n);
@@ -660,11 +593,41 @@ $('depth').addEventListener('input',e=>{state.depth=Number(e.target.value);sched
 // El filtro es solo visibilidad: conserva coordenadas, zoom y cámara.
 $('showAllBtn').onclick=()=>{state.depth=maximumDepth();scheduleVisibility();};
 window.addEventListener('keydown',e=>{const target=e.target.tagName.toLowerCase();if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){if(target!=='textarea'&&target!=='input'){e.preventDefault();undo();}}if(e.key==='Escape'&&(state.linkFrom||state.unlinkFrom)){state.linkFrom=null;state.unlinkFrom=null;updatePanel();}});
-function download(filename,data,mime){const blob=new Blob([data],{type:mime});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),500);}
-$('jsonBtn').onclick=()=>{download('p1-grafo.json',JSON.stringify({schema:'p1.graph.v1',nodes:state.nodes,edges:state.edges,planeCheckpoint:saveCheckpoint(),topologyRegister:topology.reference,derivedViews:derived.exportData()},null,2),'application/json;charset=utf-8');toast('Se exportó el grafo completo, independiente de la vista.');};
-$('loadBtn').onclick=()=>$('fileInput').click();
-$('fileInput').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!Array.isArray(data.nodes)||!Array.isArray(data.edges))throw Error('Formato de grafo no reconocido');const ids=new Set(data.nodes.map(n=>n.id));if(ids.size!==data.nodes.length||!ids.has('p1'))throw Error('Debe existir un núcleo P1 único.');if(!data.nodes.every(n=>typeof n.id==='string'&&typeof n.text==='string'&&Number.isFinite(n.width)&&n.width>=90&&n.width<=500&&Number.isInteger(n.branch)&&n.branch>=-1&&Number.isFinite(n.x)&&Number.isFinite(n.y))||!data.edges.every(o=>ids.has(o.from)&&ids.has(o.to)&&(o.style===undefined||validLinkStyle(o.style)))||!data.nodes.filter(n=>n.parent==='p1').every(n=>data.edges.some(e=>e.from==='p1'&&e.to===n.id))||data.edges.some(e=>e.to==='p1'||(e.from==='p1'&&data.nodes.find(n=>n.id===e.to)?.parent!=='p1'))||!data.nodes.every(n=>n.parent==null||ids.has(n.parent)))throw Error('Hay nodos, conexiones o vínculos del núcleo inválidos.');
- cancelInitialBuild();saveUndo();derived.reset();derived.restoreData(data.derivedViews);topology.reset();stagedTopology=data.topologyRegister??null;state.nodes=data.nodes.map(n=>({...n}));state.focusRoot='p1';state.edges=data.edges.map(e=>({...e}));state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;state.depth=maximumDepth();setLinkStyle('solid');state.idSerial=Math.max(0,...state.nodes.map(n=>Number(n.id.match(/^n(\d+)$/)?.[1]||0)));plane.ready=false;plane.nodeEls.clear();plane.routeEls.clear();linesEl.replaceChildren();nodesEl.replaceChildren();if(!validateSavedCheckpoint(data.planeCheckpoint)&&!validateSavedCheckpoint(data.planeCheckpoint,previousTypographyGeometry)&&!validateSavedCheckpoint(data.planeCheckpoint,legacyGeometry)){plane.ready=false;}pendingAutoFit=true;updatePanel();schedule();toast('Grafo importado.');}catch(error){toast('No se pudo importar: '+error.message);}finally{e.target.value='';}});
+function importGraph(data){
+ cancelPendingTyping();
+ cancelInitialBuild();
+ saveUndo();
+ derived.reset();
+ derived.restoreData(data.derivedViews);
+ topology.reset();
+ stagedTopology=data.topologyRegister??null;
+ state.nodes=data.nodes.map(n=>({...n}));
+ state.edges=data.edges.map(e=>({...e}));
+ state.focusRoot='p1';
+ state.selected='p1';
+ state.linkFrom=null;
+ state.unlinkFrom=null;
+ state.depth=maximumDepth();
+ setLinkStyle('solid');
+ state.idSerial=Math.max(0,...state.nodes.map(n=>Number(n.id.match(/^n([0-9]+)$/)?.[1]||0)));
+ plane.ready=false;
+ plane.nodeEls.clear();
+ plane.routeEls.clear();
+ linesEl.replaceChildren();
+ nodesEl.replaceChildren();
+ const restored=validateSavedCheckpoint(data.planeCheckpoint)||
+  validateSavedCheckpoint(data.planeCheckpoint,previousTypographyGeometry)||
+  validateSavedCheckpoint(data.planeCheckpoint,legacyGeometry);
+ if(!restored)plane.ready=false;
+ pendingAutoFit=true;
+ updatePanel();
+ schedule();
+}
+const graphFiles=bindGraphFiles({
+ fileInput:$('fileInput'),loadButton:$('loadBtn'),saveButton:$('jsonBtn'),toast,onImport:importGraph,
+ snapshot:()=>({schema:'p1.graph.v1',nodes:state.nodes,edges:state.edges,planeCheckpoint:saveCheckpoint(),
+  topologyRegister:topology.reference,derivedViews:derived.exportData()})
+});
 // Exportación sin cambiar el modelo, el zoom ni la posición del lienzo.
 // SVG autónomo: incluye los estilos de los nodos, las líneas y las máscaras.
 const themeButton=$('themeBtn');
@@ -679,99 +642,36 @@ let selectedTheme='light';
 try{selectedTheme=localStorage.getItem('p1-color-theme')==='dark'?'dark':'light';}catch{}
 setTheme(selectedTheme);
 themeButton.onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
-function exportColor(name){return document.documentElement.dataset.theme==='dark'?
- (name==='paper'?'#171917':'#e9e9e4'):(name==='paper'?'#f7f6f1':'#1c1c1b');}
-function exportStyles(){return exportedNodeFonts()+EXPORT_STYLE.replaceAll('#f7f6f1',exportColor('paper')).replaceAll('#1c1c1b',exportColor('ink'));}
-function exportValidationNotice(){
- const notice=derived.exportNotice();
- return notice?`<desc>${notice}</desc><g><rect x="0" y="0" width="100%" height="34" fill="${exportColor('paper')}"/><text x="16" y="23" fill="${exportColor('ink')}" font-family="Arial,sans-serif" font-size="14">${notice}</text></g>`:'';
+bindDiagramExports({
+ svgButton:$('svgBtn'),pngButton:$('pngBtn'),stage,camera,linesEl,nodesEl,plane,derived,state,diag,toast,sEl
+});
+function init(useDemo=true){
+ graphFiles.cancel();
+ cancelPendingTyping();
+ cancelInitialBuild();
+ plane.reset();
+ derived.reset();
+ topology.reset();
+ stagedTopology=null;
+ linesEl.replaceChildren();
+ nodesEl.replaceChildren();
+ const demo=useDemo?seed():blankSeed();
+ state.nodes=demo.nodes;
+ state.edges=demo.edges;
+ state.selected='p1';
+ state.linkFrom=null;
+ state.unlinkFrom=null;
+ setLinkStyle('solid');
+ state.focusRoot='p1';
+ state.depth=maximumDepth();
+ state.undo=[];
+ state.idSerial=0;
+ syncDepth();
+ updatePanel();
+ $('undoBtn').disabled=true;
+ pendingAutoFit=true;
+ schedule();
 }
-function exportCamera(node=camera){
- const text=new XMLSerializer().serializeToString(node);
- return text.replaceAll('fill="var(--paper)"','fill="'+exportColor('paper')+'"');
-}
-const EXPORT_STYLE=`
-.svgline{fill:none;stroke:#1c1c1b;stroke-width:var(--hierarchy-width,1.35);stroke-opacity:.50;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-.svgline.active{stroke-width:calc(var(--hierarchy-width,1.35) * 1px + .75px);stroke-opacity:1}
-.svgline.transverse{stroke-opacity:.52}
-.node rect{fill:#f7f6f1;stroke:#1c1c1b;stroke-width:1.4}
-.node.core rect{stroke-width:2.4}.node.anchor rect{stroke-width:1.9}.node.selected rect{stroke-width:2.7}
-.node text{font-family:Rajdhani,Arial,sans-serif;font-size:var(--node-font-size,24px);fill:#1c1c1b;text-anchor:middle;dominant-baseline:alphabetic;font-weight:600}
-.node.core text{font-size:var(--node-font-size,24px);font-weight:700}.node.anchor text{font-size:var(--node-font-size,24px);font-weight:600}
-.node.hierarchy-focus rect{stroke-width:2.8;stroke-opacity:1}
-.node.hierarchy-focus text{font-weight:700}
-.node.selected.hierarchy-focus rect{stroke-width:3.5}
-.hierarchy-focus .svgline{stroke-width:calc(var(--hierarchy-width,1.35) * 1px + .75px);stroke-opacity:1}
-`;
-function makeExportSvg(outputW,outputH){
- const sourceW=Math.max(1,stage.clientWidth),sourceH=Math.max(1,stage.clientHeight);
- // El área mostrada se adapta completa a 16:9 sin estirar las coordenadas.
- const scale=Math.min(outputW/sourceW,outputH/sourceH);
- const x=(outputW-sourceW*scale)/2,y=(outputH-sourceH*scale)/2;
- const picture=exportCamera();
- return `<svg xmlns="http://www.w3.org/2000/svg" width="${outputW}" height="${outputH}" viewBox="0 0 ${outputW} ${outputH}"><rect width="${outputW}" height="${outputH}" fill="${exportColor('paper')}"/>${svgStyleTag(exportStyles())}<g transform="translate(${x} ${y}) scale(${scale})">${picture}</g>${exportValidationNotice()}</svg>`;
-}
-function downloadBlob(filename,blob){
- const url=URL.createObjectURL(blob),a=document.createElement('a');
- a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();
- setTimeout(()=>URL.revokeObjectURL(url),2000);
-}
-$('svgBtn').onclick=async()=>{
- try{await loadNodeTypography();}catch{toast('No se pudo cargar la tipografía para exportar.');return;}
- await new Promise(requestAnimationFrame);
- const svgText=makeExportSvg(Math.max(1,stage.clientWidth),Math.max(1,stage.clientHeight));
- download('fractalear-vista.svg',svgText,'image/svg+xml;charset=utf-8');
- toast('Vista actual exportada en SVG.');
-};
-function pngExportBounds(){
- if(derived.mode!=='01'&&!derived.current)throw Error('Espera a que termine el cálculo de esta vista.');
- const scene=derived.mode==='01'?{rects:plane.rects,routes:plane.routes}:derived.current;
- return pngExportPlan({rects:scene.rects||scene.layout.rects,routes:scene.routes,notice:Boolean(derived.exportNotice())});
-}
-function makeCompletePngSvg(bounds){
- const {width,height,scale,offsetX,offsetY}=bounds;
- const graph=completeGraphClone({lines:derived.mode==='01'?linesEl:derived.derivedLines,
-  nodes:derived.mode==='01'?nodesEl:derived.derivedNodes,sEl});
- // PNG scales strokes with the graph; masks must use the same world units.
- scaleCrossings(graph,1);
- // Importantísimo: la cámara solo gobierna la pantalla. No debe trasladarse al PNG.
- graph.removeAttribute('transform');
- const picture=exportCamera(graph);
- // En una exportación a alta densidad el grosor de línea se escala junto al texto.
- const style=exportStyles().replace(/vector-effect\s*:\s*non-scaling-stroke\s*;?/g,'');
- return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="${width}" height="${height}" fill="${exportColor('paper')}"/>${svgStyleTag(style)}<g transform="translate(${offsetX.toFixed(2)} ${offsetY.toFixed(2)}) scale(${scale})">${picture}</g>${exportValidationNotice()}</svg>`;
-}
-$('pngBtn').onclick=async()=>{
- const btn=$('pngBtn');if(btn.disabled)return;
- btn.disabled=true;btn.textContent='Preparando PNG completo…';
- let temporaryURL=null;
- try{
-  await loadNodeTypography();
-  // No se toca la vista, el zoom, las posiciones ni el contenido del grafo.
-  if(state.renderQueued){
-   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-  }
-  const bounds=pngExportBounds();
-  const svgText=makeCompletePngSvg(bounds);
-  temporaryURL=URL.createObjectURL(new Blob([svgText],{type:'image/svg+xml;charset=utf-8'}));
-  const pic=new Image();
-  await new Promise((resolve,reject)=>{
-   pic.onload=resolve;pic.onerror=()=>reject(new Error('No se pudo convertir el diagrama SVG en imagen.'));
-   pic.src=temporaryURL;
-  });
-  const canvas=document.createElement('canvas');canvas.width=bounds.width;canvas.height=bounds.height;
-  const context=canvas.getContext('2d');
-  if(!context)throw new Error('El navegador no puede crear el lienzo PNG de este tamaño. Prueba SVG.');
-  context.fillStyle=exportColor('paper');context.fillRect(0,0,canvas.width,canvas.height);
-  context.drawImage(pic,0,0,bounds.width,bounds.height);
-  const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('No se pudo codificar este PNG de gran tamaño. Puedes exportar SVG.')),'image/png'));
-  diag.pngExport={...bounds,fontPixels:24*bounds.scale};
-  downloadBlob(`fractalear-${derived.mode==='04'?'03':derived.mode}-4k-${bounds.width}x${bounds.height}.png`,blob);
-  toast(`PNG 4K: ${bounds.width} × ${bounds.height} px · ${bounds.nodes} conceptos · ${bounds.edges} vínculos.`);
- }catch(err){console.error('Error exportando PNG completo:',err);toast('No se pudo exportar PNG: '+err.message);}
- finally{if(temporaryURL)URL.revokeObjectURL(temporaryURL);btn.disabled=false;btn.textContent='Exportar grafo completo · PNG 4K';}
-};
-function init(useDemo=true){cancelInitialBuild();plane.reset();derived.reset();topology.reset();stagedTopology=null;linesEl.replaceChildren();nodesEl.replaceChildren();const demo=useDemo?seed():blankSeed();state.nodes=demo.nodes;state.edges=demo.edges;state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;setLinkStyle('solid');state.focusRoot='p1';state.depth=maximumDepth();state.undo=[];state.idSerial=0;syncDepth();updatePanel();$('undoBtn').disabled=true;pendingAutoFit=true;schedule();}
 const ro=new ResizeObserver(()=>{updateCamera();});ro.observe(stage);
 const bootButtons=[...document.querySelectorAll('button')];
 bootButtons.forEach(button=>button.disabled=true);

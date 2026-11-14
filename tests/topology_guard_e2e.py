@@ -51,6 +51,35 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    assert child.get_attribute('transform')==position
    assert page.locator('#nodeText').is_disabled() and page.locator('#addBtn').is_disabled()
   print('Editor libre: cruza posiciones, adapta ambas caras, conserva vínculos y ruta ajena, deshace sin reconstrucción global; 02/03 protegidos',flush=True)
+  # Import from 03 with a damaged optional checkpoint: recover the concepts
+  # and return to a truly editable 01, rather than only changing its heading.
+  fixture=Path(__file__).parent/'fixtures'/'word-wrap-0.2.10.json'
+  damaged=json.loads(fixture.read_text(encoding='utf8'))
+  damaged['planeCheckpoint']['positions']=[None]
+  page.locator('#fileInput').set_input_files({'name':'damaged-checkpoint.json','mimeType':'application/json','buffer':json.dumps(damaged).encode()})
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().mode==="01"&&window.P1_PLANO_DIAGNOSTICO.routes===3&&document.querySelectorAll("#nodes .node").length===4',timeout=30000)
+  assert not page.locator('#addBtn').is_disabled()
+  page.locator('#nodes [data-node-id="b0"]').click();page.locator('#addBtn').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===4',timeout=30000)
+  page.locator('[data-view="02"]').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().current?.mode==="02"',timeout=30000)
+  page.locator('#newBtn').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().mode==="01"&&window.P1_PLANO_DIAGNOSTICO.routes===3&&document.querySelectorAll("#nodes .node").length===4',timeout=30000)
+  # Cancel a running calculation and immediately start another one.
+  page.locator('[data-view="04"]').evaluate("""el=>{el.click();document.querySelector('[data-view="01"]').click()}""")
+  page.locator('[data-view="02"]').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().current?.mode==="02"',timeout=30000)
+  assert page.locator('#derivedNodes .node').count()==4
+  page.locator('[data-view="01"]').click()
+  # A worker that cannot start must keep the existing main-thread fallback.
+  page.evaluate('window.__savedWorker=window.Worker;window.Worker=class {constructor(){throw new DOMException("test unavailable","AbortError")}}')
+  page.locator('#newBtn').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===3&&document.querySelectorAll("#nodes .node").length===4',timeout=30000)
+  page.evaluate('window.Worker=window.__savedWorker;delete window.__savedWorker')
+  page.locator('#nodes [data-node-id="b0"]').click();page.locator('#addBtn').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===4',timeout=30000)
+  assert not page.locator('#nodeText').is_disabled()
+  print('Ciclo de vida: importar desde 03, Nueva desde 02, caché dañada, cancelación y fallback conservan la edición',flush=True)
   assert not errors,errors
   browser.close()
  srv.shutdown()

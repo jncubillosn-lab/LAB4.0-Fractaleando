@@ -11,7 +11,9 @@ referencia. Sus nombres de vistas, experimentos, bloqueos del Editor y estados
 de publicación deben leerse con la fecha de cada corte. El estado funcional
 actual se describe en la referencia anterior.
 
-**Implementación actual 0.2.12:** [carga, medidas reutilizadas y equivalencia del dibujo](RENDIMIENTO_0_2_12.md).
+**Implementación actual 0.2.13:** [estabilidad, archivos y controladores separados](MANTENIMIENTO_0_2_13.md).
+
+**Base 0.2.12:** [carga, medidas reutilizadas y equivalencia del dibujo](RENDIMIENTO_0_2_12.md).
 
 **Base funcional 0.2.11:** [palabras completas y ancho automático](PALABRAS_COMPLETAS_0_2_11.md).
 Los cuadros se ensanchan para contener la palabra más larga, con letra fija de
