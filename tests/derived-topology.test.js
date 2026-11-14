@@ -27,6 +27,18 @@ test('una vista no se autoaprueba sin referencia 01 ni cambia la referencia comp
  assert.equal(rejected.report.valid,false);assert.ok(rejected.report.counts.crossing>0);
  assert.deepEqual(reference,before);
 });
+
+test('el editor puede adoptar otro recorrido, mientras las derivadas siguen rechazándolo contra la referencia anterior',()=>{
+ const editor=new TopologyRegister({edgeKey});
+ const prior=editor.capture(geometry());editor.observe(prior);
+ const changed=editor.capture(geometry(true));
+ assert.equal(editor.compare(prior,changed).valid,false);
+ assert.equal(editor.observe(changed,{editable:true}).valid,true);
+ assert.deepEqual(editor.reference,changed);
+ assert.equal(checkDerivedTopology({reference:prior,edgeKey,...geometry(true)}).report.valid,false);
+ const incomplete=structuredClone(changed);incomplete.pending=[incomplete.edges[0]];
+ editor.observe(incomplete,{editable:true});assert.deepEqual(editor.reference,changed);
+});
 test('una vista no aprueba si falta un vínculo, un concepto o una ruta de la referencia',()=>{
  const input=geometry(),reference=new TopologyRegister({edgeKey}).capture(input);
  const missing=geometry();missing.edges.pop();

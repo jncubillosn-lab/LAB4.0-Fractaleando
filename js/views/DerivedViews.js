@@ -9,9 +9,9 @@ import {GeometryValidator} from '../geometry/GeometryValidator.js';
 import {hierarchySelection} from '../core/HierarchySelection.js';
 import {paintNodeLabel} from '../ui/NodeTypography.js';
 import {emphasizeCrossings,visibleCrossings} from '../ui/CircuitSvg.js';
-import {RAUP_DEFAULTS,raupCaption,validateRaup} from '../geometry/RaupModel.js';
 
 const viewNumber=mode=>mode==='04'?'03':mode;
+const spiralCaption=s=>'Giro = '+s.W+' · Apertura = '+s.armWidthFactor+' · T = '+s.T;
 
 // Vistas derivadas read-only: conservan el grafo y el plano 01.
 // Cada vista tiene su punto de control y comparte la referencia topológica 01.
@@ -24,30 +24,15 @@ export class DerivedViews {
   this.validator=new GeometryValidator({router:this.router,rectOverlap:(a,b)=>ViewLayouts.overlap(a,b,0)});
   this.cache=new Map();this.mode='01';this.version=0;
   this.pending=null;this.staged={};this.rejected=null;
-  this.spiralParameters={...RAUP_DEFAULTS};
   this.names={'01':['Editor / 01','Construcción y fractaleo','Núcleo · trayectorias editables'],
    '02':['Compacto / 02','Agrupación radial','Ramas próximas · radios según el espacio disponible'],
-   '04':['Espiral / 03','Crecimiento espiral',raupCaption(RAUP_DEFAULTS)]};
+   '04':['Espiral / 03','Crecimiento espiral','Giro = 0.25 · Apertura = 0.85 · T = 0']};
   this.derivedLines=sEl('g',{id:'derivedLines'});
   this.derivedNodes=sEl('g',{id:'derivedNodes'});
   camera.append(this.derivedLines,this.derivedNodes);
   this.renderer=new SvgRenderer({linesEl:this.derivedLines,sEl,router:this.router,edgeKey});
   this.current=null;
   this.graphIdentity=null;
-  const controls=document.createElement('form');controls.id='spiralControls';controls.className='spiral-controls';controls.hidden=true;
-  for(const [key,title,step,min,max] of [['W','Expansión por vuelta W','any',1.0001,null],['D','Distancia relativa al eje D',.01,0,.9999],['T','Traslación axial T',.05,null,null]]){
-   const label=document.createElement('label');label.textContent=key;
-   const input=document.createElement('input');input.id='spiral'+key;input.name=key;input.type='number';input.step=String(step);
-   if(min!==null)input.min=String(min);if(max!==null)input.max=String(max);
-   input.value=String(this.spiralParameters[key]);input.required=true;input.setAttribute('aria-label',title);label.append(input);controls.append(label);
-  }
-  const apply=document.createElement('button');apply.type='submit';apply.className='action';apply.textContent='Aplicar';controls.append(apply);
-  controls.addEventListener('submit',event=>{
-   event.preventDefault();const parameters=Object.fromEntries(['W','D','T'].map(k=>[k,Number(controls.elements.namedItem(k).value)]));
-   try{validateRaup(parameters);}catch(error){this.toast(error.message);return;}
-   this.spiralParameters=parameters;this.cache.delete('04');delete this.staged['04'];this.select('04');
-  });
-  document.querySelector('.toplabel').append(controls);
  }
  sourceKey(){return JSON.stringify([...this.plane.positions].sort(([a],[b])=>a.localeCompare(b)).map(([id,p])=>[id,Math.round(p.x*100)/100,Math.round(p.y*100)/100]));}
  referenceKey(){return JSON.stringify(this.referenceTopology?.()??null);}
@@ -82,13 +67,11 @@ export class DerivedViews {
  }
  updateLabels(mode){
   const text=this.names[mode];
-  if(mode==='04')text[2]=raupCaption(this.spiralParameters);
   for(const [index,selector] of ['.toplabel .eyebrow','.toplabel .maptitle','.toplabel .mapcaption'].entries()){
    const el=document.querySelector(selector);if(el)el.textContent=text[index];
   }
   const footer=document.getElementById('viewState');
   if(footer)footer.textContent=mode==='01'?'01 · EDITABLE':viewNumber(mode)+' · LECTURA';
-  document.getElementById('spiralControls').hidden=mode!=='04';
  }
  metrics(){
   return new Map(this.state.nodes.map(n=>[n.id,this.geometry(n)]));
@@ -162,7 +145,7 @@ export class DerivedViews {
   const token=this.version,metrics=this.metrics();
   try{
    const base=this.cache.get('02');
-   const scene=await this.computeScene({mode,...this.spiralParameters,nodes:this.state.nodes,edges:this.state.edges,metrics,
+   const scene=await this.computeScene({mode,nodes:this.state.nodes,edges:this.state.edges,metrics,
     sourcePositions:this.plane.positions,topologyReference:this.referenceTopology?.(),
     baseScene:mode==='04'&&base?{layout:base.layout,result:{routes:[...base.routes]}}:undefined});
    if(token!==this.version)return;
@@ -236,7 +219,7 @@ export class DerivedViews {
   visibleCrossings(this.derivedLines,visibleEdges);
   const s=current.layout.stats,problems=current.audit.invalid+current.audit.boxes+current.audit.portsRepeated+
    (current.report.issueCount||0)+current.unfinished;
-  if(this.mode==='04')document.querySelector('.toplabel .mapcaption').textContent=raupCaption(s);
+  if(this.mode==='04')document.querySelector('.toplabel .mapcaption').textContent=spiralCaption(s);
   const prefix='Vista '+viewNumber(this.mode)+' · '+shown.size+' conceptos · '+drawn+' vínculos · separación media '+s.meanGap.toFixed(0)+' px';
   const warning=problems>0||!current.valid;
   this.status(prefix+' · '+(warning?
@@ -280,7 +263,7 @@ export class DerivedViews {
      !Array.isArray(stored.positions)||!Array.isArray(stored.routes)||
      !TopologyRegister.validShape(stored.topology))return null;
   if(stored.coreGapFactor!==undefined&&(!Number.isFinite(stored.coreGapFactor)||stored.coreGapFactor<=0||stored.coreGapFactor>1))return null;
-  const input={...this.spiralParameters,nodes:this.state.nodes,edges:this.state.edges,metrics:this.metrics(),sourcePositions:this.plane.positions,topologyReference:this.referenceTopology?.()};
+  const input={nodes:this.state.nodes,edges:this.state.edges,metrics:this.metrics(),sourcePositions:this.plane.positions,topologyReference:this.referenceTopology?.()};
   const policy={coreClearances:stored.coreClearances||{},coreGapFactor:stored.coreGapFactor??.5};
   const baseLayout=mode==='04'?this.layoutEngine.compute({mode:'02',...input,...policy,nodeClearances:stored.baseNodeClearances||{}}):undefined;
   const layout=this.layoutEngine.compute({mode,...input,...policy,baseLayout,nodeClearances:stored.nodeClearances||{}});
@@ -317,7 +300,7 @@ export class DerivedViews {
    unfinished:0,valid:true,calculations:0,restored:true};
  }
  exportData(){
-  const output=this.spiralParameters?{spiralParameters:{...this.spiralParameters}}:{};
+  const output={};
   const identity=this.graphKey()+this.sourceKey()+this.referenceKey();
   for(const [mode,c] of this.cache)if(c.valid&&c.identity===identity)
    output[mode]={layoutVersion:SCENE_VERSION,nodeClearances:c.layout.stats.nodeClearances,baseNodeClearances:c.layout.stats.baseNodeClearances,
@@ -331,8 +314,6 @@ export class DerivedViews {
  restoreData(data){
   this.staged={};
   if(!data||typeof data!=='object')return;
-  try{validateRaup(data.spiralParameters||{});this.spiralParameters=Object.fromEntries(['W','D','T'].map(k=>[k,data.spiralParameters[k]]));}catch{this.spiralParameters={...RAUP_DEFAULTS};}
-  for(const k of ['W','D','T'])document.getElementById('spiral'+k).value=String(this.spiralParameters[k]);
   for(const mode of ['02','04'])if(TopologyRegister.validShape(data[mode]?.topology))
    this.staged[mode]=data[mode];
  }

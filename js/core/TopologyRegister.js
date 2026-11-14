@@ -260,8 +260,14 @@ export class TopologyRegister {
  }
  // La referencia solo se promueve si el candidato es compatible. En caso
  // contrario se mantiene intacta, aun cuando el usuario edite el grafo.
- observe(snapshot){
+ observe(snapshot,{editable=false}={}){
   this.latest=snapshot;
+  // The Editor owns the embedding: moving a box or changing a port updates
+  // its current reference. Derived views keep the strict default comparison.
+  if(editable&&!snapshot.pending.length&&TopologyRegister.validShape(snapshot)){
+   const compared=Boolean(this.reference);this.reference=structuredClone(snapshot);
+   this.report={valid:true,issueCount:0,issues:[],counts:{},compared};return this.report;
+  }
   if(!this.reference){this.reference=snapshot;this.report={valid:true,issueCount:0,issues:[],counts:{},compared:false};return this.report;}
   const report=this.compare(this.reference,snapshot);
   this.report=report;

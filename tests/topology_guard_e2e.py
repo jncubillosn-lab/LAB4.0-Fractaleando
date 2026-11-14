@@ -1,6 +1,5 @@
-"""Validación transaccional: el arrastre no puede invertir relaciones topológicas de 01."""
-import http.server,socketserver,threading
-import os
+"""El editor cambia la geometría local; las vistas derivadas mantienen su protección."""
+import http.server,threading,json,os
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(os.environ.get('P1_SITE_ROOT',Path(__file__).resolve().parents[1]))
@@ -10,30 +9,48 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
 with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
  threading.Thread(target=srv.serve_forever,daemon=True).start()
  with sync_playwright() as p:
-  browser=p.chromium.launch(**({'executable_path':os.environ['P1_BROWSER_PATH']} if os.environ.get('P1_BROWSER_PATH') else {'channel':'chrome'}), headless=True)
-  page=browser.new_page(viewport={'width':1440,'height':900})
-  errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+  browser=p.chromium.launch(**({'executable_path':os.environ['P1_BROWSER_PATH']} if os.environ.get('P1_BROWSER_PATH') else {'channel':'chrome'}),headless=True)
+  page=browser.new_page(viewport={'width':1440,'height':900},accept_downloads=True)
+  errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.on('dialog',lambda d:d.accept())
   page.goto('http://127.0.0.1:'+str(srv.server_address[1])+'/index.html',wait_until='domcontentloaded')
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===217',timeout=60000)
-  node=page.locator('#nodes [data-node-id="p1"]')
-  original=node.get_attribute('transform')
-  box=node.bounding_box()
-  assert box is not None
-  x=box['x']+box['width']/2;y=box['y']+box['height']/2
-  # El núcleo originalmente está por encima de sus hijos J1. Desplazarlo
-  # por debajo invertiría ese orden y no debe consolidarse.
-  page.mouse.move(x,y)
-  page.mouse.down()
-  page.mouse.move(x,y+330,steps=12)
-  page.mouse.up()
-  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.checkpoint>=2',timeout=60000)
-  now=node.get_attribute('transform')
-  info=page.evaluate('({topology:window.P1_PLANO_DIAGNOSTICO.topology(),audit:window.P1_PLANO_DIAGNOSTICO.audit(),last:window.P1_PLANO_DIAGNOSTICO.lastOperation})')
-  print('ARRASTRE_TOPOLOGICO',info,'before',original,'after',now,flush=True)
+  page.locator('#newBtn').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===3&&document.querySelectorAll("#nodes .node").length===4',timeout=60000)
+  page.locator('#nodes [data-node-id="b0"]').click();page.locator('#addBtn').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===4',timeout=30000)
+  def graph():
+   with page.expect_download() as d:page.locator('#jsonBtn').click()
+   return json.loads(Path(d.value.path()).read_text(encoding='utf8'))
+  before=graph();builds=page.evaluate('window.P1_PLANO_DIAGNOSTICO.initialBuilds')
+  source_routes={r['key']:r for r in before['planeCheckpoint']['routes']}
+  node=page.locator('#nodes [data-node-id="p1"]');original=node.get_attribute('transform');box=node.bounding_box()
+  bottom=max(page.locator('#nodes .node').evaluate_all('(els)=>els.map(el=>el.getBoundingClientRect().bottom)'))
+  stage=page.locator('#stage').bounding_box();target_y=bottom+100
+  assert target_y+box['height']/2<stage['y']+stage['height'],(target_y,stage)
+  page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2);page.mouse.down()
+  page.mouse.move(box['x']+box['width']/2,target_y,steps=12);page.mouse.up()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.checkpoint>=3',timeout=30000)
+  after=graph();info=page.evaluate('({pending:window.P1_PLANO_DIAGNOSTICO.pending,affected:window.P1_PLANO_DIAGNOSTICO.lastAffectedRoutes,builds:window.P1_PLANO_DIAGNOSTICO.initialBuilds,audit:window.P1_PLANO_DIAGNOSTICO.audit(),topology:window.P1_PLANO_DIAGNOSTICO.topology()})')
+  assert node.get_attribute('transform')!=original
+  assert after['edges']==before['edges']
+  assert [(n['id'],n.get('parent')) for n in after['nodes']]==[(n['id'],n.get('parent')) for n in before['nodes']]
+  nodes={n['id']:n for n in after['nodes']};assert nodes['p1']['y']>nodes['f0']['y']
+  routes={r['key']:r for r in after['planeCheckpoint']['routes']}
+  assert routes['f0|p1']['fromPort']['side']=='top',routes['f0|p1']
+  assert routes['f0|p1']['toPort']['side']=='bottom',routes['f0|p1']
+  assert routes['b0|n1']==source_routes['b0|n1']
+  assert info['builds']==builds and info['affected']<len(after['edges']),info
+  assert info['pending']==0 and info['audit']['invalid']==info['audit']['boxes']==info['audit']['portsRepeated']==0,info
   assert info['topology']['valid'],info
-  assert info['audit']['invalid']==0 and info['audit']['portsRepeated']==0,info
-  assert 'rechazado' in info['last'].lower(),info
-  assert now==original,(now,original)
+  page.locator('#undoBtn').click();page.wait_for_function('(t)=>document.querySelector("#nodes [data-node-id=p1]").getAttribute("transform")===t',arg=original)
+  for mode in ('02','04'):
+   page.locator('[data-view="'+mode+'"]').click()
+   page.wait_for_function('(m)=>window.P1_PLANO_DIAGNOSTICO.views().current?.mode===m',arg=mode,timeout=120000)
+   child=page.locator('#derivedNodes [data-node-id="f0"]');position=child.get_attribute('transform');b=child.bounding_box()
+   page.mouse.move(b['x']+b['width']/2,b['y']+b['height']/2);page.mouse.down();page.mouse.move(b['x']+b['width']/2+70,b['y']+b['height']/2+70,steps=8);page.mouse.up()
+   assert child.get_attribute('transform')==position
+   assert page.locator('#nodeText').is_disabled() and page.locator('#addBtn').is_disabled()
+  print('Editor libre: cruza posiciones, adapta ambas caras, conserva vínculos y ruta ajena, deshace sin reconstrucción global; 02/03 protegidos',flush=True)
   assert not errors,errors
   browser.close()
  srv.shutdown()

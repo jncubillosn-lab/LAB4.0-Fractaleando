@@ -1,5 +1,9 @@
 # Fractalear · 0.2.9
 
+**Registro histórico:** el experimento W–D–T se retiró en
+[0.2.10](EDITOR_LIBRE_0_2_10.md), por solicitud del usuario, para recuperar
+el motor estable de la versión 0.2.8.
+
 La identidad presenta Fractalear como una herramienta desarrollada por el LAB 4.0
 de la Universidad Nacional. Las vistas visibles son 01 Editor, 02 Compacto y
 03 Espiral. El identificador interno `04` se conserva para leer los archivos
