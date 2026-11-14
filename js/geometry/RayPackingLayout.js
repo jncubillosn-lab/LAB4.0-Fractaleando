@@ -56,7 +56,9 @@ export class RayPackingLayout {
   children.set('p1',roots);
   const pairClearance=(size,r)=>{
    const rootChild=byId.get(size.id)?.parent==='p1';
-   if(rootChild&&r.id==='p1')return 0;
+   // The half-gap target may be diagonal. Keep the same rectangular
+   // clearance used by the independent audit around the core as well.
+   if(rootChild&&r.id==='p1')return clearance;
    // J1 heads share the core region; their outward fan capacity must not
    // inflate the empty space between heads. Routes still pass full DRC.
    if(rootChild&&byId.get(r.id)?.parent==='p1')return clearance;

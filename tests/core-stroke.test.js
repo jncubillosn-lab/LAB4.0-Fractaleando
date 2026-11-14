@@ -1,6 +1,8 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {RayPackingLayout} from '../js/geometry/RayPackingLayout.js';
+import {RadialLayout} from '../js/geometry/RadialLayout.js';
+import {readFileSync} from 'node:fs';
 import {hierarchyStrokeProfile} from '../js/ui/HierarchyStroke.js';
 
 test('J0–J1 reduce a la mitad el hueco entre bordes, conservando medidas y margen físico',()=>{
@@ -17,6 +19,16 @@ test('J0–J1 reduce a la mitad el hueco entre bordes, conservando medidas y mar
  const narrow=new RayPackingLayout().compute({nodes,edges,metrics});
  assert.ok(narrow.stats.coreSpacing.links[0].actualGap>=24);
 });
+test('una palabra ensanchada conserva el margen rectangular entre núcleo y J1 en diagonal',()=>{
+ const data=JSON.parse(readFileSync(new URL('./fixtures/expanded-word-layout.json',import.meta.url)));
+ const degree=new Map(data.nodes.map(n=>[n.id,0]));
+ for(const e of data.edges){degree.set(e.from,degree.get(e.from)+1);degree.set(e.to,degree.get(e.to)+1);}
+ const nodeClearances=Object.fromEntries([...degree].map(([id,count])=>[id,Math.max(24,12+count*8)]));
+ const result=new RadialLayout().compute({...data,metrics:new Map(data.metrics),sourcePositions:new Map(data.sourcePositions),nodeClearances});
+ assert.equal(result.stats.geometricallySafe,true,JSON.stringify(result.stats.collisions));
+ assert.equal(result.stats.overlaps,0);assert.deepEqual(result.stats.outwardViolations,[]);
+});
+
 test('el grosor aumenta suavemente hacia J0, conserva el mínimo y tiene un techo para jerarquías largas',()=>{
  const nodes=Array.from({length:6},(_,i)=>({id:'j'+i,parent:i?'j'+(i-1):null}));
  const levels=Object.fromEntries(nodes.map((n,i)=>[n.id,i]));
