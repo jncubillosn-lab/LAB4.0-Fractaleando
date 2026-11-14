@@ -41,9 +41,11 @@ jobs:
           P1_SITE_ROOT: _site
           P1_SCREENSHOTS: artifacts/views
         run: |
-          python tests/pages_e2e.py
-          python tests/views_e2e.py
-          python tests/topology_guard_e2e.py
+          result=0
+          python tests/pages_e2e.py || result=$?
+          python tests/views_e2e.py || result=$?
+          python tests/topology_guard_e2e.py || result=$?
+          exit "$result"
 
       - name: Conservar evidencia de las vistas
         if: always()
