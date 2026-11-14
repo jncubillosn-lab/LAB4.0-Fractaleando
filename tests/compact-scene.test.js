@@ -18,6 +18,7 @@ test('PPR completo: rayos compactos, 217 rutas seguras y 04 derivada de la misma
  const originalMean=fixture.edges.reduce((s,e)=>s+RadialLayout.gap(sourceRects.get(e.from),sourceRects.get(e.to)),0)/217;
  await AvoidLib.load();const options={load:async()=>AvoidLib.getInstance()};
  const base=await computeDerivedScene({mode:'02',...input},options);
+ console.log(JSON.stringify({stage:'base',pending:base.pending,passes:base.layout.stats.capacityPasses,core:base.layout.stats.coreSpacing}));
  assert.equal(base.layout.stats.coreSpacing.factor,.5);
  for(const link of base.layout.stats.coreSpacing.links){
   assert.equal(link.constrained,false,JSON.stringify(link));

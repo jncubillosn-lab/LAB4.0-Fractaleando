@@ -6,6 +6,7 @@ import {DerivedViews} from './views/DerivedViews.js';
 import {PcbRouter} from './geometry/PcbRouter.js';
 import {GeometryValidator} from './geometry/GeometryValidator.js';
 import {SvgRenderer} from './ui/SvgRenderer.js';
+import {loadNodeTypography,paintNodeLabel,exportedNodeFonts} from './ui/NodeTypography.js';
 import {computeInitialRoutes} from './workers/initial-route.worker.js';
 // P1 application coordinator: preserves the approved HTML, controls and data model.
 const NS='http://www.w3.org/2000/svg';
@@ -571,10 +572,7 @@ function refreshNodeLabel(n){
  const el=[...nodesEl.children].find(e=>e.dataset.nodeId===n.id);
  if(!el)return;
  const g=geometry(n),text=el.querySelector('text');if(!text)return;
- text.replaceChildren();const y0=-(g.wrapped.length-1)*g.lineheight/2;
- for(let i=0;i<g.wrapped.length;i++){
-  const t=sEl('tspan',{x:0,y:y0+i*g.lineheight});t.textContent=g.wrapped[i];text.append(t);
- }
+ paintNodeLabel(text,n,g,ctx);
  el.setAttribute('aria-label',n.text);
 }
 function selectNode(id){
@@ -677,7 +675,7 @@ setTheme(selectedTheme);
 themeButton.onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
 function exportColor(name){return document.documentElement.dataset.theme==='dark'?
  (name==='paper'?'#171917':'#e9e9e4'):(name==='paper'?'#f7f6f1':'#1c1c1b');}
-function exportStyles(){return EXPORT_STYLE.replaceAll('#f7f6f1',exportColor('paper')).replaceAll('#1c1c1b',exportColor('ink'));}
+function exportStyles(){return exportedNodeFonts()+EXPORT_STYLE.replaceAll('#f7f6f1',exportColor('paper')).replaceAll('#1c1c1b',exportColor('ink'));}
 function exportValidationNotice(){
  const notice=derived.exportNotice();
  return notice?`<desc>${notice}</desc><g><rect x="0" y="0" width="100%" height="34" fill="${exportColor('paper')}"/><text x="16" y="23" fill="${exportColor('ink')}" font-family="Arial,sans-serif" font-size="14">${notice}</text></g>`:'';
@@ -692,8 +690,8 @@ const EXPORT_STYLE=`
 .svgline.transverse{stroke-dasharray:5 5;stroke-opacity:.52}
 .node rect{fill:#f7f6f1;stroke:#1c1c1b;stroke-width:1.4}
 .node.core rect{stroke-width:2.4}.node.anchor rect{stroke-width:1.9}.node.selected rect{stroke-width:2.7}
-.node text{font-family:Inter,"Helvetica Neue",Arial,sans-serif;font-size:14px;fill:#1c1c1b;text-anchor:middle;dominant-baseline:middle;font-weight:480}
-.node.core text{font-size:20px;font-weight:650;letter-spacing:.015em}.node.anchor text{font-size:15px;font-weight:590}
+.node text{font-family:Rajdhani,Arial,sans-serif;font-size:var(--node-font-size,24px);fill:#1c1c1b;text-anchor:middle;dominant-baseline:alphabetic;font-weight:600}
+.node.core text{font-size:var(--node-font-size,30px);font-weight:700}.node.anchor text{font-size:var(--node-font-size,25px);font-weight:600}
 .node.hierarchy-focus rect{stroke-width:2.8;stroke-opacity:1}
 .node.hierarchy-focus text{font-weight:700}
 .node.selected.hierarchy-focus rect{stroke-width:3.5}
@@ -713,6 +711,7 @@ function downloadBlob(filename,blob){
  setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
 $('svgBtn').onclick=async()=>{
+ try{await loadNodeTypography();}catch{toast('No se pudo cargar la tipografía para exportar.');return;}
  await new Promise(requestAnimationFrame);
  const svgText=makeExportSvg(Math.max(1,stage.clientWidth),Math.max(1,stage.clientHeight));
  download('p1-plano.svg',svgText,'image/svg+xml;charset=utf-8');
@@ -720,7 +719,7 @@ $('svgBtn').onclick=async()=>{
 };
 // PNG sin recorte: la resolución se calcula a partir de la extensión REAL del grafo.
 // No se hace fit en el viewport ni se disminuye la fuente de los conceptos.
-// La escala 2.0 convierte la tipografía estándar de 14 unidades a unos 28 px.
+// La escala 2.0 conserva el tamaño ajustado de cada etiqueta a alta resolución.
 const PNG_TEXT_SCALE=2;
 const PNG_MARGIN=100; // en unidades del propio diagrama
 const PNG_CANVAS_MAX_SIDE=16384;
@@ -754,6 +753,7 @@ $('pngBtn').onclick=async()=>{
  btn.disabled=true;btn.textContent='Preparando PNG completo…';
  let temporaryURL=null;
  try{
+  await loadNodeTypography();
   // No se toca la vista, el zoom, las posiciones ni el contenido del grafo.
   if(state.renderQueued){
    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
@@ -780,3 +780,4 @@ $('pngBtn').onclick=async()=>{
 function init(useDemo=true){cancelInitialBuild();guardedMove=null;plane.reset();derived.reset();topology.reset();stagedTopology=null;linesEl.replaceChildren();nodesEl.replaceChildren();const demo=useDemo?seed():blankSeed();state.nodes=demo.nodes;state.edges=demo.edges;state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;state.focusRoot='p1';state.depth=1;state.undo=[];state.idSerial=0;syncDepth();updatePanel();$('undoBtn').disabled=true;pendingAutoFit=true;schedule();}
 const ro=new ResizeObserver(()=>{updateCamera();});ro.observe(stage);
 init();
+loadNodeTypography().then(()=>{for(const node of state.nodes)refreshNodeLabel(node);derived.refreshTypography();}).catch(error=>console.warn('Tipografía de respaldo:',error.message));

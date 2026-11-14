@@ -2,9 +2,10 @@
 
 **[▶ Abrir la aplicación en GitHub Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/)**
 
-**Implementación actual 0.2.4:** [núcleo más compacto y grosor por jerarquía](NUCLEO_JERARQUIAS_0_2_4.md).
-Reduce a la mitad el hueco J0–J1 de 02 y distingue las conexiones por
-jerarquía con un grosor normal de 1,35 a 2,05 px. Conserva la
+**Implementación actual 0.2.5:** [tipografía técnica, cruces y puertos](TIPOGRAFIA_CONEXIONES_0_2_5.md).
+Rajdhani aumenta la presencia del texto dentro de sus cuadros; los cruces
+siguen el grosor real de las líneas y los puertos evitan las esquinas.
+Conserva el [núcleo compacto y grosor por jerarquía](NUCLEO_JERARQUIAS_0_2_4.md), la
 [selección de lectura y el ensayo H/V/45](CORTE_02_0_2_3.md) y la
 [base compacta](MOTOR_COMPACTO_0_2_2.md).
 Las vistas siguen **EN REVISIÓN** por cruces frente a 01 y cota 2H.

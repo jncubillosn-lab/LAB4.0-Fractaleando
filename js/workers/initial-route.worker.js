@@ -1,4 +1,5 @@
 import {PcbRouter} from '../geometry/PcbRouter.js';
+import {portClearOfCorners} from '../geometry/PortPolicy.js';
 
 // All inputs are plain structured-clone data. No DOM, CSS, or canvas in workers.
 export function computeInitialRoutes({nodes,edges,positions,rects,levels,mode='01',maxDurationMs=24000}){
@@ -60,6 +61,7 @@ export function computeInitialRoutes({nodes,edges,positions,rects,levels,mode='0
       port.x=side==='left'?r.l:r.r;port.y=r.t+fraction*r.h;
       port.sx=port.x+(side==='left'?-stub:stub);port.sy=port.y;
      }
+     if(mode!=='01'&&!portClearOfCorners(port,r))continue;
      if((used.get(id)||[]).some(p=>Math.hypot(p.x-port.x,p.y-port.y)<11))continue;
      out.push(port);
     }

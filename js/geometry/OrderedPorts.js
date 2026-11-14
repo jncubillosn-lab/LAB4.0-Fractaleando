@@ -1,8 +1,10 @@
 import {segmentEntersRect} from './SegmentGeometry.js';
+import {portInset,portClearOfCorners} from './PortPolicy.js';
 const edgeKey=e=>[e.from,e.to].sort().map(encodeURIComponent).join('|');
 const normal={top:[0,-1],right:[1,0],bottom:[0,1],left:[-1,0]};
 
 export function portAt(side,x,y,rects,ownId,maxStub=19,clearance=9){
+ if(!portClearOfCorners({side,x,y},rects.get(ownId)))return null;
  const [nx,ny]=normal[side];let available=Infinity;
  for(const r of rects.values())if(r.id!==ownId){
   if(nx&&y>=r.t-clearance&&y<=r.b+clearance){const d=nx>0?r.l-clearance-x:x-r.r-clearance;if(d>=0)available=Math.min(available,d);}
@@ -27,9 +29,9 @@ export function assignOrderedPorts({nodes,edges,positions,rects,reference,spacin
   const slots=[];
   for(const side of ['top','right','bottom','left']){
    const horizontal=side==='top'||side==='bottom',length=horizontal?r.w:r.h;
-   const count=Math.max(1,Math.floor((length-16)/spacing)+1);
+   const inset=portInset(r,side),count=Math.max(1,Math.floor((length-2*inset)/spacing)+1);
    for(let i=0;i<count;i++){
-    const at=count===1?length/2:8+(length-16)*i/(count-1),offset=side==='bottom'||side==='left'?length-at:at;
+    const at=count===1?length/2:inset+(length-2*inset)*i/(count-1),offset=side==='bottom'||side==='left'?length-at:at;
     const x=horizontal?r.l+offset:side==='right'?r.r:r.l,y=horizontal?(side==='top'?r.t:r.b):r.t+offset;
     const p=portAt(side,x,y,rects,n.id);if(p)slots.push(p);
    }
@@ -88,8 +90,9 @@ export function alignStraightPorts({edges,rects,ports}){
   if(!oldA||!oldB)continue;
   const oldCycleA=cycle(e.from),oldCycleB=cycle(e.to),candidates=[];
   const add=(horizontal)=>{
-   const lo=horizontal?Math.max(a.t,b.t)+8:Math.max(a.l,b.l)+8;
-   const hi=horizontal?Math.min(a.b,b.b)-8:Math.min(a.r,b.r)-8;
+   const insetA=portInset(a,horizontal?'left':'top'),insetB=portInset(b,horizontal?'left':'top');
+   const lo=horizontal?Math.max(a.t+insetA,b.t+insetB):Math.max(a.l+insetA,b.l+insetB);
+   const hi=horizontal?Math.min(a.b-insetA,b.b-insetB):Math.min(a.r-insetA,b.r-insetB);
    const forward=horizontal?a.r<b.l:a.b<b.t,backward=horizontal?b.r<a.l:b.b<a.t;
    if(lo>hi||!forward&&!backward)return;
    const values=[(lo+hi)/2,horizontal?oldA.y:oldA.x,horizontal?oldB.y:oldB.x,lo,hi];

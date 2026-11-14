@@ -41,7 +41,9 @@ test('compact diagonal branches choose the faces with physical clearance, withou
  const result=computeInitialRoutes({mode:'02',nodes,edges,rects,
   positions:nodes.map(n=>[n.id,{x:n.x,y:n.y}]),levels:{p1:0,a:1,b:1,c:1,d:1}});
  assert(result.routes.every(([,r])=>r.points));
- const audit=validator.audit(rects.map(([,r])=>r),result.routes.map(([,r])=>r));
+ const circuitRouter=new PcbRouter({state:{nodes,edges},nodeById:id=>nodes.find(n=>n.id===id),mode:'02',clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});
+ const circuitValidator=new GeometryValidator({router:circuitRouter,rectOverlap:(a,b)=>a.l<b.r&&a.r>b.l&&a.t<b.b&&a.b>b.t});
+ const audit=circuitValidator.audit(rects.map(([,r])=>r),result.routes.map(([,r])=>r));
  assert.equal(audit.invalid,0,JSON.stringify(audit.details));assert.equal(audit.crossings,0);
 });
 test('an exhausted routing budget preserves every edge as explicitly unresolved',()=>{
