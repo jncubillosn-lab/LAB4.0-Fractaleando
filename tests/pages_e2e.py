@@ -55,8 +55,8 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   original=page.locator('#nodes .node').evaluate_all('(els)=>Object.fromEntries(els.map(el=>[el.dataset.nodeId,el.getAttribute("transform")]))')
   parent_text=page.locator('#nodeText').input_value()
   # Repeated clicks in one frame must create siblings, with independent slots.
-  page.locator('#addBtn').evaluate('(el)=>{for(let i=0;i<7;i++)el.click()}')
-  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===10',timeout=30000)
+  page.locator('#addBtn').evaluate('(el)=>{for(let i=0;i<12;i++)el.click()}')
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===15',timeout=30000)
   assert page.locator('#nodes .selected').get_attribute('data-node-id')=='b0'
   assert page.locator('#nodeText').input_value()==parent_text
   assert page.evaluate('document.activeElement.id')!='nodeText'
@@ -69,18 +69,23 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   graph=json.loads(Path(siblings.value.path()).read_text(encoding='utf8'))
   parent=next(n for n in graph['nodes'] if n['id']=='b0')
   children=[n for n in graph['nodes'] if n['parent']=='b0']
-  assert len(children)==7 and all(n['branch']==parent['branch'] for n in children),children
+  assert len(children)==12 and all(n['branch']==parent['branch'] for n in children),children
   hours=[round((math.atan2(n['x']-parent['x'],parent['y']-n['y'])*6/math.pi+12)%12)%12 for n in children]
-  assert hours==[0,5,10,3,8,1,6],hours
+  assert hours==[0,5,10,3,8,1,6,11,4,9,2,7],hours
+  routes={r['key']:r for r in graph['planeCheckpoint']['routes']}
+  child_routes=[routes['b0|'+n['id']] for n in children]
+  assert {r['toPort']['side'] for r in child_routes}=={'top','right','bottom','left'},child_routes
+  for hour,side in [(0,'bottom'),(3,'left'),(6,'top'),(9,'right')]:
+   assert child_routes[hours.index(hour)]['toPort']['side']==side,child_routes[hours.index(hour)]
   assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.pending')==0
   page.locator('#undoBtn').click()
-  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===9',timeout=30000)
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===14',timeout=30000)
   assert page.locator('#nodes .selected').get_attribute('data-node-id')=='b0'
   with page.expect_download() as undone:page.locator('#jsonBtn').click()
   undo_graph=json.loads(Path(undone.value.path()).read_text(encoding='utf8'))
   positions={n['id']:(n['x'],n['y']) for n in graph['nodes']}
   assert all(positions[n['id']]==(n['x'],n['y']) for n in undo_graph['nodes']),undo_graph
-  print('Más concepto: siete hermanos, reloj y selección persistente; deshacer conserva posiciones',flush=True)
+  print('Más concepto: doce hermanos, entradas por las cuatro caras y cardinales enfrentados; selección y deshacer estables',flush=True)
   assert not errors,errors
   b.close()
  srv.shutdown()

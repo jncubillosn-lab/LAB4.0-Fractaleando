@@ -9,6 +9,7 @@ import {SvgRenderer} from './ui/SvgRenderer.js';
 import {loadNodeTypography,paintNodeLabel,exportedNodeFonts} from './ui/NodeTypography.js';
 import {scaleCrossings} from './ui/CircuitSvg.js';
 import {clockChildPosition} from './geometry/ClockPlacement.js';
+import {routeFacingLink} from './geometry/FacingPorts.js';
 import {computeInitialRoutes} from './workers/initial-route.worker.js';
 // P1 application coordinator: preserves the approved HTML, controls and data model.
 const NS='http://www.w3.org/2000/svg';
@@ -257,10 +258,17 @@ function diversePorts(candidates){
 function chooseRoute(edge,occupied,original=null,previousRects=new Map()){
  const a=plane.rects.get(edge.from),b=plane.rects.get(edge.to);
  if(!a||!b)return null;
+ const began=performance.now();
  const ar=original?.fromPort&&previousRects.has(edge.from)?moveOldPort(original.fromPort,previousRects.get(edge.from),a):original?.fromPort;
  const br=original?.toPort&&previousRects.has(edge.to)?moveOldPort(original.toPort,previousRects.get(edge.to),b):original?.toPort;
  const optionsA=diversePorts(candidatePorts(edge.from,edge.to,edge));
  const optionsB=diversePorts(candidatePorts(edge.to,edge.from,edge));
+ if(!original?.points){
+  const facing=routeFacingLink({edge,a,b,fromPorts:optionsA,toPorts:optionsB,makePort:portAt,
+   usedFrom:portsAtNode(edge.from),usedTo:portsAtNode(edge.to),router,obstacles:[...plane.rects.values()],occupied,
+   onAttempt:()=>diag.routeCalculations++,deadline:began+950});
+  if(facing)return {edge:{...edge},points:facing.points,crosses:facing.crosses,fromPort:facing.fromPort,toPort:facing.toPort};
+ }
  const pA=ar?[ar,...optionsA]:optionsA;
  const pB=br?[br,...optionsB]:optionsB;
  // R01: al incorporar un brazo J1, probar primero el costado libre del núcleo.
@@ -283,7 +291,7 @@ function chooseRoute(edge,occupied,original=null,previousRects=new Map()){
   for(let j=1;j<Math.min(pB.length,4);j++)candidates.push([0,j]);
   for(let i=1;i<Math.min(pA.length,4);i++)candidates.push([i,Math.min(i,pB.length-1)]);
  }
- const began=performance.now(),maxAttempts=isCoreNewArm?15:10;let attempts=0;
+ const maxAttempts=isCoreNewArm?15:10;let attempts=0;
  for(const [i,j] of candidates){
   if(attempts>=maxAttempts||(attempts>0&&performance.now()-began>950))
    return {edge:{...edge},points:null,fromPort:null,toPort:null,unresolved:true};
