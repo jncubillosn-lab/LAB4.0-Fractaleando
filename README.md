@@ -5,6 +5,9 @@ construir conceptos, desarrollar sus jerarquías y representar sus relaciones.
 
 **[Abrir Fractalear en GitHub Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/)**
 
+**Actualización 0.2.12:** [optimización de carga, mediciones y comprobaciones de
+equivalencia](docs/RENDIMIENTO_0_2_12.md), conservando el funcionamiento de 0.2.11.
+
 ## Documentación vigente
 
 El punto de referencia funcional es **0.2.11**, documentado el **14 de noviembre
