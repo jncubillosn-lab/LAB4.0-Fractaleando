@@ -10,7 +10,7 @@ import {loadNodeTypography,paintNodeLabel,exportedNodeFonts,nodeGeometry} from '
 import {scaleCrossings,emphasizeCrossings,visibleCrossings} from './ui/CircuitSvg.js';
 import {validLinkStyle} from './ui/LinkStyles.js';
 import {clockChildPosition,nextClockIndex} from './geometry/ClockPlacement.js';
-import {pngExportPlan,completeGraphClone} from './ui/PngExport.js';
+import {pngExportPlan,completeGraphClone,svgStyleTag} from './ui/PngExport.js';
 import {routeFacingLink} from './geometry/FacingPorts.js';
 import {computeInitialRoutes} from './workers/initial-route.worker.js';
 // P1 application coordinator: preserves the approved HTML, controls and data model.
@@ -734,7 +734,7 @@ function makeExportSvg(outputW,outputH){
  const scale=Math.min(outputW/sourceW,outputH/sourceH);
  const x=(outputW-sourceW*scale)/2,y=(outputH-sourceH*scale)/2;
  const picture=exportCamera();
- return `<svg xmlns="http://www.w3.org/2000/svg" width="${outputW}" height="${outputH}" viewBox="0 0 ${outputW} ${outputH}"><rect width="${outputW}" height="${outputH}" fill="${exportColor('paper')}"/><style>${exportStyles()}</style><g transform="translate(${x} ${y}) scale(${scale})">${picture}</g>${exportValidationNotice()}</svg>`;
+ return `<svg xmlns="http://www.w3.org/2000/svg" width="${outputW}" height="${outputH}" viewBox="0 0 ${outputW} ${outputH}"><rect width="${outputW}" height="${outputH}" fill="${exportColor('paper')}"/>${svgStyleTag(exportStyles())}<g transform="translate(${x} ${y}) scale(${scale})">${picture}</g>${exportValidationNotice()}</svg>`;
 }
 function downloadBlob(filename,blob){
  const url=URL.createObjectURL(blob),a=document.createElement('a');
@@ -764,7 +764,7 @@ function makeCompletePngSvg(bounds){
  const picture=exportCamera(graph);
  // En una exportación a alta densidad el grosor de línea se escala junto al texto.
  const style=exportStyles().replace(/vector-effect\s*:\s*non-scaling-stroke\s*;?/g,'');
- return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="${width}" height="${height}" fill="${exportColor('paper')}"/><style>${style}</style><g transform="translate(${offsetX.toFixed(2)} ${offsetY.toFixed(2)}) scale(${scale})">${picture}</g>${exportValidationNotice()}</svg>`;
+ return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="${width}" height="${height}" fill="${exportColor('paper')}"/>${svgStyleTag(style)}<g transform="translate(${offsetX.toFixed(2)} ${offsetY.toFixed(2)}) scale(${scale})">${picture}</g>${exportValidationNotice()}</svg>`;
 }
 $('pngBtn').onclick=async()=>{
  const btn=$('pngBtn');if(btn.disabled)return;

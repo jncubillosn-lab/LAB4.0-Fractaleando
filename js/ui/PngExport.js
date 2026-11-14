@@ -1,5 +1,7 @@
 // 4K longest side, keeping the graph's natural aspect ratio for readable type.
 // Bounds come from the entire scene, independently of camera and depth filters.
+// XML text must escape the font licence's ampersand as well as stylesheet text.
+export const svgStyleTag=css=>'<style>'+css.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')+'</style>';
 export function pngExportPlan({rects,routes,notice=false}){
  const boxes=[...rects.values()],paths=[...routes.values()];
  if(!boxes.length)throw Error('No hay conceptos para exportar.');

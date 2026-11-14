@@ -101,6 +101,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
     assert abs(float(focused.evaluate('(el)=>parseFloat(getComputedStyle(el).strokeWidth)-parseFloat(el.style.getPropertyValue("--hierarchy-width"))'))-.75)<.001
     with page.expect_download() as weighted_svg:page.locator('#svgBtn').click()
     weighted=Path(weighted_svg.value.path()).read_text(encoding='utf8')
+    assert page.evaluate('(svg)=>!new DOMParser().parseFromString(svg,"image/svg+xml").querySelector("parsererror")',weighted)
     assert '@font-face' in weighted and 'data:font/ttf;base64,' in weighted and 'SIL OPEN FONT LICENSE' in weighted
     assert re.search(r'--hierarchy-width:\s*3\.15',weighted) and re.search(r'--hierarchy-width:\s*1\.35',weighted)
    before=page.evaluate('window.P1_PLANO_DIAGNOSTICO.routeCalculations')

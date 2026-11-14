@@ -20,6 +20,8 @@ Texto, trazos, patrones y franjas de cruces se escalan juntos. La cámara y el
 filtro de lectura no cambian. Una imagen de tamaño fijo no puede mantener la
 misma legibilidad con un número ilimitado de conceptos; SVG conserva su utilidad
 para diagramas que necesiten ampliar más allá de la resolución del PNG.
+La hoja de estilos incrustada se codifica como texto XML: el ampersand de la
+licencia OFL de la fuente ya no invalida el SVG ni su conversión a PNG.
 
 ## Lectura y creación
 
