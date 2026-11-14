@@ -53,6 +53,16 @@ test('an exhausted routing budget preserves every edge as explicitly unresolved'
  assert.equal(result.calculations,0);
  assert(result.routes.every(([,r])=>r.points===null&&r.unresolved));
 });
+test('la recuperación local ignora ejes lejanos sin perder la validación de la escena completa',()=>{
+ const occupied=[];
+ for(let i=0;i<350;i++){
+  occupied.push(...router.allSegments([{x:10000,y:i*.5},{x:11000,y:i*.5}]));
+  occupied.push(...router.allSegments([{x:i*.5,y:10000},{x:i*.5,y:11000}]));
+ }
+ const boxes=[{id:'obstacle',l:70,r:130,t:-20,b:20}];
+ const points=router.findRouteGrid({x:0,y:0},{x:200,y:0},boxes,occupied,true,100,150);
+ assert.ok(points);assert.notEqual(router.routeShapeValid(points,boxes,[],occupied,true),null);
+});
 test('the full initial PPR remains complete and independently valid',()=>{
  const fixture=JSON.parse(readFileSync(new URL('./route-fixture.json',import.meta.url)));
  const result=computeInitialRoutes(fixture),routes=new Map(result.routes);

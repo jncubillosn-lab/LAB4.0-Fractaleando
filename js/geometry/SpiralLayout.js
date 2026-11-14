@@ -8,7 +8,7 @@ const overlap=(a,b,pad)=>a.l<b.r+pad&&a.r>b.l-pad&&a.t<b.b+pad&&a.b>b.t-pad;
 export class SpiralLayout {
  // Historical W is an internal twist coefficient, not Raup's expansion
  // ratio per revolution. D is not parameterized here; this view is planar.
- compute({base,nodes,edges,metrics,nodeClearances={},W=.30,armWidthFactor=.70}){
+ compute({base,nodes,edges,metrics,nodeClearances={},W=.25,armWidthFactor=.85}){
   metrics=new Map([...(metrics instanceof Map?metrics:new Map(metrics))].map(([id,m])=>
    [id,{...m,routingClearance:Math.max(base.stats.clearance??24,base.rects.get(id)?.routingClearance||0,nodeClearances[id]||0)}]));
   const byId=new Map(nodes.map(n=>[n.id,n])),clearance=base.stats.clearance??24;

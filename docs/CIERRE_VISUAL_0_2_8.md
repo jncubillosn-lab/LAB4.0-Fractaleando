@@ -40,7 +40,7 @@ el patrón elegido; las máscaras copian el mismo patrón y su fase.
 ## Espiral
 
 04 sigue partiendo de 02. La dispersión angular dentro de cada brazo se
-comprime al 70 % y el coeficiente interno de giro pasa de 0,23 a 0,30.
+comprime al 85 % y el coeficiente interno de giro pasa de 0,23 a 0,25.
 Se permite un ajuste angular local adicional para colocar cuadros sin
 solapes, antes de aumentar su radio. Los textos permanecen horizontales,
 el núcleo central y el avance hacia fuera se verifican como antes.
@@ -48,6 +48,10 @@ Las rutas de 04 recuperan corredores con una búsqueda local acotada y
 devuelven los que no se resuelven al modelo de capacidad de la distribución.
 Así no se acumulan reconstrucciones nativas de obstáculos en un corredor
 estrecho. Cada ruta recuperada pasa la misma auditoría independiente.
+Si solo quedan unas pocas conexiones, también se prueban otros puertos
+libres usando el emparejamiento ya empleado en 01, con una comprobación
+adicional del orden circular. No se permite intercambiar vecinos para
+resolver un corredor.
 Ese coeficiente interno no es la expansión W del modelo biológico de Raup;
 T continúa en cero y D no es un control de esta implementación.
 
