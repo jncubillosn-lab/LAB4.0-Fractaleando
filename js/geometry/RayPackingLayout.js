@@ -8,12 +8,12 @@ export const rayRect=(id,p,m)=>({id,...p,w:m.w,h:m.h,routingClearance:m.routingC
 
 // One ray is a direction, not a ring for a whole generation. Intersecting the
 // ray with expanded boxes gives the nearest free radius analytically.
-export function firstFreeRadius(angle,minimum,size,rects,clearance=24,except=null,origin={x:0,y:0}){
+export function firstFreeRadius(angle,minimum,size,rects,clearance=24,except=null,origin={x:0,y:0},pairClearance=null){
  const vx=Math.cos(angle),vy=Math.sin(angle),blocked=[];
  for(const r of rects.values()){
   if(r.id===except)continue;
   let lo=minimum,hi=Infinity;
-  const pad=Math.max(clearance,size.routingClearance||0,r.routingClearance||0);
+  const pad=pairClearance?pairClearance(size,r):Math.max(clearance,size.routingClearance||0,r.routingClearance||0);
   for(const [v,center,half] of [[vx,r.x-origin.x,(r.w+size.w)/2+pad],[vy,r.y-origin.y,(r.h+size.h)/2+pad]]){
    if(Math.abs(v)<1e-10){if(Math.abs(center)>=half){hi=-Infinity;break;}continue;}
    const a=(center-half)/v,b=(center+half)/v;
@@ -28,10 +28,11 @@ export function firstFreeRadius(angle,minimum,size,rects,clearance=24,except=nul
 }
 
 export class RayPackingLayout {
- static VERSION='ray-packing-v1';
- compute({nodes,edges,metrics,sourcePositions,topologyReference,clearance=24,nodeClearances={},refinementPasses=3}){
+ static VERSION='ray-packing-v2';
+ compute({nodes,edges,metrics,sourcePositions,topologyReference,clearance=24,nodeClearances={},coreClearances=nodeClearances,coreGapFactor=.5,refinementPasses=3}){
+  if(!Number.isFinite(coreGapFactor)||coreGapFactor<=0||coreGapFactor>1)throw Error('Factor de separación del núcleo inválido.');
   metrics=new Map([...(metrics instanceof Map?metrics:new Map(metrics))].map(([id,m])=>
-   [id,{...m,routingClearance:Math.max(clearance,nodeClearances[id]||0)}]));
+   [id,{...m,id,routingClearance:Math.max(clearance,nodeClearances[id]||0)}]));
   const source=sourcePositions instanceof Map?sourcePositions:new Map(sourcePositions||[]);
   const byId=new Map(nodes.map(n=>[n.id,n]));
   if(byId.size!==nodes.length||!byId.has('p1'))throw Error('Se requiere un núcleo p1 y conceptos únicos.');
@@ -53,6 +54,20 @@ export class RayPackingLayout {
   }
   const roots=orderRoots(children.get('p1'),topologyReference);
   children.set('p1',roots);
+  const pairClearance=(size,r)=>r.id==='p1'&&byId.get(size.id)?.parent==='p1'?0:
+   Math.max(clearance,size.routingClearance||0,r.routingClearance||0);
+  // Halve the actual free gap between borders, not the box dimensions or
+  // centre-to-centre radius. Freeze the reference capacity across route retries.
+  const coreTarget=(id,angle)=>{
+   const a=rayRect('p1',{x:0,y:0},{...metrics.get('p1'),routingClearance:Math.max(clearance,coreClearances.p1||0)});
+   const b={...metrics.get(id),routingClearance:Math.max(clearance,coreClearances[id]||0)};
+   const referenceRadius=firstFreeRadius(angle,1,b,new Map([['p1',a]]),clearance);
+   const at=radius=>rayRect(id,{x:Math.cos(angle)*radius,y:Math.sin(angle)*radius},b);
+   const referenceGap=gap(a,at(referenceRadius)),requestedGap=Math.max(clearance,referenceGap*coreGapFactor);
+   let lo=0,hi=Math.max(referenceRadius,requestedGap+a.w+a.h+b.w+b.h);
+   for(let i=0;i<40;i++){const mid=(lo+hi)/2;if(gap(a,at(mid))<requestedGap)lo=mid;else hi=mid;}
+   return {referenceGap,requestedGap,radius:hi+EPS};
+  };
   const levels={p1:0},owner=new Map(),area=new Map(),seen=new Set(),ordered=[];
   const visit=(n,level,branch)=>{
    if(seen.has(n.id))return 0;
@@ -143,8 +158,8 @@ export class RayPackingLayout {
     let choice=old?{p:old,r:rects.get(n.id),score:scoreAt(old,rects.get(n.id))}:null;
     for(const angle of [...new Set(angles.map(a=>Math.round(a*1e8)/1e8))]){
      const vx=Math.cos(angle),vy=Math.sin(angle),dot=parent.x*vx+parent.y*vy;
-     const minimum=-dot+Math.sqrt(dot*dot+2*parentRadius+1);
-     const distance=firstFreeRadius(angle,minimum,m,rects,clearance,n.id,parent);
+     const minimum=Math.max(-dot+Math.sqrt(dot*dot+2*parentRadius+1),n.parent==='p1'?coreTarget(n.id,angle).radius:0);
+     const distance=firstFreeRadius(angle,minimum,m,rects,clearance,n.id,parent,pairClearance);
      const p={x:parent.x+vx*distance,y:parent.y+vy*distance},radius=Math.hypot(p.x,p.y),r=rayRect(n.id,p,m);
      if(radius>maximum||sector&&Math.abs(delta(Math.atan2(p.y,p.x),sector.center))>sector.span/2+1e-6)continue;
      if(refine){
@@ -172,6 +187,12 @@ export class RayPackingLayout {
   }
   return {...best,levels,owner,ordered,disconnected,roots,clearance,
    stats:{engine:RayPackingLayout.VERSION,arms:roots.length,meanGap:best.gaps.reduce((s,v)=>s+v,0)/Math.max(1,edges.length),
-    maxGap:Math.max(0,...best.gaps),bounds:best.bounds,clearance,nodeClearances,fallbacks:best.fallbacks}};
+    maxGap:Math.max(0,...best.gaps),bounds:best.bounds,clearance,nodeClearances,coreClearances,coreGapFactor,
+    coreSpacing:{view:'02',factor:coreGapFactor,minimumGap:clearance,links:roots.map(n=>{
+     const p=best.positions.get(n.id),target=coreTarget(n.id,Math.atan2(p.y,p.x));
+     const actualGap=gap(best.rects.get('p1'),best.rects.get(n.id));
+     return {id:n.id,referenceGap:target.referenceGap,requestedGap:target.requestedGap,actualGap,
+      ratio:actualGap/target.referenceGap,constrained:actualGap>target.requestedGap+.1};
+    })},fallbacks:best.fallbacks}};
  }
 }

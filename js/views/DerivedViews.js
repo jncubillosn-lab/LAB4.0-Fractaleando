@@ -181,7 +181,7 @@ export class DerivedViews {
  draw(snapshot){
   this.derivedLines.replaceChildren();
   this.drawNodes(snapshot.layout);
-  this.renderer.draw(snapshot.ordered,snapshot.routes);
+  this.renderer.draw(snapshot.ordered,snapshot.routes,{mode:snapshot.mode,nodes:this.state.nodes,levels:snapshot.layout.levels});
   this.paintVisibility();
  }
  paintVisibility(){
@@ -251,9 +251,11 @@ export class DerivedViews {
   if(!stored||stored.layoutVersion!==SCENE_VERSION||stored.graphKey!==graphKey||stored.sourceKey!==this.sourceKey()||stored.referenceKey!==this.referenceKey()||
      !Array.isArray(stored.positions)||!Array.isArray(stored.routes)||
      !TopologyRegister.validShape(stored.topology))return null;
+  if(stored.coreGapFactor!==undefined&&(!Number.isFinite(stored.coreGapFactor)||stored.coreGapFactor<=0||stored.coreGapFactor>1))return null;
   const input={nodes:this.state.nodes,edges:this.state.edges,metrics:this.metrics(),sourcePositions:this.plane.positions,topologyReference:this.referenceTopology?.()};
-  const baseLayout=mode==='04'?this.layoutEngine.compute({mode:'02',...input,nodeClearances:stored.baseNodeClearances||{}}):undefined;
-  const layout=this.layoutEngine.compute({mode,...input,baseLayout,nodeClearances:stored.nodeClearances||{}});
+  const policy={coreClearances:stored.coreClearances||{},coreGapFactor:stored.coreGapFactor??.5};
+  const baseLayout=mode==='04'?this.layoutEngine.compute({mode:'02',...input,...policy,nodeClearances:stored.baseNodeClearances||{}}):undefined;
+  const layout=this.layoutEngine.compute({mode,...input,...policy,baseLayout,nodeClearances:stored.nodeClearances||{}});
   if(layout.stats.overlaps||layout.stats.radialOrder===false||layout.stats.constraintsValid===false)return null;
   const saved=new Map(stored.positions.map(p=>[p.id,p]));
   if(saved.size!==layout.positions.size)return null;
@@ -290,7 +292,8 @@ export class DerivedViews {
   const output={};
   const identity=this.graphKey()+this.sourceKey()+this.referenceKey();
   for(const [mode,c] of this.cache)if(c.valid&&c.identity===identity)
-   output[mode]={layoutVersion:SCENE_VERSION,nodeClearances:c.layout.stats.nodeClearances,baseNodeClearances:c.layout.stats.baseNodeClearances,graphKey:this.graphKey(),sourceKey:this.sourceKey(),referenceKey:this.referenceKey(),
+   output[mode]={layoutVersion:SCENE_VERSION,nodeClearances:c.layout.stats.nodeClearances,baseNodeClearances:c.layout.stats.baseNodeClearances,
+    coreClearances:c.layout.stats.coreClearances,coreGapFactor:c.layout.stats.coreGapFactor,graphKey:this.graphKey(),sourceKey:this.sourceKey(),referenceKey:this.referenceKey(),
     validation:{geometry:true,topology:true,normative:'pending-definition',pendingDefinitions:['D1','D2','D3','D4']},
     topology:c.topology.reference,
     positions:[...c.layout.positions].map(([id,p])=>({id,x:p.x,y:p.y})),

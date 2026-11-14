@@ -4,7 +4,7 @@ import {bevelRoutes} from './CircuitRoutes.js';
 import {PcbRouter} from './PcbRouter.js';
 import {GeometryValidator} from './GeometryValidator.js';
 
-export const SCENE_VERSION='packed-circuit-0.2.3';
+export const SCENE_VERSION='packed-core-0.2.4';
 
 // Placement and routing share the same capacity model. Space is requested
 // only beside congested corridors, never by expanding every generation.
@@ -14,9 +14,10 @@ export async function computeDerivedScene(input,{load,onProgress=()=>{}}={}){
   const degree=new Map(input.nodes.map(n=>[n.id,0]));
   for(const e of input.edges){degree.set(e.from,degree.get(e.from)+1);degree.set(e.to,degree.get(e.to)+1);}
   let nodeClearances=Object.fromEntries([...degree].map(([id,count])=>[id,Math.max(24,12+count*8)])),best=null;
+  const coreClearances={...nodeClearances};
   for(let pass=0;pass<12;pass++){
    onProgress({mode,pass:pass+1});
-   const layout=engine.compute({...input,mode,baseLayout,nodeClearances});
+   const layout=engine.compute({...input,mode,baseLayout,nodeClearances,coreClearances});
    if(!layout.stats.geometricallySafe)throw Error('Distribución incompleta o con solapes.');
    const result=await computeAvoidRoutes({...input,positions:layout.positions,rects:layout.rects,levels:layout.levels},{load});
    const pending=result.routes.filter(([,r])=>!r.points).length;
