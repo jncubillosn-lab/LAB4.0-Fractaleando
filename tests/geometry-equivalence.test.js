@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {segmentIntersection,segmentEntersRect} from '../js/geometry/SegmentGeometry.js';
+import {fastSegmentIntersection as segmentIntersection,fastSegmentEntersRect as segmentEntersRect} from '../js/geometry/SegmentGeometry.js';
 import {segmentIntersection as previousIntersection,segmentEntersRect as previousClip} from './fixtures/segment-geometry-0.2.11.js';
 
 test('las comprobaciones rápidas conservan los resultados numéricos de 0.2.11',()=>{

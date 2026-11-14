@@ -1,4 +1,5 @@
-import {routeSegments,segmentAxis,segmentIntersection,segmentEntersRect,leavesRect} from './SegmentGeometry.js';
+import {routeSegments,segmentAxis,segmentIntersection as exactIntersection,segmentEntersRect as exactClip,
+ fastSegmentIntersection,fastSegmentEntersRect,leavesRect} from './SegmentGeometry.js';
 import {circuitRelation} from './CircuitGeometry.js';
 import {assignOrderedPorts} from './OrderedPorts.js';
 // Routing of individual semantic links on a single 2D plane.
@@ -8,6 +9,8 @@ export class PcbRouter {
  constructor({state,nodeById,clamp,mode='01',deadline=Infinity,allowBendCrossings=false}){
   const ROUTE_CLEAR=9, ROUTE_SEPARATION=mode==='01'?6:3, PORT_STUB=19;
   const CROSS_CLEAR=mode==='01'?9:3;
+  const segmentIntersection=mode==='01'?fastSegmentIntersection:exactIntersection;
+  const segmentEntersRect=mode==='01'?fastSegmentEntersRect:exactClip;
   const expired=()=>performance.now()>=deadline;
   function prefSide(node,other,edge,box,otherBox){
    if(mode==='02'||mode==='04'){
