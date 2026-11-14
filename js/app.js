@@ -7,6 +7,7 @@ import {PcbRouter} from './geometry/PcbRouter.js';
 import {GeometryValidator} from './geometry/GeometryValidator.js';
 import {SvgRenderer} from './ui/SvgRenderer.js';
 import {loadNodeTypography,paintNodeLabel,exportedNodeFonts} from './ui/NodeTypography.js';
+import {scaleCrossings} from './ui/CircuitSvg.js';
 import {computeInitialRoutes} from './workers/initial-route.worker.js';
 // P1 application coordinator: preserves the approved HTML, controls and data model.
 const NS='http://www.w3.org/2000/svg';
@@ -536,7 +537,7 @@ diag.audit=()=>({...validator.audit([...plane.rects.values()],[...plane.routes.v
 diag.topology=()=>topology.status(); // informe sin enrutamiento ni repintado
 diag.views=()=>derived.diagnostic();
 
-function updateCamera(){camera.setAttribute('transform',`translate(${state.tx.toFixed(2)} ${state.ty.toFixed(2)}) scale(${state.zoom.toFixed(4)})`);}
+function updateCamera(){camera.setAttribute('transform',`translate(${state.tx.toFixed(2)} ${state.ty.toFixed(2)}) scale(${state.zoom.toFixed(4)})`);scaleCrossings(document.getElementById('derivedLines'),Number(state.zoom.toFixed(4)));}
 function schedule(){syncDepth();if(state.renderQueued)return;state.renderQueued=true;requestAnimationFrame(render);}
 function selected(){return nodeById(state.selected);}
 function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(state.toastTimer);state.toastTimer=setTimeout(()=>el.classList.remove('show'),3500);}
@@ -739,6 +740,8 @@ function pngExportBounds(){
 function makeCompletePngSvg(bounds){
  const {bbox,width,height,scale}=bounds;
  const graph=camera.cloneNode(true);
+ // PNG scales strokes with the graph; masks must use the same world units.
+ scaleCrossings(graph,1);
  // Importantísimo: la cámara solo gobierna la pantalla. No debe trasladarse al PNG.
  graph.removeAttribute('transform');
  const picture=exportCamera(graph);
