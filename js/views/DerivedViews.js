@@ -1,19 +1,20 @@
+import {RadialLayout} from '../geometry/RadialLayout.js';
 import {ViewLayouts} from '../geometry/ViewLayouts.js';
 import {SvgRenderer} from '../ui/SvgRenderer.js';
 import {TopologyRegister} from '../core/TopologyRegister.js';
+import {checkDerivedTopology} from '../core/DerivedTopology.js';
 import {computeInitialRoutes} from '../workers/initial-route.worker.js';
 
 // Vistas derivadas read-only: conservan el grafo y el plano 01.
-// Cada vista tiene su propio punto de control y registro topológico.
+// Cada vista tiene su punto de control y comparte la referencia topológica 01.
 export class DerivedViews {
- constructor({state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast}){
-  Object.assign(this,{state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast});
+ constructor({state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast,referenceTopology}){
+  Object.assign(this,{state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast,referenceTopology});
   this.layoutEngine=new ViewLayouts();
   this.cache=new Map();this.mode='01';this.version=0;
-  this.pending=null;this.staged={};
+  this.pending=null;this.staged={};this.rejected=null;
   this.names={'01':['Plano conceptual / 01','Construcción y fractaleo','Núcleo · trayectorias editables'],
-   '02':['Proximidad / 02','Reorganización compacta','Geometría conservadora · relaciones intactas'],
-   '03':['Órbitas / 03','Jerarquías y cercanía','Mismo radio para cada jerarquía'],
+   '02':['Radial acotado / 02','Representación circular','Misma estructura de 01 · separación máxima 2H'],
    '04':['Espiral / 04','Crecimiento espiral','Un brazo por cada término J1 · T = 0']};
   this.derivedLines=sEl('g',{id:'derivedLines'});
   this.derivedNodes=sEl('g',{id:'derivedNodes'});
@@ -23,6 +24,7 @@ export class DerivedViews {
   this.graphIdentity=null;
  }
  sourceKey(){return JSON.stringify([...this.plane.positions].sort(([a],[b])=>a.localeCompare(b)).map(([id,p])=>[id,Math.round(p.x*100)/100,Math.round(p.y*100)/100]));}
+ referenceKey(){return JSON.stringify(this.referenceTopology?.()??null);}
  graphKey(){
   return JSON.stringify({nodes:this.state.nodes.map(n=>[n.id,n.text,n.width,n.branch,n.parent]),
    edges:this.state.edges.map(e=>[e.from,e.to,e.kind||''])});
@@ -30,7 +32,7 @@ export class DerivedViews {
  reset(){
   this.version++;
   if(this.pending){this.pending.terminate?.();this.pending=null;}
-  this.cache.clear();this.current=null;this.staged={};this.graphIdentity=null;
+  this.cache.clear();this.current=null;this.staged={};this.graphIdentity=null;this.rejected=null;
   this.derivedLines.replaceChildren();this.derivedNodes.replaceChildren();
   this.switchVisibility('01');this.updateLabels('01');
  }
@@ -61,6 +63,22 @@ export class DerivedViews {
  }
  metrics(){
   return new Map(this.state.nodes.map(n=>[n.id,this.geometry(n)]));
+ }
+ async computeLayout(input){
+  if(typeof Worker==='undefined')return this.layoutEngine.compute(input);
+  return new Promise((resolve,reject)=>{
+   const worker=new Worker('./js/workers/radial-layout.worker.js',{type:'module'});
+   this.pending=worker;
+   const finish=(error,result)=>{
+    clearTimeout(timeout);worker.terminate();
+    if(this.pending===worker)this.pending=null;
+    if(error)reject(error);else resolve(result);
+   };
+   const timeout=setTimeout(()=>finish(new Error('Límite de cálculo de posiciones (15 s)')),15000);
+   worker.onmessage=event=>event.data.error?finish(new Error(event.data.error)):finish(null,event.data.result);
+   worker.onerror=event=>finish(new Error(event.message||'Error de distribución'));
+   worker.postMessage(input);
+  });
  }
  async route(layout,nodes,edges,token){
   const payload={
@@ -102,7 +120,7 @@ export class DerivedViews {
  }
  async select(mode){
   if(!ViewLayouts.MODES.includes(mode))return;
-  const old=this.mode;this.mode=mode;
+  this.mode=mode;this.rejected=null;
   ++this.version;
   if(this.pending){this.pending.terminate();this.pending=null;}
   this.switchVisibility(mode);this.updateLabels(mode);
@@ -118,9 +136,9 @@ export class DerivedViews {
    this.toast('La geometría original todavía se está calculando.');
    return;
   }
-  const key=this.graphKey();
-  if(this.graphIdentity!==key){
-   this.cache.clear();this.graphIdentity=key;
+  const key=this.graphKey(),identity=key+this.sourceKey()+this.referenceKey();
+  if(this.graphIdentity!==identity){
+   this.cache.clear();this.graphIdentity=identity;
   }
   let cached=this.cache.get(mode);
   if(!cached)cached=this.tryRestore(mode,key);
@@ -128,9 +146,28 @@ export class DerivedViews {
   if(cached){this.cache.set(mode,cached);this.current=cached;this.draw(cached);this.fit();return;}
   this.status('Calculando la vista '+mode+' y sus conexiones…');
   const token=this.version,metrics=this.metrics();
-  const layout=this.layoutEngine.compute({mode,nodes:this.state.nodes,edges:this.state.edges,
-   metrics,sourcePositions:this.plane.positions});
+  let layout;
+  try{
+   layout=await this.computeLayout({mode,nodes:this.state.nodes,edges:this.state.edges,
+    metrics,sourcePositions:this.plane.positions,topologyReference:this.referenceTopology?.()});
+  }catch(error){
+   if(token!==this.version)return;
+   this.derivedLines.replaceChildren();this.derivedNodes.replaceChildren();
+   this.linesEl.style.display='';this.nodesEl.style.display='';
+   this.status('No se completó la distribución. Se muestra 01 Plano. '+error.message,true);
+   this.fit();return;
+  }
   if(token!==this.version)return;
+  if(mode==='02'&&(layout.stats.constraintsValid!==true||
+     layout.stats.graphSignature!==RadialLayout.signature(this.state.nodes,this.state.edges))){
+   this.rejected=layout.stats;
+   this.current=null;
+   this.derivedLines.replaceChildren();this.derivedNodes.replaceChildren();
+   // Rejection is transactional: do not replace a legible plane with boxes
+   // that violate the hard limits. Keep all conceptual edges in 01.
+   this.linesEl.style.display='';this.nodesEl.style.display='';
+   this.paintVisibility();this.fit();return;
+  }
   // Mostrar cuadros antes del cálculo sin inventar líneas provisionales.
   this.derivedLines.replaceChildren();
   this.drawNodes(layout);
@@ -149,17 +186,13 @@ export class DerivedViews {
      return pr(a)-pr(b)||a.__index-b.__index;
     });
    const audit=this.validator.audit([...layout.rects.values()],[...routes.values()]);
-   const topology=new TopologyRegister({edgeKey:this.edgeKey});
-   const signature=topology.capture({positions:layout.positions,rects:layout.rects,routes,edges:ordered});
-   const stored=this.staged[mode]?.topology;
-   if(stored&&TopologyRegister.validShape(stored)&&stored.edges.join('|')===signature.edges.join('|')){
-    topology.restore(stored);
-   }
-   const report=topology.observe(signature);
+   const {topology,report}=checkDerivedTopology({reference:this.referenceTopology?.(),edgeKey:this.edgeKey,
+    positions:layout.positions,rects:layout.rects,routes,edges:ordered});
    const unfinished=[...routes.values()].filter(r=>!r?.points).length;
    const valid=audit.boxes===0&&audit.invalid===0&&audit.portsRepeated===0&&
-     layout.stats.overlaps===0&&layout.stats.radialOrder!==false&&report.valid&&unfinished===0;
-   const snapshot={mode,layout,routes,ordered,topology,audit,report,unfinished,valid,calculations:result.calculations};
+     layout.stats.overlaps===0&&layout.stats.radialOrder!==false&&
+     layout.stats.constraintsValid!==false&&report.valid&&report.compared&&unfinished===0&&routes.size===this.state.edges.length;
+   const snapshot={mode,identity,layout,routes,ordered,topology,audit,report,unfinished,valid,budgetExceeded:result.budgetExceeded,calculations:result.calculations};
    this.cache.set(mode,snapshot);this.current=snapshot;
    this.draw(snapshot);
    this.fit();
@@ -196,7 +229,17 @@ export class DerivedViews {
  paintVisibility(){
   if(this.mode==='01')return;
   const current=this.current;
-  if(!current){this.status('Calculando las rutas de esta representación…');return;}
+  if(!current){
+   if(this.rejected){
+    const s=this.rejected,violations=s.distanceViolations||[],worst=[...violations].sort((a,b)=>b.gap-a.gap)[0];
+    this.status('02 no resuelto · Se muestra 01 Plano. '+s.overlaps+' solapes; '+violations.length+
+     ' enlaces superan 2H ('+s.maxAllowedGap.toFixed(1)+' px). '+
+     (worst?'Mayor separación: '+worst.from+' → '+worst.to+' = '+worst.gap.toFixed(1)+' px. ':'')+
+     (s.orderViolations?.length||0)+' inversiones de orden; '+(s.sectorViolations?.length||0)+' cuadros fuera de sector; '+
+     (s.disconnected?.length||0)+' conceptos desconectados. No se aumentó la cota.',true);
+   }else this.status('Calculando las rutas de esta representación…');
+   return;
+  }
   const shown=new Set(this.state.nodes.filter(n=>
    (current.layout.levels[n.id]??Infinity)<=this.state.depth).map(n=>n.id));
   for(const el of this.derivedNodes.children)el.style.display=shown.has(el.dataset.nodeId)?'':'none';
@@ -210,25 +253,37 @@ export class DerivedViews {
   const s=current.layout.stats,problems=current.audit.invalid+current.audit.boxes+current.audit.portsRepeated+
    (current.report.issueCount||0)+current.unfinished;
   const prefix='Vista '+this.mode+' · '+shown.size+' conceptos · '+drawn+' vínculos';
-  const warning=problems>0;
+  const warning=problems>0||!current.valid;
   this.status(prefix+' · '+(warning?
     ('En revisión: '+current.unfinished+' pendientes, '+current.audit.invalid+
-     ' rutas inválidas, '+(current.report.issueCount||0)+' diferencias topológicas.'):
-    ('Rutas completas · '+current.audit.crossings+' cruces registrados · '+s.arms+' brazos J1')),warning);
+     ' rutas inválidas, '+(current.report.issueCount||0)+' diferencias topológicas.'+
+     (current.budgetExceeded?' Se alcanzó el límite de cálculo.':'')):
+    ('Geometría y topología comprobadas · '+current.audit.crossings+' cruces · validación normativa pendiente · '+s.arms+' brazos J1'+
+     (this.mode==='02'?' · separación máxima '+s.maxGap.toFixed(1)+' / '+s.maxAllowedGap.toFixed(1)+' px (2H)':''))),warning);
   const footer=document.getElementById('footHint');
-  if(footer)footer.textContent='Vista '+this.mode+' · '+drawn+' conexiones visibles · control propio';
+  if(footer)footer.textContent='Vista '+this.mode+' · '+drawn+' conexiones visibles · referencia 01';
+  const scope=document.getElementById('scopeInfo'),stats=document.getElementById('stats');
+  if(scope)scope.textContent=shown.size+' conceptos visibles · '+drawn+' vínculos trazados · '+pending+' pendientes';
+  if(stats)stats.textContent=this.state.nodes.length+' conceptos · '+this.state.edges.length+' vínculos · '+current.unfinished+' rutas pendientes';
+ }
+ exportNotice(){
+  if(this.mode==='01')return '';
+  const c=this.current;
+  if(!c)return 'BORRADOR · vista '+this.mode+' sin resultado aprobado';
+  if(!c.valid)return 'EN REVISIÓN · vista '+this.mode+' · '+c.unfinished+' rutas pendientes · '+(c.report.issueCount||0)+' diferencias topológicas';
+  return 'BORRADOR · vista '+this.mode+' · validación normativa pendiente';
  }
  // Recuperación segura de una vista previamente calculada: mismos datos y
  // geometría de 01, mismas posiciones deterministas, DRC independiente y
  // firma de relaciones intacta. No acepta archivos que inventan caminos.
  tryRestore(mode,graphKey){
   const stored=this.staged[mode];
-  if(!stored||stored.graphKey!==graphKey||stored.sourceKey!==this.sourceKey()||
+  if(!stored||stored.graphKey!==graphKey||stored.sourceKey!==this.sourceKey()||stored.referenceKey!==this.referenceKey()||
      !Array.isArray(stored.positions)||!Array.isArray(stored.routes)||
      !TopologyRegister.validShape(stored.topology))return null;
   const layout=this.layoutEngine.compute({mode,nodes:this.state.nodes,edges:this.state.edges,
-   metrics:this.metrics(),sourcePositions:this.plane.positions});
-  if(layout.stats.overlaps||layout.stats.radialOrder===false)return null;
+   metrics:this.metrics(),sourcePositions:this.plane.positions,topologyReference:this.referenceTopology?.()});
+  if(layout.stats.overlaps||layout.stats.radialOrder===false||layout.stats.constraintsValid===false)return null;
   const saved=new Map(stored.positions.map(p=>[p.id,p]));
   if(saved.size!==layout.positions.size)return null;
   for(const [id,p] of layout.positions){
@@ -254,18 +309,18 @@ export class DerivedViews {
    .sort((a,b)=>priority(a)-priority(b)||a.__index-b.__index);
   const audit=this.validator.audit([...layout.rects.values()],[...routes.values()]);
   if(audit.invalid||audit.boxes||audit.portsRepeated||audit.drawn!==edges.size)return null;
-  const topology=new TopologyRegister({edgeKey:this.edgeKey});
-  if(!topology.restore(stored.topology))return null;
-  const now=topology.capture({positions:layout.positions,rects:layout.rects,routes,edges:ordered});
-  const report=topology.observe(now);
-  if(!report.valid)return null;
-  return {mode,layout,routes,ordered,topology,audit,report,
+  const {topology,report}=checkDerivedTopology({reference:this.referenceTopology?.(),edgeKey:this.edgeKey,
+   positions:layout.positions,rects:layout.rects,routes,edges:ordered});
+  if(!report.valid||!report.compared)return null;
+  return {mode,identity:graphKey+this.sourceKey()+this.referenceKey(),layout,routes,ordered,topology,audit,report,
    unfinished:0,valid:true,calculations:0,restored:true};
  }
  exportData(){
   const output={};
-  for(const [mode,c] of this.cache)if(c.valid)
-   output[mode]={graphKey:this.graphKey(),sourceKey:this.sourceKey(),
+  const identity=this.graphKey()+this.sourceKey()+this.referenceKey();
+  for(const [mode,c] of this.cache)if(c.valid&&c.identity===identity)
+   output[mode]={graphKey:this.graphKey(),sourceKey:this.sourceKey(),referenceKey:this.referenceKey(),
+    validation:{geometry:true,topology:true,normative:'pending-definition',pendingDefinitions:['D1','D2','D3','D4']},
     topology:c.topology.reference,
     positions:[...c.layout.positions].map(([id,p])=>({id,x:p.x,y:p.y})),
     routes:[...c.routes].map(([key,r])=>({key,points:r.points,fromPort:r.fromPort,toPort:r.toPort}))};
@@ -274,13 +329,13 @@ export class DerivedViews {
  restoreData(data){
   this.staged={};
   if(!data||typeof data!=='object')return;
-  for(const mode of ['02','03','04'])if(TopologyRegister.validShape(data[mode]?.topology))
+  for(const mode of ['02','04'])if(TopologyRegister.validShape(data[mode]?.topology))
    this.staged[mode]=data[mode];
  }
  diagnostic(){
   const value=this.current;
-  return {mode:this.mode,cached:[...this.cache.keys()],
-   current:value?{...value.layout.stats,valid:value.valid,audit:value.audit,
+  return {mode:this.mode,cached:[...this.cache.keys()],rejected:this.rejected,
+   current:value?{...value.layout.stats,valid:value.valid,normative:'pending-definition',budgetExceeded:Boolean(value.budgetExceeded),audit:value.audit,
     topology:value.topology.status(),pending:value.unfinished,restored:Boolean(value.restored),pendingKeys:[...value.routes].filter(([,r])=>!r?.points).map(([key])=>key),calculations:value.calculations}:null};
  }
 }

@@ -9,6 +9,7 @@ test('static Pages entrypoint references local modules and styles',()=>{
  assert.match(html,/<svg id="stage"/);assert.match(html,/id="addBtn"/);
 });
 test('approved R01 monolith remains immutable for rollback',()=>{
- const old=read('P1_Plano_R01_brazos_variables.html').trimEnd();
+ // Git may check out CRLF on Windows; the approved text stays identical.
+ const old=read('P1_Plano_R01_brazos_variables.html').replace(/\r\n/g,'\n').trimEnd();
  assert.equal(old.length,89246);
 });

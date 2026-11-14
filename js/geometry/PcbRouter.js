@@ -1,12 +1,20 @@
+import {routeSegments,segmentAxis,segmentIntersection,segmentEntersRect,leavesRect} from './SegmentGeometry.js';
 // Routing of individual semantic links on a single 2D plane.
 // The class is instantiated for the active document; its algorithms are
 // extracted from the last approved R01 implementation, not a retired engine.
 export class PcbRouter {
- constructor({state,nodeById,clamp,mode='01'}){
+ constructor({state,nodeById,clamp,mode='01',deadline=Infinity}){
   const ROUTE_CLEAR=9, ROUTE_SEPARATION=6, PORT_STUB=19;
-  function prefSide(node,other,edge){
-   if(mode==='03'||mode==='04'){
+  const expired=()=>performance.now()>=deadline;
+  function prefSide(node,other,edge,box,otherBox){
+   if(mode==='02'||mode==='04'){
     const dx=other.x-node.x,dy=other.y-node.y;
+    // Compact 02 needs physical face clearance. Keep 04's established lane
+    // policy while its global topology/routing replacement is still pending.
+    if(mode==='02'&&box&&otherBox){
+     const gapX=Math.abs(dx)-(box.w+otherBox.w)/2,gapY=Math.abs(dy)-(box.h+otherBox.h)/2;
+     return gapX>gapY?(dx>0?'right':'left'):(dy>0?'bottom':'top');
+    }
     return Math.abs(dx)>Math.abs(dy)*.72?
      (dx>0?'right':'left'):(dy>0?'bottom':'top');
    }
@@ -24,7 +32,7 @@ export class PcbRouter {
     for(const [id,other] of [[e.from,e.to],[e.to,e.from]]){
      const p=positions.get(id),q=positions.get(other);if(!p||!q)continue;
      if(!requests.has(id))requests.set(id,[]);
-     requests.get(id).push({idx,other,prefer:prefSide({id,...p,parent:nodeById(id)?.parent},{id:other,...q,parent:nodeById(other)?.parent},e),target:q});
+     requests.get(id).push({idx,other,prefer:prefSide({id,...p,parent:nodeById(id)?.parent},{id:other,...q,parent:nodeById(other)?.parent},e,rects.get(id),rects.get(other)),target:q});
     }
    }
    const ports=new Map();
@@ -40,7 +48,9 @@ export class PcbRouter {
      sides[side].push(entry);
     }
     for(const [side,group] of Object.entries(sides)){
-     group.sort((a,b)=>(side==='top'||side==='bottom'?Math.abs(b.target.y-r.y)-Math.abs(a.target.y-r.y):a.target.y-b.target.y)||a.idx-b.idx);
+     group.sort((a,b)=>(side==='top'||side==='bottom'?
+      (mode==='02'?a.target.x-b.target.x:Math.abs(b.target.y-r.y)-Math.abs(a.target.y-r.y)):
+      a.target.y-b.target.y)||a.idx-b.idx);
      const length=(side==='top'||side==='bottom'?r.w:r.h);
      for(let k=0;k<group.length;k++){
       const fraction=(k+1)/(group.length+1);
@@ -59,16 +69,13 @@ export class PcbRouter {
    }
    return ports;
   }
-  function allSegments(points){const segments=[];for(let i=1;i<points.length;i++){const a=points[i-1],b=points[i];if(Math.abs(a.x-b.x)+Math.abs(a.y-b.y)<.01)continue;segments.push({a,b,h:Math.abs(a.y-b.y)<.01});}return segments;}
+  const allSegments=routeSegments;
   function segmentHitsRect(a,b,r,pad=ROUTE_CLEAR){
-   const l=r.l-pad,rr=r.r+pad,t=r.t-pad,bb=r.b+pad;
-   if(Math.abs(a.y-b.y)<.01){const y=a.y;return y>t&&y<bb&&Math.min(a.x,b.x)<rr&&Math.max(a.x,b.x)>l;}
-   if(Math.abs(a.x-b.x)<.01){const x=a.x;return x>l&&x<rr&&Math.min(a.y,b.y)<bb&&Math.max(a.y,b.y)>t;}
-   return true;
+   return segmentEntersRect(a,b,r,pad);
   }
   function onSegmentVal(z,a,b,eps=0){return z>=Math.min(a,b)-eps&&z<=Math.max(a,b)+eps;}
   function segmentRelation(a,b,c,d){
-   const ah=Math.abs(a.y-b.y)<.001,bh=Math.abs(c.y-d.y)<.001;
+   const ah=segmentAxis(a,b)==='h',bh=segmentAxis(c,d)==='h';
    if(ah===bh){
     const dist=ah?Math.abs(a.y-c.y):Math.abs(a.x-c.x);
     const lo=Math.max(Math.min(ah?a.x:a.y,ah?b.x:b.y),Math.min(ah?c.x:c.y,ah?d.x:d.y));
@@ -76,8 +83,9 @@ export class PcbRouter {
     if(dist<ROUTE_SEPARATION&&hi-lo>0.5)return {overlap:true,cross:0};
     return {overlap:false,cross:0};
    }
-   const x=ah?c.x:a.x,y=ah?a.y:c.y;
-   if(onSegmentVal(x,ah?a.x:c.x,ah?b.x:d.x,.01)&&onSegmentVal(y,ah?c.y:a.y,ah?d.y:b.y,.01)){
+   const hit=segmentIntersection(a,b,c,d);
+   if(hit){
+    const {x,y}=hit;
     // Una intersección a menos de 7 px de un giro no admite un salto legible.
     const d1=Math.min(Math.hypot(x-a.x,y-a.y),Math.hypot(x-b.x,y-b.y));
     const d2=Math.min(Math.hypot(x-c.x,y-c.y),Math.hypot(x-d.x,y-d.y));
@@ -88,10 +96,12 @@ export class PcbRouter {
   }
   function routeShapeValid(points,rects,ownIds,occupied,allowCross){
    let crosses=0;const segments=allSegments(points);
+   if(points.length<2||segments.length!==points.length-1||segments.some(s=>!segmentAxis(s.a,s.b)))return null;
    for(const [i,seg] of segments.entries()){
     for(const r of rects){
-     if(!ownIds.includes(r.id)&&segmentHitsRect(seg.a,seg.b,r))return null;
-     if(ownIds.includes(r.id)&&i!==0&&i!==segments.length-1&&segmentHitsRect(seg.a,seg.b,r))return null;
+     const departure=r.id===ownIds[0]&&i===0&&leavesRect(seg.a,seg.b,r);
+     const arrival=r.id===ownIds[1]&&i===segments.length-1&&leavesRect(seg.b,seg.a,r);
+     if(!departure&&!arrival&&segmentHitsRect(seg.a,seg.b,r))return null;
     }
     for(const old of occupied){const q=segmentRelation(seg.a,seg.b,old.a,old.b);if(q.overlap)return null;if(q.cross){if(!allowCross)return null;crosses+=q.cross;}}
    }
@@ -101,15 +111,17 @@ export class PcbRouter {
    const out=[];
    for(const p of points){if(out.length&&Math.hypot(out.at(-1).x-p.x,out.at(-1).y-p.y)<.05)continue;
     out.push(p);
-    while(out.length>=3){const [a,b,c]=out.slice(-3);if((Math.abs(a.x-b.x)<.01&&Math.abs(b.x-c.x)<.01)||(Math.abs(a.y-b.y)<.01&&Math.abs(b.y-c.y)<.01))out.splice(out.length-2,1);else break;}
+    while(out.length>=3){const [a,b,c]=out.slice(-3),axis=segmentAxis(a,b);
+     if(axis&&axis===segmentAxis(b,c)&&axis===segmentAxis(a,c))out.splice(out.length-2,1);else break;}
    }
    return out;
   }
   function fastCandidates(s,t,rects,occupied,own){
    const options=[];
    const add=(coords)=>{
+    if(expired())return;
     const points=simplify([s,...coords,t]);
-    if(points.some((p,i)=>i&&Math.abs(p.x-points[i-1].x)>.01&&Math.abs(p.y-points[i-1].y)>.01))return;
+    if(points.some((p,i)=>i&&!segmentAxis(points[i-1],p)))return;
     const crossings=routeShapeValid(points,rects,own,occupied,true);
     if(crossings!==null){let len=0;for(const g of allSegments(points))len+=Math.abs(g.a.x-g.b.x)+Math.abs(g.a.y-g.b.y);
      options.push({points,crossings,len});}
@@ -126,6 +138,8 @@ export class PcbRouter {
    return options[0]||null;
   }
   function findRouteGrid(start,end,allRects,occupied,allowCross,margin,limitMs){
+   const searchDeadline=Math.min(deadline,limitMs===undefined?Infinity:performance.now()+limitMs);
+   if(performance.now()>=searchDeadline)return null;
    const minx=Math.min(start.x,end.x)-margin,maxx=Math.max(start.x,end.x)+margin;
    const miny=Math.min(start.y,end.y)-margin,maxy=Math.max(start.y,end.y)+margin;
    const near=allRects.filter(r=>r.r>=minx&&r.l<=maxx&&r.b>=miny&&r.t<=maxy);
@@ -158,6 +172,7 @@ export class PcbRouter {
    }
    let expansions=0,goal=null;
    while(heap.length&&expansions++<130000){
+    if(expansions%128===0&&performance.now()>=searchDeadline)return null;
     const cur=pop();if(cur.v!==g.get(cur.k))continue;
     const idx=Math.floor(cur.k/3),dir=cur.k%3;
     if(idx===target){goal=cur.k;break;}
@@ -228,6 +243,7 @@ export class PcbRouter {
    return best;
   }
   function routeEdge(src,dst,obstacles,occupied){
+   if(expired())return null;
    const start={x:src.x,y:src.y},s={x:src.sx,y:src.sy};
    const t={x:dst.sx,y:dst.sy},end={x:dst.x,y:dst.y};
    const own=[src.id,dst.id];
@@ -236,7 +252,7 @@ export class PcbRouter {
    // Canal individual para ramas paralelas del mismo progenitor.
    // Se reserva por orden espacial: los hijos más alejados usan los carriles interiores.
    const parent=nodeById(src.id),child=nodeById(dst.id);
-   if((mode==='01'||mode==='02')&&child?.parent===src.id&&src.side==='right'&&dst.side==='left'&&t.x-s.x>30){
+   if(mode==='01'&&child?.parent===src.id&&src.side==='right'&&dst.side==='left'&&t.x-s.x>30){
     const py=parent.y,above=t.y<py;
     const siblings=state.nodes.filter(n=>n.parent===src.id&&((n.y<py)===above))
      .sort((a,b)=>above?a.y-b.y:b.y-a.y);
@@ -264,7 +280,7 @@ export class PcbRouter {
     if(search){const full=simplify([start,...search,end]),crossings=routeShapeValid(full,obstacles,own,occupied,true);
      if(crossings!==null){best={points:search,crossings};break;}}
    }}
-   if(!best&&(mode==='02'||mode==='03')){
+   if(!best&&mode==='02'){
     const wide=wideCandidates(start,s,t,end,obstacles,occupied,own);
     if(wide)return {points:wide.points,crosses:wide.crosses};
    }

@@ -74,24 +74,19 @@ test('identifica inversión de orden de puertos',()=>{
  // Los puertos pertenecen a nodos distintos: cambiar valores no invierte orden en el mismo cuadro.
  assert.equal(report.counts.portOrder,0);
 });
-test('detecta inversión real de dos puertos sobre el mismo cuadro',()=>{
- const base=basic();
- base.routes.get(edgeKey(base.edges[1])).edge.from='a';
- base.edges[1].from='a';
- const oldKey=edgeKey({from:'c',to:'d'}),newKey=edgeKey(base.edges[1]);
- base.routes.set(newKey,base.routes.get(oldKey));base.routes.delete(oldKey);
+test('N1.1 admite rotación circular y N1.2 cambio de cara, pero rechaza reflexión',()=>{
  const register=new TopologyRegister({edgeKey});
- const previous=register.capture(base);register.observe(previous);
- const changed=basic();
- changed.edges[1].from='a';
- changed.routes.get(oldKey).edge.from='a';
- const second=changed.routes.get(oldKey);
- changed.routes.delete(oldKey);changed.routes.set(newKey,second);
- const pA=changed.routes.get(edgeKey(changed.edges[0])).fromPort;
- const pB=changed.routes.get(newKey).fromPort;
- [pA.y,pB.y]=[pB.y,pA.y];
- const report=register.compare(previous,register.capture(changed));
- assert.ok(report.counts.portOrder>0,JSON.stringify(report));
+ const previous=register.capture(basic());
+ previous.edges.push('A','B','C','D');
+ for(const key of ['A','B','C','D'])previous.crossingOrders[key]=[];
+ previous.ports.a=['A','B','C','D'].map((edge,i)=>({edge,id:'a:p'+i,side:'right'}));
+ const rotated=structuredClone(previous);
+ rotated.ports.a=[...rotated.ports.a.slice(2),...rotated.ports.a.slice(0,2)]
+  .map(p=>({...p,side:'top'}));
+ assert.equal(register.compare(previous,rotated).counts.portOrder,0);
+ assert.equal(register.compare(previous,rotated).valid,true);
+ const reflected=structuredClone(rotated);reflected.ports.a.reverse();
+ assert.equal(register.compare(previous,reflected).counts.portOrder,1);
 });
 test('cruce existente no puede desaparecer ni cambiar su secuencia',()=>{
  const base=basic(),register=new TopologyRegister({edgeKey});
@@ -103,7 +98,7 @@ test('cruce existente no puede desaparecer ni cambiar su secuencia',()=>{
  assert.ok(report.counts.crossing>0,JSON.stringify(report));
  assert.equal(register.reference,prior,'Una topología inválida NO sustituye la referencia');
 });
-test('registra inversión de lado entre dos carriles paralelos',()=>{
+test('la inversión de carriles que permuta cruces se detecta por crossingOrder',()=>{
  const base=basic(),register=new TopologyRegister({edgeKey});
  const old=register.capture(base);register.observe(old);
  const changed=basic();
@@ -111,15 +106,15 @@ test('registra inversión de lado entre dos carriles paralelos',()=>{
  rt1.points=rt1.points.map(p=>({...p,y:40}));
  rt2.points=rt2.points.map(p=>({...p,y:0}));
  const report=register.compare(old,register.capture(changed));
- assert.ok(report.counts.neighbor>0,JSON.stringify(report));
+ assert.ok(report.counts.crossingOrder>0,JSON.stringify(report));
 });
-test('detecta inversión de orden espacial de conceptos',()=>{
+test('el orden espacial absoluto es diagnóstico y no fija la topología',()=>{
  const base=basic(),register=new TopologyRegister({edgeKey});
  register.observe(register.capture(base));
  const moved=basic();
  moved.positions.get('a').x=10000;
  const report=register.compare(register.reference,register.capture(moved));
- assert.ok(report.counts.nodeOrder>0,JSON.stringify(report));
+ assert.equal(report.valid,true,JSON.stringify(report));
 });
 
 test('detecta permutación de cruces conservando los mismos pares',()=>{

@@ -1,9 +1,11 @@
+import {RadialLayout} from './RadialLayout.js';
+import {orderRoots} from '../core/RootOrder.js';
 // Vistas derivadas y deterministas del mismo grafo conceptual P1.
 // Nunca modifica los nodos, los vínculos ni el punto de control de 01.
-// 02: compactación conservadora; 03: radio idéntico por jerarquía;
+// 02: radial acotado; 03 retirado;
 // 04: N brazos espirales (N=#J1), T=0 y bandas radiales estrictas.
 export class ViewLayouts {
- static MODES=['01','02','03','04'];
+ static MODES=['01','02','04'];
  constructor(){this.last=null;}
  static graphLevels(nodes,edges){
   const ids=new Set(nodes.map(n=>n.id)),adj=new Map(nodes.map(n=>[n.id,[]]));
@@ -66,11 +68,13 @@ export class ViewLayouts {
   }
   return count;
  }
- compute({mode,nodes,edges,metrics,sourcePositions}){
-  if(!['02','03','04'].includes(mode))throw Error('Vista no reconocida');
+ compute({mode,nodes,edges,metrics,sourcePositions,topologyReference}){
+  if(mode==='02')return new RadialLayout().compute({nodes,edges,metrics,sourcePositions,topologyReference});
+  if(mode!=='04')throw Error('Vista no reconocida');
   if(!nodes.length)return {mode,positions:new Map(),rects:new Map(),levels:{},stats:{}};
   const {levels,disconnected,adj}=ViewLayouts.graphLevels(nodes,edges);
-  const {owner,roots}=ViewLayouts.branches(nodes,adj);
+  const {owner,roots:originalRoots}=ViewLayouts.branches(nodes,adj);
+  const roots=orderRoots(originalRoots,topologyReference);
   const byId=new Map(nodes.map(n=>[n.id,n]));
   const positions=new Map(),rects=new Map();
   const metricsMap=metrics instanceof Map?metrics:new Map(metrics);
@@ -81,99 +85,6 @@ export class ViewLayouts {
    disconnected:[...disconnected],arms:roots.length,
    ...extra
   });
-  if(mode==='02'){
-   const ids=nodes.map(n=>n.id);
-   const first=source.get('p1')||{x:0,y:0};
-   let factor=0.88;
-   // Menor factor que conserva distancia suficiente entre cuadros existentes;
-   // el orden topológico del plano no cambia al escalar uniformemente.
-   const fits=f=>{
-    const boxes=ids.map(id=>{
-     const p=source.get(id)||{x:0,y:0},m=metricsMap.get(id);
-     return ViewLayouts.rect(id,{x:first.x+(p.x-first.x)*f,y:first.y+(p.y-first.y)*f},m);
-    });
-    for(let i=0;i<boxes.length;i++)for(let j=0;j<i;j++){
-     const a=boxes[i],b=boxes[j];
-     if(a.l<b.r+14&&a.r>b.l-14&&a.t<b.b+14&&a.b>b.t-14)return false;
-    }
-    return true;
-   };
-   while(factor<1&& !fits(factor))factor=Math.min(1,Math.round((factor+.025)*1000)/1000);
-   // Si el documento original ya contiene solapamientos, no amplificarlos.
-   for(const id of ids){
-    const p=source.get(id)||{x:0,y:0};
-    set(id,{x:first.x+(p.x-first.x)*factor,y:first.y+(p.y-first.y)*factor});
-   }
-   // Compresión local: acercar realmente extremos vinculados, no solo
-   // reducir la escala global. Solo se acepta una mejora de longitud y
-   // si mantiene las precedencias originales de centros en X e Y.
-   const baseline=new Map([...positions].map(([id,p])=>[id,{...p}]));
-   const lengthSum=()=>edges.reduce((acc,e)=>{
-    const a=positions.get(e.from),b=positions.get(e.to);
-    return acc+(a&&b?Math.hypot(a.x-b.x,a.y-b.y):0);
-   },0);
-   const uniformLength=lengthSum();
-   let accepted=0;
-   const ordered=ids.filter(id=>id!=='p1');
-   for(let pass=0;pass<3;pass++){
-    for(const id of ordered){
-     const p=positions.get(id),initial=baseline.get(id);
-     const neighbors=adj.get(id)||[];
-     if(!p||!initial||!neighbors.length)continue;
-     let dx=0,dy=0;
-     for(const otherId of neighbors){
-      const q=positions.get(otherId);if(!q)continue;
-      const dist=Math.hypot(q.x-p.x,q.y-p.y)||1;
-      dx+=(q.x-p.x)/dist;dy+=(q.y-p.y)/dist;
-     }
-     const norm=Math.hypot(dx,dy);
-     if(norm<.02)continue;
-     const step=7.5;
-     let xx=p.x+dx/norm*step,yy=p.y+dy/norm*step;
-     let minX=-Infinity,maxX=Infinity,minY=-Infinity,maxY=Infinity;
-     for(const other of ordered){
-      if(other===id)continue;
-      const original=baseline.get(other),current=positions.get(other);
-      if(!original||!current)continue;
-      if(original.x<initial.x-.05)minX=Math.max(minX,current.x+.1);
-      if(original.x>initial.x+.05)maxX=Math.min(maxX,current.x-.1);
-      if(original.y<initial.y-.05)minY=Math.max(minY,current.y+.1);
-      if(original.y>initial.y+.05)maxY=Math.min(maxY,current.y-.1);
-     }
-     // También se respeta el orden respecto al núcleo inmóvil.
-     const c=baseline.get('p1'),root=positions.get('p1');
-     if(c&&root){
-      if(c.x<initial.x-.05)minX=Math.max(minX,root.x+.1);
-      if(c.x>initial.x+.05)maxX=Math.min(maxX,root.x-.1);
-      if(c.y<initial.y-.05)minY=Math.max(minY,root.y+.1);
-      if(c.y>initial.y+.05)maxY=Math.min(maxY,root.y-.1);
-     }
-     xx=Math.max(minX,Math.min(maxX,xx));yy=Math.max(minY,Math.min(maxY,yy));
-     if(!Number.isFinite(xx)||!Number.isFinite(yy))continue;
-     const candidate={x:xx,y:yy},rect=ViewLayouts.rect(id,candidate,metricsMap.get(id));
-     let collides=false;
-     for(const [other,r] of rects){
-      if(other===id)continue;
-      if(rect.l<r.r+14&&rect.r>r.l-14&&rect.t<r.b+14&&rect.b>r.t-14){collides=true;break;}
-     }
-     if(collides)continue;
-     const before=neighbors.reduce((acc,other)=>{
-      const q=positions.get(other);return acc+(q?Math.hypot(p.x-q.x,p.y-q.y):0);
-     },0);
-     const after=neighbors.reduce((acc,other)=>{
-      const q=positions.get(other);return acc+(q?Math.hypot(candidate.x-q.x,candidate.y-q.y):0);
-     },0);
-     if(after>=before-.001)continue;
-     positions.set(id,candidate);rects.set(id,rect);accepted++;
-    }
-   }
-   return {mode,positions,rects,levels:Object.fromEntries(levels),
-    stats:makeStats({factor,metric:'compactación relacional con precedencias',
-     relativeMoves:accepted,uniformLinkLength:uniformLength,
-     linkLength:lengthSum(),radiusByLevel:null})};
-  }
-  // Orden estable dentro de ramas. La cercanía de los conceptos se expresa
-  // mediante prioridad de parentesco y vecinos, sin cambiar los vínculos.
   const maxLevel=Math.max(...levels.values());
   const rootIds=roots.map(n=>n.id);
   const grouped=new Map();

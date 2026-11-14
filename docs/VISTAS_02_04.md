@@ -1,73 +1,41 @@
-# P1 — Representaciones 02, 03 y 04
+# P1 — Radial acotado 02 y Espiral 04
 
-**Estado:** implementación de las representaciones derivadas; su aceptación está supeditada a los resultados de validación geométrica y topológica.
+**Actualización documental del 13 de noviembre de 2026:** los valores H mínima global, 14 px de margen y orden vertical convertido en angular son decisiones del intento, no normas definitivas. Las aclaraciones posteriores se recogen en [normas v0.1](NORMAS_JERARQUIZADAS_P1.md). GitHub Actions completó correctamente la [ejecución 145](https://github.com/jncubillosn-lab/LAB4.0-Fractaleando/actions/runs/43355519745); esto no resuelve el PPR, cuya prueba verifica el rechazo. Véase la [memoria completa](MEMORIA_PROYECTO_P1.md).
 
-## Principio invariable
+**Estado del reintento, 12 de noviembre de 2026: experimental. El caso PPR completo sigue sin resolver.**
 
-El grafo conceptual es **uno solo**. Las vistas 02–04 no pueden crear, editar ni eliminar conceptos o vínculos, y no alteran el punto de control de 01. El plano original continúa siendo la vista de edición. Filtrar profundidad, hacer zoom o desplazar la cámara no recalcula recorridos.
+02 Compactación y 03 Órbitas se sustituyen por 02 Radial acotado. 01 conserva su geometría y edición; 04 no cambia de alcance.
 
-La jerarquía utilizada en 03 y 04 es la **menor distancia en número de vínculos hasta P1**, obtenida por búsqueda en anchura sobre el grafo no dirigido. No se inventan relaciones: los componentes desconectados quedan etiquetados y situados en una banda periférica visual sin asignarles un camino artificial al origen.
+## Contrato de 02
 
-## 02 · Reorganización compacta
+- Se utilizan todos los nodos y vínculos originales, incluidos los transversales. No se cambian identificadores, padres ni ramas.
+- J0 está en (0, 0). Los hijos directos de J0 determinan el número de sectores.
+- Los descendientes permanecen dentro del sector de su rama y avanzan radialmente respecto de su padre. No se imponen circunferencias uniformes por nivel.
+- La separación euclidiana mínima entre los bordes de cada par vinculado es como máximo 2H. H es la menor altura medida de los cuadros: 53 px en PPR, cota 106 px. La longitud de la ruta no se confunde con esta distancia.
+- Cuadros sin solapes, con 14 px de margen para trazado; orden angular de hermanos obtenido de 01.
+- El auditor vuelve a medir posiciones, distancias, sectores, orden y origen. Las coordenadas de las métricas de 01 no pueden sustituir las posiciones calculadas.
 
-La distribución parte de una **compactación métrica conservadora** de 01 y luego acerca localmente los conceptos vinculados mediante un descenso de longitud de enlaces. Cada modificación local solo se acepta si reduce efectivamente la suma de distancias de sus vínculos, evita solapamientos y **conserva las precedencias relativas izquierda/derecha y arriba/abajo** que existían entre centros. El factor global se aumenta si fuese necesario para respetar la separación entre cuadros. No cambia parentescos ni relaciones de datos.
+La búsqueda es finita y determinista. Prueba distribuciones iniciales y orientación alternativa; algunos intentos proyectan además el orden de hermanos. No aumenta la cota para aprobar. El estado `not-found` significa que el algoritmo no encontró solución, **no demuestra imposibilidad matemática**.
 
-No afirmamos que esta primera compactación sea el mínimo global de longitudes o un problema de optimización matemática resuelto. El requisito de minimización debe mantenerse como objetivo medible, pero no autoriza a destruir la estructura ya validada.
+## Resultado comprobado y límite pendiente
 
-## 03 · Órbitas
+La prueba de árbol binario de 46 cuadros cumple las restricciones geométricas. El ejemplo PPR de 210 cuadros y 217 vínculos conserva sus datos, pero todavía incumple restricciones. La prueba de rechazo verifica protección del plano original; no constituye una prueba de aceptación del caso completo.
 
-Todos los conceptos de una misma jerarquía conectada comparten exactamente el **mismo radio**. La capacidad de cada órbita determina su radio mínimo, teniendo en cuenta dimensiones medidas de los cuadros y densidad angular por brazo.
+Una distribución rechazada no se dibuja ni se exporta como validada: se mantiene 01 y se informan los incumplimientos. La búsqueda se ejecuta en un Worker para que el usuario pueda cambiar de vista mientras calcula. Cambiar de vista termina el Worker y descarta resultados obsoletos.
 
-El orden angular se establece por parentesco y se ajusta con barridos baricéntricos que favorecen la proximidad de conceptos con vínculos en jerarquías adyacentes. Los sectores conservan el brazo de origen; un vínculo transversal no cambia el progenitor.
+Para aprobar una distribución se exigen además todas las rutas, puertos válidos, ausencia de intersecciones con cuadros ajenos y control topológico. No basta con aprobar posiciones. La identidad conceptual se contrasta con 01; el registro geométrico de cruces y puertos es propio de cada representación. No se afirma conservar automáticamente los mismos cruces de 01 al cambiar su geometría.
 
-La condición radial se valida después del cálculo, sin sustituir el significado de jerarquía por distancias arbitrarias.
+## Archivos y verificación
 
-## 04 · Espiral plana de brazos variables
+- `js/geometry/RadialLayout.js`: distribución y auditor independiente.
+- `js/geometry/ViewLayouts.js`: selección de motor; 03 ya no se admite.
+- `js/workers/radial-layout.worker.js`: cálculo fuera de la interfaz.
+- `js/views/DerivedViews.js`: caché, rechazo, enrutamiento y recuperación.
+- `tests/views.test.js`: aceptación geométrica pequeña, conservación de datos PPR, rechazo, auditor y Worker.
+- `tests/views_e2e.py`: prueba prevista de rechazo PPR, rutas pequeñas, 04 y persistencia.
 
-El número de brazos es **exactamente el número de términos J1** que nacen de P1: tres para el ejemplo original, cuatro después de agregar un cuarto término J1, etcétera.
+Ejecutar `npm test`. Para navegador, ejecutar las tres pruebas Python de `.github/workflows/tests.yml` con Chrome. En el entorno del reintento Chromium no pudo iniciar por una restricción de sockets; no se declara aprobada la prueba E2E local.
 
-El radio de cada nivel puede variar dentro de su intervalo, pero para cada par de jerarquías consecutivas debe cumplirse:
+## Pendiente para integrar
 
-\`máx(radio de Jn) < mín(radio de J(n+1))\`
-
-Una progresión angular produce los brazos espirales. Los parámetros geométricos de la implementación se denominan W (progresión angular), D (variación radial intrajerárquica) y T (traslación axial): **T = 0**, porque el diagrama es completamente plano. W y D son parámetros internos, **no nuevas normas rígidas**. Se pueden ajustar experimentalmente sin modificar vínculos o jerarquías.
-
-## Enrutamiento y validez
-
-Todas las vistas heredan las reglas R01–R08: rutas exclusivas, cuadros ajenos inviolables, puertos propios y cruces inequívocos.
-
-- La distribución se calcula sin modificar datos.
-- El Worker de P1 recibe rectángulos medidos, posiciones y jerarquía propias de la vista.
-- El enrutador utiliza preferencias de salida de puertos acordes al contexto geométrico: columnas en 01–02 y orientación espacial en 03–04.
-- Antes de considerar válida una vista se ejecuta el mismo validador independiente: **cero cuadros solapados, cero rutas inválidas, cero puertos repetidos, cero vínculos pendientes**, y jerarquías radiales correctas.
-- Si alguna conexión no se puede resolver, su relación conceptual sigue existiendo, pero no se dibuja una ruta ficticia. La vista anuncia expresamente **«En revisión»** y los vínculos pendientes.
-
-### Registro topológico por vista
-
-Se distingue entre la **topología conceptual** (identidades de nodos y vínculos), que es idéntica en las cuatro representaciones, y la **topología de la inmersión gráfica** (orden de puertos, cruces, vecindades), que puede ser diferente al organizar el mismo grafo sobre un plano, un círculo o una espiral.
-
-No es matemáticamente correcto exigir que todos los nodos conserven su orden izquierda/derecha entre una disposición lineal y otra circular. Por tanto:
-
-1. La referencia topológica de **01** permanece protegida; los arrastres manuales que cambien sus relaciones o produzcan rutas inválidas se revierten.
-2. Cada representación derivada conserva su **propio registro topológico**, independiente del de 01.
-3. La edición está habilitada exclusivamente en 01: cambiar de pestaña no reestructura una vista existente.
-4. Los registros de vistas derivados se almacenan opcionalmente en \`derivedViews\` del JSON \`p1.graph.v1\`. La recuperación de puntos de control exige verificar identidad de grafo y fuente, geometría, reglas DRC y firma topológica antes de aceptar sus rutas.
-5. Las nuevas distribuciones que no cumplan todas las condiciones no se declaran validadas aunque se pueda visualizar su estado provisional.
-
-Este modelo **no transforma automáticamente un diseño planario en uno espiral preservando todos sus cruces originales**, pues puede ser incompatible con la disposición circular exigida. Es una restricción explícita y documentada, no una garantía falsa del motor.
-
-## Modo oscuro
-
-El cambio de tema solo cambia variables de color CSS y colores de exportación de SVG/PNG. No altera posiciones, métricas, rutas ni jerarquías. Se conserva la lectura de dos tintas y el estilo gráfico previo.
-
-## Archivos
-
-- \`js/geometry/ViewLayouts.js\`: posiciones puras de 02–04.
-- \`js/views/DerivedViews.js\`: control de vistas, Worker, cachés, topología, DRC, recuperación y visualización.
-- \`js/workers/initial-route.worker.js\`: enrutamiento según modalidad, sin cambiar la lógica de 01.
-- \`js/core/TopologyRegister.js\`: firma relacional independiente.
-- \`tests/views.test.js\` y \`tests/views_e2e.py\`: geometría formal, uso real del navegador y modo oscuro.
-
-## Requisitos de aprobación
-
-No basta con que se vean cuatro pestañas: las cuatro vistas deben representar todos los vínculos del caso PPR, no atravesar cuadros, conservar los puntos de control, respetar R01–R08 y pasar el test en navegador. La visualización de una vista **en revisión** no constituye su validación.
+Resolver el caso completo y verificarlo en navegador. Mantener esta implementación en una rama de trabajo hasta entonces. No sustituir una prueba de aceptación por el hecho de que el rechazo funcione.

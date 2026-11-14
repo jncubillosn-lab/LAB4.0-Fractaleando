@@ -1,3 +1,4 @@
+import {segmentAxis,segmentEntersRect,leavesRect} from './SegmentGeometry.js';
 // Independent DRC-like checks. Cannot approve a path merely because
 // it avoids third-party boxes: endpoints, ports, and continuity matter (H02).
 export class GeometryValidator {
@@ -23,9 +24,23 @@ export class GeometryValidator {
    if((usedPorts.get(id)||[]).some(p=>Math.hypot(p.x-port.x,p.y-port.y)<8))return {ok:false,reason:'Puerto repetido'};
   }
   const segments=this.router.allSegments(points);
-  if(segments.length!==points.length-1||segments.some(s=>Math.abs(s.a.x-s.b.x)>.01&&Math.abs(s.a.y-s.b.y)>.01))return {ok:false,reason:'Segmento no ortogonal o vacío'};
-  const crossings=this.router.routeShapeValid(points,rects,[edge.from,edge.to],occupied,true);
-  if(crossings===null)return {ok:false,reason:'Ruta invade obstáculo o solapa otra ruta'};
+  if(segments.length!==points.length-1||segments.some(s=>!segmentAxis(s.a,s.b)))return {ok:false,reason:'Segmento no ortogonal o vacío'};
+  if(!leavesRect(segments[0].a,segments[0].b,first)||
+     !leavesRect(segments.at(-1).b,segments.at(-1).a,last))
+   return {ok:false,reason:'La ruta no sale o llega por la cara de su puerto'};
+  // Independent acceptance: do not inherit the router's endpoint exemptions.
+  let crossings=0;
+  for(const [i,s] of segments.entries()){
+   for(const r of rects){
+    if(r.id===edge.from&&i===0||r.id===edge.to&&i===segments.length-1)continue;
+    if(segmentEntersRect(s.a,s.b,r,this.router.clearance))
+     return {ok:false,reason:'Ruta invade obstáculo o solapa otra ruta'};
+   }
+   for(const old of occupied){const q=this.router.segmentRelation(s.a,s.b,old.a,old.b);
+    if(q.overlap)return {ok:false,reason:'Ruta invade obstáculo o solapa otra ruta'};
+    crossings+=q.cross;
+   }
+  }
   return {ok:true,crossings};
  }
  audit(rects,routes){

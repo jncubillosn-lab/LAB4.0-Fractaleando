@@ -1,1 +1,1 @@
-{"name":"p1-fractaleando","version":"0.2.0","private":true,"type":"module","scripts":{"test":"node --test tests/*.test.js"}}
+{"name":"p1-fractaleando","version":"0.2.1","private":true,"type":"module","scripts":{"test":"node --test --test-concurrency=1 tests/*.test.js","bench:layouts":"node scripts/benchmark-layouts.mjs"},"devDependencies":{"elkjs":"0.12.1"}}
