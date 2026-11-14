@@ -2,7 +2,11 @@
 
 **[▶ Abrir la aplicación en GitHub Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/)**
 
-**Implementación actual 0.2.6:** [creación de hermanos en reloj y trazos proporcionales](CONCEPTOS_RELOJ_0_2_6.md).
+**Implementación actual 0.2.7:** [entradas enfrentadas al crear conexiones](ENTRADAS_REFLEJADAS_0_2_7.md).
+La salida del padre y la entrada del hijo se eligen juntas, con reflexión
+entre caras opuestas y alineación directa cuando hay espacio libre.
+
+**Base 0.2.6:** [creación de hermanos en reloj y trazos proporcionales](CONCEPTOS_RELOJ_0_2_6.md).
 «+ Concepto» conserva el padre seleccionado y distribuye sus hijos de cinco
 en cinco horas. Los grosores por jerarquía se mantienen al seleccionar y
 los cruces reservan un blanco proporcional a la línea superior.
