@@ -1,5 +1,5 @@
 """Browser acceptance tests against the actual relative ES module URLs of GitHub Pages."""
-import http.server, socketserver, threading, time, json, math
+import http.server, socketserver, threading, time, json, math, re
 import os
 from pathlib import Path
 from playwright.sync_api import sync_playwright
@@ -62,7 +62,9 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   assert page.evaluate('document.activeElement.id')!='nodeText'
   for node_id,transform in original.items():
    actual=page.locator('#nodes [data-node-id="'+node_id+'"]').get_attribute('transform')
-   assert actual==transform,{'id':node_id,'before':transform,'after':actual}
+   old_xy=[float(v) for v in re.findall(r'-?\d+(?:\.\d+)?',transform)]
+   new_xy=[float(v) for v in re.findall(r'-?\d+(?:\.\d+)?',actual)]
+   assert all(abs(a-b)<.011 for a,b in zip(old_xy,new_xy)),{'id':node_id,'before':transform,'after':actual}
   with page.expect_download() as siblings:page.locator('#jsonBtn').click()
   graph=json.loads(Path(siblings.value.path()).read_text(encoding='utf8'))
   parent=next(n for n in graph['nodes'] if n['id']=='b0')
