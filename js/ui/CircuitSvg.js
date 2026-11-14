@@ -1,8 +1,10 @@
 import {routeCrossings} from '../geometry/CircuitGeometry.js';
+import {hierarchyStrokeProfile} from './HierarchyStroke.js';
 
 // A crossing cuts only the lower route's own mask. It works at a vertex or
 // beside a bevel without a minimum distance to either, and erases no neighbour.
-export function drawCircuitSvg({ordered,routes,linesEl,sEl,edgeKey}){
+export function drawCircuitSvg({ordered,routes,linesEl,sEl,edgeKey,mode,nodes,levels}){
+ const strokeFor=hierarchyStrokeProfile({mode,nodes,levels});
  const entries=ordered.flatMap(e=>{const key=edgeKey(e),r=routes.get(key);return r?.points?[{e,key,r,cuts:[]}]:[];});
  const defs=sEl('defs'),elements=new Map();linesEl.append(defs);
  for(let i=0;i<entries.length;i++)for(let j=0;j<i;j++)
@@ -11,6 +13,10 @@ export function drawCircuitSvg({ordered,routes,linesEl,sEl,edgeKey}){
   const group=sEl('g',{'data-edge-key':key}),points=r.points;
   const d=points.map((p,i)=>(i?'L ':'M ')+Number(p.x.toFixed(5))+' '+Number(p.y.toFixed(5))).join(' ');
   const attrs={d,class:'svgline'+(e.kind==='transversal'?' transverse':''),'data-link-from':e.from,'data-link-to':e.to};
+  if(mode==='02'){
+   const stroke=strokeFor(e);attrs.style='--hierarchy-width:'+stroke.width;
+   attrs['data-hierarchy-level']=stroke.depth;
+  }
   if(cuts.length){
    const id='derived-crossing-'+index,mask=sEl('mask',{id,maskUnits:'userSpaceOnUse','mask-type':'luminance'});
    const l=Math.min(...points.map(p=>p.x))-10,t=Math.min(...points.map(p=>p.y))-10;

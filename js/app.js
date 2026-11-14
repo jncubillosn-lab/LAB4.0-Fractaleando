@@ -687,7 +687,7 @@ function exportCamera(node=camera){
  return text.replaceAll('fill="var(--paper)"','fill="'+exportColor('paper')+'"');
 }
 const EXPORT_STYLE=`
-.svgline{fill:none;stroke:#1c1c1b;stroke-width:1.35;stroke-opacity:.50;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.svgline{fill:none;stroke:#1c1c1b;stroke-width:var(--hierarchy-width,1.35);stroke-opacity:.50;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .svgline.active{stroke-width:2;stroke-opacity:1}
 .svgline.transverse{stroke-dasharray:5 5;stroke-opacity:.52}
 .node rect{fill:#f7f6f1;stroke:#1c1c1b;stroke-width:1.4}

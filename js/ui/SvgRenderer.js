@@ -2,9 +2,9 @@ import {drawCircuitSvg} from './CircuitSvg.js';
 // SVG is presentation only: it never requests new routes or layouts.
 export class SvgRenderer {
  constructor({linesEl,sEl,router,edgeKey}){Object.assign(this,{linesEl,sEl,router,edgeKey});}
- draw(ordered,routes){
+ draw(ordered,routes,styleContext={}){
   this.linesEl.replaceChildren();const elements=new Map(),occupied=[];
-  if(this.router.circuit45)return drawCircuitSvg({...this,ordered,routes});
+  if(this.router.circuit45)return drawCircuitSvg({...this,...styleContext,ordered,routes});
   for(const e of ordered){
    const key=this.edgeKey(e),rt=routes.get(key);if(!rt?.points)continue;
    const group=this.sEl('g',{'data-edge-key':key});

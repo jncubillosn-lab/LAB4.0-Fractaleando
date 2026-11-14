@@ -1,5 +1,5 @@
 """Acceptance against the built Pages modules, worker and local WASM."""
-import http.server, threading, json, os
+import http.server, threading, json, os, re
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(os.environ.get('P1_SITE_ROOT',Path(__file__).resolve().parents[1]/'_site'))
@@ -21,7 +21,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   print('E2E: abriendo sitio construido',flush=True)
   page.goto('http://127.0.0.1:'+str(srv.server_address[1])+'/index.html',wait_until='domcontentloaded')
   build=page.locator('meta[name="application-build"]').get_attribute('content')
-  assert '0.2.3' in page.locator('meta[name="application-version"]').get_attribute('content')
+  assert '0.2.4' in page.locator('meta[name="application-version"]').get_attribute('content')
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===3',timeout=60000)
   page.locator('#showAllBtn').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===217',timeout=60000)
@@ -60,14 +60,28 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    assert page.locator('#derivedNodes .node').evaluate_all('(els)=>els.map(el=>el.getAttribute("transform"))')==positions
    page.locator('#derivedNodes [data-node-id="b42"]').press('Enter')
    assert page.locator('#derivedNodes [data-node-id="b42"]').get_attribute('aria-pressed')=='true'
+   if mode=='02':
+    assert result['coreSpacing']['factor']==.5,result
+    assert all(not link['constrained'] and abs(link['ratio']-.5)<.001 for link in result['coreSpacing']['links']),result['coreSpacing']
+    widths=page.locator('#derivedLines .svgline').evaluate_all('(els)=>els.map(el=>[el.dataset.hierarchyLevel,el.style.getPropertyValue("--hierarchy-width")])')
+    values=[float(row[1]) for row in widths]
+    assert min(values)==1.35 and max(values)==2.05,values
+    normal_core=page.locator('#derivedLines g:not(.hierarchy-focus) > path[data-hierarchy-level="1"]').first
+    assert abs(float(normal_core.evaluate('(el)=>parseFloat(getComputedStyle(el).strokeWidth)'))-2.05)<.001
+    focused=page.locator('#derivedLines .hierarchy-focus .svgline').first
+    assert abs(float(focused.evaluate('(el)=>parseFloat(getComputedStyle(el).strokeWidth)'))-2.8)<.001
+    with page.expect_download() as weighted_svg:page.locator('#svgBtn').click()
+    weighted=Path(weighted_svg.value.path()).read_text(encoding='utf8')
+    assert re.search(r'--hierarchy-width:\s*2\.05',weighted) and re.search(r'--hierarchy-width:\s*1\.35',weighted)
    before=page.evaluate('window.P1_PLANO_DIAGNOSTICO.routeCalculations')
    page.locator('#depth').evaluate('(el)=>{el.value="1";el.dispatchEvent(new Event("input",{bubbles:true}))}')
    page.locator('#showAllBtn').click()
    assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.routeCalculations')==before
+   if mode=='02':assert page.locator('#derivedLines .svgline').evaluate_all('(els)=>els.map(el=>[el.dataset.hierarchyLevel,el.style.getPropertyValue("--hierarchy-width")])')==widths
    output=os.environ.get('P1_SCREENSHOTS')
    if output:
     Path(output).mkdir(parents=True,exist_ok=True)
-    page.screenshot(path=str(Path(output)/('Fractaleando_0_2_3_'+mode+'.png')))
+    page.screenshot(path=str(Path(output)/('Fractaleando_0_2_4_'+mode+'.png')))
   assert results['04']['baseBounds']==results['02']['bounds']
   assert results['04']['baseMeanGap']==results['02']['meanGap']
   page.locator('#themeBtn').click()

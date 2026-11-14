@@ -2,12 +2,12 @@
 
 **[▶ Abrir la aplicación en GitHub Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/)**
 
-**Implementación actual 0.2.3:** [corte de lectura y trazado](CORTE_02_0_2_3.md).
-Incluye selección jerárquica en 02/04, puertos alineados y ensayo de trazado
-con biseles de 45° y cruces junto a giros. Continúa la
-[base compacta de 0.2.2](MOTOR_COMPACTO_0_2_2.md), integrada mediante el PR #14.
+**Implementación actual 0.2.4:** [núcleo más compacto y grosor por jerarquía](NUCLEO_JERARQUIAS_0_2_4.md).
+Reduce a la mitad el hueco J0–J1 de 02 y distingue las conexiones por
+jerarquía con un grosor normal de 1,35 a 2,05 px. Conserva la
+[selección de lectura y el ensayo H/V/45](CORTE_02_0_2_3.md) y la
+[base compacta](MOTOR_COMPACTO_0_2_2.md).
 Las vistas siguen **EN REVISIÓN** por cruces frente a 01 y cota 2H.
-El documento del corte explica también W, D y T como preparación de 04.
 Los cortes históricos que siguen no sustituyen este estado ni las normas vigentes.
 
 **Lectura actualizada al 13 de noviembre de 2026:** consultar [Memoria del proyecto](MEMORIA_PROYECTO_P1.md) y [Normas jerarquizadas v0.1](NORMAS_JERARQUIZADAS_P1.md). Este archivo conserva cortes históricos; las afirmaciones sobre etapas futuras, estado observacional o cuatro vistas deben leerse con sus fechas. El radial sigue en borrador y no está aprobado.
