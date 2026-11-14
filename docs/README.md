@@ -1,5 +1,15 @@
 # P1 — Diagramador de relaciones conceptuales
 
+**Implementación actual 0.2.2:** [explicación del motor compacto](MOTOR_COMPACTO_0_2_2.md#explicación-del-cambio).
+02 distribuye los conceptos sobre rayos aprovechando el espacio libre;
+04 gira esa misma base. El código está integrado en `main` mediante el
+[PR #14](https://github.com/jncubillosn-lab/LAB4.0-Fractaleando/pull/14) y
+[publicado en Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/?v=0.2.2).
+Ambas vistas siguen **EN REVISIÓN** por diferencias de cruces frente a 01
+y por la cota 2H. La explicación incluye resultados, límites, un esquema
+del proceso y los archivos responsables. Los cortes históricos que siguen
+no sustituyen este estado ni las normas vigentes.
+
 **Lectura actualizada al 13 de noviembre de 2026:** consultar [Memoria del proyecto](MEMORIA_PROYECTO_P1.md) y [Normas jerarquizadas v0.1](NORMAS_JERARQUIZADAS_P1.md). Este archivo conserva cortes históricos; las afirmaciones sobre etapas futuras, estado observacional o cuatro vistas deben leerse con sus fechas. El radial sigue en borrador y no está aprobado.
 
 **Documento inicial de referencia · Requerimientos, normas y arquitectura del motor gráfico**  

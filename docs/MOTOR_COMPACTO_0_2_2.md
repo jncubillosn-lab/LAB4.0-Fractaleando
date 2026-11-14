@@ -4,7 +4,76 @@ Responde a las capturas donde 02 seguía rectangular y 04 ampliaba
 excesivamente el diagrama. Cambia distribución y trazado; conserva conceptos,
 parentescos, vínculos, normas y la referencia de 01.
 
-## Implementación
+## Explicación del cambio
+
+El problema tenía dos partes. Cuando 02 no satisfacía las restricciones del
+intento anterior, la interfaz volvía a mostrar 01: se veía el dibujo
+rectangular aunque estuviera seleccionada la pestaña radial. En 04, la
+reserva de espacio por generaciones producía radios grandes y recorridos
+largos. Corregir únicamente el aspecto de las líneas no resolvía esas causas.
+
+Ahora el proceso sigue esta secuencia:
+
+```mermaid
+flowchart TD
+ A[Conceptos, parentescos y vínculos originales] --> B[Medir cuadros y contenido de las ramas]
+ B --> C[02: buscar posiciones próximas sobre rayos]
+ C --> D[Calcular conexiones y comprobar conflictos]
+ D -->|Solicitar espacio junto al conflicto| C
+ D --> E[Candidato 02 e informe de auditoría]
+ E --> F[04: girar esa misma base y corregir colisiones]
+ F --> G[Calcular conexiones y auditar 04]
+```
+
+**1. Ubicar los cuadros por el espacio que realmente ocupan.** Se conserva
+el núcleo en el centro y se organiza cada rama considerando todo el
+contenido que desarrolla. Desde cada padre se prueban direcciones y se
+busca el primer hueco donde cabe el hijo con su margen. Dos conceptos de
+la misma generación pueden quedar a radios diferentes. La búsqueda compara
+candidatos para reducir la separación entre cuadros vinculados; es una
+aproximación finita, no una demostración del mínimo global posible.
+
+**2. Reservar espacio para las conexiones.** Un cuadro con muchas conexiones
+necesita más salidas que uno terminal. Si el trazador encuentra un corredor
+congestionado, solicita espacio junto a ese conflicto y se vuelve a probar
+la distribución. Las peticiones de espacio son locales; cada reintento
+puede recalcular la distribución completa y cambiar otras posiciones.
+
+Por ejemplo, un hijo que necesita un corredor adicional no impone por sí
+solo un nuevo radio a toda su generación. Esa es la diferencia que permite
+aprovechar los huecos que señalabas en las capturas.
+
+**3. Transformar 02 para obtener 04.** Se parte de las coordenadas compactas
+de 02 y se aplica un giro que aumenta con la distancia al núcleo. Después
+se corrigen colisiones cercanas. No equivale a rotar rígidamente todo el
+diagrama: los extremos de los brazos giran más y algunos cuadros se
+desplazan para seguir teniendo espacio. Los textos conservan su orientación.
+
+**4. Comprobar el resultado por separado.** El motor que propone caminos
+no puede aprobarse a sí mismo. Otro componente comprueba que las líneas
+lleguen a sus cuadros, respeten obstáculos y no compartan puertos o tramos
+prohibidos. También compara el resultado con la referencia 01. Tener las
+217 conexiones dibujadas es distinto de conservar sus cruces originales;
+esa segunda comprobación todavía falla y permanece visible.
+
+El trabajo pesado se ejecuta en un Worker para mantener disponible la
+interfaz. Las vistas calculadas quedan en caché durante la sesión: cambiar
+de profundidad o volver a una vista no obliga a calcularla otra vez.
+
+## Dónde está cada responsabilidad
+
+| Componente | Responsabilidad |
+| --- | --- |
+| [RayPackingLayout.js](../js/geometry/RayPackingLayout.js) | Buscar y comparar posiciones compactas de 02. |
+| [SpiralLayout.js](../js/geometry/SpiralLayout.js) | Girar la base 02 y resolver colisiones de 04. |
+| [DerivedScene.js](../js/geometry/DerivedScene.js) | Coordinar distribución, trazado y solicitudes de espacio. |
+| [OrderedPorts.js](../js/geometry/OrderedPorts.js) | Conservar el orden circular de las conexiones alrededor de cada cuadro. |
+| [AvoidRouter.js](../js/geometry/AvoidRouter.js) | Calcular recorridos ortogonales con libavoid/WASM y buscar alternativas a conflictos. |
+| [GeometryValidator.js](../js/geometry/GeometryValidator.js) | Auditar la geometría sin confiar en la aprobación del trazador. |
+| [DerivedViews.js](../js/views/DerivedViews.js) | Mostrar candidatos, advertencias y cachés de 02/04. |
+| [build-site.mjs](../scripts/build-site.mjs) | Publicar todos los módulos bajo una misma identidad de versión. |
+
+## Detalles de implementación
 
 02 busca el primer espacio libre desde cada padre, intersectando rayos con
 los rectángulos reales. Considera el contenido de los subárboles y prueba
