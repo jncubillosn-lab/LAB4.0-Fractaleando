@@ -1,3 +1,4 @@
+import {segmentEntersRect} from './SegmentGeometry.js';
 const edgeKey=e=>[e.from,e.to].sort().map(encodeURIComponent).join('|');
 const normal={top:[0,-1],right:[1,0],bottom:[0,1],left:[-1,0]};
 
@@ -60,5 +61,54 @@ export function assignOrderedPorts({nodes,edges,positions,rects,reference,spacin
   }
   for(let i=0;i<count;i++)result.set(ordered[i].index+':'+n.id,best.chosen[i]);
  }
+ alignStraightPorts({edges,rects,ports:result});
  return result;
+}
+
+// Pair the endpoints, rather than selecting their coordinates independently.
+// A line of sight may replace two elbows only if both perimeter cycles survive.
+export function alignStraightPorts({edges,rects,ports}){
+ const sideRank={top:0,right:1,bottom:2,left:3};
+ const cycle=id=>edges.flatMap((e,i)=>{
+  if(e.from!==id&&e.to!==id)return [];
+  const p=ports.get(i+':'+id);return p?[{edge:edgeKey(e),p}]:[];
+ }).sort((a,b)=>sideRank[a.p.side]-sideRank[b.p.side]||
+  (['bottom','left'].includes(a.p.side)?-1:1)*
+  ((['top','bottom'].includes(a.p.side)?a.p.x:a.p.y)-(['top','bottom'].includes(b.p.side)?b.p.x:b.p.y)))
+  .map(e=>e.edge);
+ const sameCycle=(a,b)=>a.length===b.length&&a.every((key,i)=>key===b[(i+b.indexOf(a[0]))%b.length]);
+ const available=(id,p,index)=>edges.every((e,i)=>{
+  if(i===index||e.from!==id&&e.to!==id)return true;
+  const other=ports.get(i+':'+id);return !other||Math.hypot(p.x-other.x,p.y-other.y)>=8;
+ });
+ let aligned=0;
+ const byDistance=edges.map((e,index)=>({e,index,d:Math.hypot(rects.get(e.from).x-rects.get(e.to).x,rects.get(e.from).y-rects.get(e.to).y)})).sort((a,b)=>a.d-b.d||a.index-b.index);
+ for(const {e,index} of byDistance){
+  const a=rects.get(e.from),b=rects.get(e.to),oldA=ports.get(index+':'+e.from),oldB=ports.get(index+':'+e.to);
+  if(!oldA||!oldB)continue;
+  const oldCycleA=cycle(e.from),oldCycleB=cycle(e.to),candidates=[];
+  const add=(horizontal)=>{
+   const lo=horizontal?Math.max(a.t,b.t)+8:Math.max(a.l,b.l)+8;
+   const hi=horizontal?Math.min(a.b,b.b)-8:Math.min(a.r,b.r)-8;
+   const forward=horizontal?a.r<b.l:a.b<b.t,backward=horizontal?b.r<a.l:b.b<a.t;
+   if(lo>hi||!forward&&!backward)return;
+   const values=[(lo+hi)/2,horizontal?oldA.y:oldA.x,horizontal?oldB.y:oldB.x,lo,hi];
+   for(const v of [...new Set(values)])if(v>=lo&&v<=hi){
+    const sideA=horizontal?(forward?'right':'left'):(forward?'bottom':'top');
+    const sideB=horizontal?(forward?'left':'right'):(forward?'top':'bottom');
+    const p=portAt(sideA,horizontal?(forward?a.r:a.l):v,horizontal?v:(forward?a.b:a.t),rects,e.from);
+    const q=portAt(sideB,horizontal?(forward?b.l:b.r):v,horizontal?v:(forward?b.t:b.b),rects,e.to);
+    if(p&&q)candidates.push({p,q,cost:Math.hypot(p.x-q.x,p.y-q.y)});
+   }
+  };
+  add(true);add(false);candidates.sort((a,b)=>a.cost-b.cost);
+  for(const {p,q} of candidates){
+   if(!available(e.from,p,index)||!available(e.to,q,index))continue;
+   if([...rects.values()].some(r=>r.id!==e.from&&r.id!==e.to&&segmentEntersRect(p,q,r,9)))continue;
+   ports.set(index+':'+e.from,p);ports.set(index+':'+e.to,q);
+   if(sameCycle(oldCycleA,cycle(e.from))&&sameCycle(oldCycleB,cycle(e.to))){aligned++;break;}
+   ports.set(index+':'+e.from,oldA);ports.set(index+':'+e.to,oldB);
+  }
+ }
+ return aligned;
 }

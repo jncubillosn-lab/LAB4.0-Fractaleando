@@ -25,7 +25,7 @@ test('PPR completo: rayos compactos, 217 rutas seguras y 04 derivada de la misma
   const {layout,result}=scene,routes=new Map(result.routes);
   const audit=validator.audit([...layout.rects.values()],[...routes.values()]);
   const report=checkDerivedTopology({reference:topologyReference,edgeKey:e=>[e.from,e.to].sort().map(encodeURIComponent).join('|'),positions:layout.positions,rects:layout.rects,routes,edges:fixture.edges}).report;
-  console.log(JSON.stringify({mode:layout.mode,meanGap:layout.stats.meanGap,passes:layout.stats.capacityPasses,pending:scene.pending,topology:report.counts}));
+  console.log(JSON.stringify({mode:layout.mode,meanGap:layout.stats.meanGap,passes:layout.stats.capacityPasses,pending:scene.pending,topology:report.counts,circuit:layout.stats.circuit,routing:layout.stats.routing}));
   assert.equal(layout.positions.size,210);assert.equal(routes.size,217);assert.equal(scene.pending,0);
   assert.equal(audit.drawn,217);assert.equal(audit.boxes+audit.invalid+audit.portsRepeated,0,JSON.stringify(audit.details));
   assert.deepEqual(layout.positions.get('p1'),{x:0,y:0});assert.equal(layout.stats.radialOrder,true);
@@ -35,6 +35,9 @@ test('PPR completo: rayos compactos, 217 rutas seguras y 04 derivada de la misma
   // Existing crossing pairs/order and 2H remain independently measured;
   // neither is waived to label this packed preview as normatively approved.
   assert.equal(layout.stats.maxAllowedGap,106);
+  assert.ok(layout.stats.circuit.beveledCorners>0);
+  assert.ok(layout.stats.circuit.savedLength>0);
+  assert.ok(layout.stats.routing.straight>0);
  }
  assert.deepEqual(spiral.layout.stats.baseBounds,base.layout.stats.bounds);
  assert.equal(spiral.layout.stats.baseMeanGap,base.layout.stats.meanGap);

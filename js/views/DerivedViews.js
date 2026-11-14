@@ -6,12 +6,13 @@ import {checkDerivedTopology} from '../core/DerivedTopology.js';
 import {computeDerivedScene,SCENE_VERSION} from '../geometry/DerivedScene.js';
 import {PcbRouter} from '../geometry/PcbRouter.js';
 import {GeometryValidator} from '../geometry/GeometryValidator.js';
+import {hierarchySelection} from '../core/HierarchySelection.js';
 
 // Vistas derivadas read-only: conservan el grafo y el plano 01.
 // Cada vista tiene su punto de control y comparte la referencia topológica 01.
 export class DerivedViews {
- constructor({state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast,referenceTopology}){
-  Object.assign(this,{state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast,referenceTopology});
+ constructor({state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast,referenceTopology,onSelect}){
+  Object.assign(this,{state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast,referenceTopology,onSelect});
   this.layoutEngine=new ViewLayouts();
   this.router=new PcbRouter({state,nodeById:id=>state.nodes.find(n=>n.id===id),mode:'02',clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});
   this.validator=new GeometryValidator({router:this.router,rectOverlap:(a,b)=>ViewLayouts.overlap(a,b,0)});
@@ -42,6 +43,7 @@ export class DerivedViews {
  }
  switchVisibility(mode){
   const derived=mode!=='01';
+  if(derived){this.state.linkFrom=null;this.state.unlinkFrom=null;}
   this.linesEl.style.display=derived?'none':'';
   this.nodesEl.style.display=derived?'none':'';
   this.derivedLines.style.display=derived?'':'none';
@@ -159,7 +161,12 @@ export class DerivedViews {
    const m=this.geometry(node),p=layout.positions.get(node.id);
    if(!p)continue;
    const g=this.sEl('g',{class:'node'+(node.id==='p1'?' core':node.parent==='p1'?' anchor':''),
-    'data-node-id':node.id,transform:'translate('+p.x.toFixed(2)+' '+p.y.toFixed(2)+')'});
+    'data-node-id':node.id,tabindex:0,role:'button','aria-label':node.text,'aria-pressed':node.id===this.state.selected?'true':'false',
+    transform:'translate('+p.x.toFixed(2)+' '+p.y.toFixed(2)+')'});
+   const select=()=>{if(this.onSelect)this.onSelect(node.id);else{this.state.selected=node.id;this.paintSelection();}};
+   g.addEventListener('pointerdown',event=>event.stopPropagation());
+   g.addEventListener('click',event=>{event.stopPropagation();select();});
+   g.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();select();}});
    g.append(this.sEl('rect',{x:-m.w/2,y:-m.h/2,width:m.w,height:m.h,rx:8,ry:8}));
    const label=this.sEl('text'),wrapped=m.wrapped||[node.text];
    for(let i=0;i<wrapped.length;i++){
@@ -217,6 +224,17 @@ export class DerivedViews {
   const scope=document.getElementById('scopeInfo'),stats=document.getElementById('stats');
   if(scope)scope.textContent=shown.size+' conceptos visibles · '+drawn+' vínculos trazados · '+pending+' pendientes';
   if(stats)stats.textContent=this.state.nodes.length+' conceptos · '+this.state.edges.length+' vínculos · '+current.unfinished+' rutas pendientes';
+  this.paintSelection();
+ }
+ paintSelection(){
+  const focus=hierarchySelection({nodes:this.state.nodes,edges:this.state.edges,selectedId:this.state.selected,levels:this.current?.layout.levels});
+  for(const el of this.derivedNodes.children){
+   const selected=el.dataset.nodeId===this.state.selected;
+   el.classList.toggle('selected',selected);el.classList.toggle('hierarchy-focus',focus.nodeIds.has(el.dataset.nodeId));
+   el.setAttribute('aria-pressed',String(selected));
+  }
+  for(const el of this.derivedLines.querySelectorAll('[data-edge-key]'))
+   el.classList.toggle('hierarchy-focus',focus.edgeKeys.has(el.dataset.edgeKey));
  }
  exportNotice(){
   if(this.mode==='01')return '';
@@ -249,7 +267,7 @@ export class DerivedViews {
   for(const record of stored.routes){
    if(!record||!edges.has(record.key)||routes.has(record.key)||
       !Array.isArray(record.points)||!record.fromPort||!record.toPort)return null;
-   routes.set(record.key,{edge:edges.get(record.key),points:record.points,
+   routes.set(record.key,{edge:edges.get(record.key),points:record.points,style:record.style,
     fromPort:record.fromPort,toPort:record.toPort});
   }
   if(routes.size!==edges.size)return null;
@@ -276,7 +294,7 @@ export class DerivedViews {
     validation:{geometry:true,topology:true,normative:'pending-definition',pendingDefinitions:['D1','D2','D3','D4']},
     topology:c.topology.reference,
     positions:[...c.layout.positions].map(([id,p])=>({id,x:p.x,y:p.y})),
-    routes:[...c.routes].map(([key,r])=>({key,points:r.points,fromPort:r.fromPort,toPort:r.toPort}))};
+    routes:[...c.routes].map(([key,r])=>({key,points:r.points,fromPort:r.fromPort,toPort:r.toPort,style:r.style}))};
   return output;
  }
  restoreData(data){

@@ -8,7 +8,9 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
  def __init__(self,*args,**kwargs):super().__init__(*args,directory=str(ROOT),**kwargs)
 with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
  threading.Thread(target=srv.serve_forever,daemon=True).start()
+ print('E2E: iniciando Playwright',flush=True)
  with sync_playwright() as p:
+  print('E2E: abriendo Chrome',flush=True)
   browser=p.chromium.launch(**({'executable_path':os.environ['P1_BROWSER_PATH']} if os.environ.get('P1_BROWSER_PATH') else {'channel':'chrome'}),headless=True)
   page=browser.new_page(viewport={'width':1600,'height':1000},accept_downloads=True)
   page.on('dialog',lambda d:d.accept())
@@ -16,17 +18,20 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   page.on('pageerror',lambda e:errors.append(str(e)))
   page.on('response',lambda r:bad.append(r.url) if r.status>=400 else None)
   page.on('request',lambda r:requests.append(r.url))
+  print('E2E: abriendo sitio construido',flush=True)
   page.goto('http://127.0.0.1:'+str(srv.server_address[1])+'/index.html',wait_until='domcontentloaded')
   build=page.locator('meta[name="application-build"]').get_attribute('content')
-  assert '0.2.2' in page.locator('meta[name="application-version"]').get_attribute('content')
+  assert '0.2.3' in page.locator('meta[name="application-version"]').get_attribute('content')
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===3',timeout=60000)
   page.locator('#showAllBtn').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===217',timeout=60000)
+  print('E2E: 01 completo',flush=True)
   baseline=page.evaluate('window.P1_PLANO_DIAGNOSTICO.topology()')
   original=page.locator('#nodes [data-node-id="p1"]').get_attribute('transform')
   assert baseline['valid'] and baseline['crossings']==71
   results={}
   for mode in ('02','04'):
+   print('E2E: calculando',mode,flush=True)
    page.locator('[data-view="'+mode+'"]').click()
    page.wait_for_function('(mode)=>window.P1_PLANO_DIAGNOSTICO.views().current?.mode===mode',arg=mode,timeout=120000)
    result=page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current');results[mode]=result
@@ -41,6 +46,20 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    assert result['topology']['hasReference'] and result['topology']['crossings']==71
    assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.topology()')==baseline
    assert page.locator('#derivedLines circle').count()==result['audit']['crossings']
+   # Select J3 by click: actual ancestry plus its J4 neighbours, with no reroute.
+   before_selection=page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current.calculations')
+   positions=page.locator('#derivedNodes .node').evaluate_all('(els)=>els.map(el=>el.getAttribute("transform"))')
+   page.locator('#derivedNodes [data-node-id="b42"]').click()
+   focused=page.locator('#derivedNodes .hierarchy-focus').evaluate_all('(els)=>els.map(el=>el.dataset.nodeId).sort()')
+   assert focused==sorted(['p1','b0','b4','b42','b421','b422','b423']),focused
+   bold_edges=page.locator('#derivedLines .hierarchy-focus').evaluate_all('(els)=>els.map(el=>el.dataset.edgeKey).sort()')
+   assert bold_edges==sorted(['b0|p1','b0|b4','b4|b42','b42|b421','b42|b422','b42|b423']),bold_edges
+   assert page.locator('#nodeText').is_disabled()
+   assert page.locator('#addBtn').is_disabled()
+   assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current.calculations')==before_selection
+   assert page.locator('#derivedNodes .node').evaluate_all('(els)=>els.map(el=>el.getAttribute("transform"))')==positions
+   page.locator('#derivedNodes [data-node-id="b42"]').press('Enter')
+   assert page.locator('#derivedNodes [data-node-id="b42"]').get_attribute('aria-pressed')=='true'
    before=page.evaluate('window.P1_PLANO_DIAGNOSTICO.routeCalculations')
    page.locator('#depth').evaluate('(el)=>{el.value="1";el.dispatchEvent(new Event("input",{bubbles:true}))}')
    page.locator('#showAllBtn').click()
@@ -48,7 +67,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    output=os.environ.get('P1_SCREENSHOTS')
    if output:
     Path(output).mkdir(parents=True,exist_ok=True)
-    page.screenshot(path=str(Path(output)/('Fractaleando_0_2_2_'+mode+'.png')))
+    page.screenshot(path=str(Path(output)/('Fractaleando_0_2_3_'+mode+'.png')))
   assert results['04']['baseBounds']==results['02']['bounds']
   assert results['04']['baseMeanGap']==results['02']['meanGap']
   page.locator('#themeBtn').click()
@@ -60,6 +79,9 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   page.locator('[data-view="01"]').click()
   assert page.locator('#nodes [data-node-id="p1"]').get_attribute('transform')==original
   assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.topology()')==baseline
+  page.locator('#nodes [data-node-id="b42"]').click()
+  assert 'selected' in page.locator('#nodes [data-node-id="b42"]').get_attribute('class')
+  assert page.locator('#lines .svgline.active').count()>0
   # Existing cached 02 must be immediate and identical to the base used by 04.
   page.locator('[data-view="02"]').click()
   assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current.meanGap')==results['02']['meanGap']

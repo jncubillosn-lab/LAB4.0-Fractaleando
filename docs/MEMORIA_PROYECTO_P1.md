@@ -1,5 +1,7 @@
 # Memoria del proyecto P1
 
+**Corte 0.2.3:** [selección jerárquica, puertos y ensayo de 45°](CORTE_02_0_2_3.md). Se conserva el estado de revisión normativa.
+
 **Actualización 0.2.2:** [motor compacto, resultados y límites](MOTOR_COMPACTO_0_2_2.md). Las descripciones del intento anterior que siguen se conservan como registro histórico.
 
 Objetivos normas parámetros decisiones y estado de desarrollo

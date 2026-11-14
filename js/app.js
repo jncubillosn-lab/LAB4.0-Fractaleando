@@ -126,7 +126,7 @@ const edgeKey=e=>[e.from,e.to].sort().map(encodeURIComponent).join('|');
 // Registro relacional paralelo al punto de control geométrico.
 const topology=new TopologyRegister({edgeKey});
 const derived=new DerivedViews({state,plane,camera,linesEl,nodesEl,sEl,router,validator,
- edgeKey,readDepthMap,fit,geometry,toast,referenceTopology:()=>topology.reference});
+ edgeKey,readDepthMap,fit,geometry,toast,referenceTopology:()=>topology.reference,onSelect:selectNode});
 let stagedTopology=null;
 let guardedMove=null;
 // Solo los arrastres manuales son transacciones geométricas estrictas.
@@ -578,6 +578,7 @@ function refreshNodeLabel(n){
  el.setAttribute('aria-label',n.text);
 }
 function selectNode(id){
+ if(derived.mode!=='01'){state.selected=id;updatePanel();derived.switchVisibility(derived.mode);derived.paintSelection();$('editHint').textContent='Selección: ascendencia hasta J0 y conexiones al siguiente nivel.';return;}
  const changingEdges=Boolean(state.unlinkFrom||state.linkFrom);
  if(state.unlinkFrom){const first=state.unlinkFrom;if(first===id){state.unlinkFrom=null;toast('Eliminación cancelada.');}else if(removeLink(first,id)){state.unlinkFrom=null;} }
  else if(state.linkFrom){if(state.linkFrom===id){state.linkFrom=null;toast('Conexión cancelada.');}else if(state.linkFrom==='p1'||id==='p1'){state.linkFrom=null;toast('Para crear otro brazo J1, selecciona P1 y utiliza «+ Concepto».');}else if(!state.edges.some(e=>(e.from===state.linkFrom&&e.to===id)||(e.from===id&&e.to===state.linkFrom))){saveUndo();state.edges.push({from:state.linkFrom,to:id});state.linkFrom=null;toast('Conceptos vinculados.');}else{state.linkFrom=null;toast('Este vínculo ya existe.');}}
@@ -693,6 +694,10 @@ const EXPORT_STYLE=`
 .node.core rect{stroke-width:2.4}.node.anchor rect{stroke-width:1.9}.node.selected rect{stroke-width:2.7}
 .node text{font-family:Inter,"Helvetica Neue",Arial,sans-serif;font-size:14px;fill:#1c1c1b;text-anchor:middle;dominant-baseline:middle;font-weight:480}
 .node.core text{font-size:20px;font-weight:650;letter-spacing:.015em}.node.anchor text{font-size:15px;font-weight:590}
+.node.hierarchy-focus rect{stroke-width:2.8;stroke-opacity:1}
+.node.hierarchy-focus text{font-weight:700}
+.node.selected.hierarchy-focus rect{stroke-width:3.5}
+.hierarchy-focus .svgline{stroke-width:2.8;stroke-opacity:1}
 `;
 function makeExportSvg(outputW,outputH){
  const sourceW=Math.max(1,stage.clientWidth),sourceH=Math.max(1,stage.clientHeight);

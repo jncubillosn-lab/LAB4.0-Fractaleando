@@ -1,7 +1,10 @@
 import {ViewLayouts} from './ViewLayouts.js';
 import {computeAvoidRoutes} from './AvoidRouter.js';
+import {bevelRoutes} from './CircuitRoutes.js';
+import {PcbRouter} from './PcbRouter.js';
+import {GeometryValidator} from './GeometryValidator.js';
 
-export const SCENE_VERSION='packed-rays-0.2.2';
+export const SCENE_VERSION='packed-circuit-0.2.3';
 
 // Placement and routing share the same capacity model. Space is requested
 // only beside congested corridors, never by expanding every generation.
@@ -25,6 +28,13 @@ export async function computeDerivedScene(input,{load,onProgress=()=>{}}={}){
    if(JSON.stringify(next)===JSON.stringify(nodeClearances))break;
    nodeClearances=next;
   }
+  const router=new PcbRouter({state:input,nodeById:id=>input.nodes.find(n=>n.id===id),mode,clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});
+  const validator=new GeometryValidator({router,rectOverlap:(a,b)=>ViewLayouts.overlap(a,b,0)});
+  const circuit=bevelRoutes({routes:best.result.routes,rects:best.layout.rects,router,validator});
+  best.result.routes=circuit.routes;best.layout.stats.circuit=circuit.stats;
+  const complete=best.result.routes.filter(([,r])=>r.points);
+  best.layout.stats.routing={straight:complete.filter(([,r])=>r.points.length===2).length,
+   length:complete.reduce((sum,[,r])=>sum+r.points.slice(1).reduce((s,p,i)=>s+Math.hypot(p.x-r.points[i].x,p.y-r.points[i].y),0),0)};
   return best;
  };
  const baseScene=input.baseScene||await solve('02');
