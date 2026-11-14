@@ -148,7 +148,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    drawCircuitSvg({ordered:edges,routes,linesEl:g,sEl:el,edgeKey:key,mode:'04'});
    for(const n of g.querySelectorAll('[id]'))n.id='probe-'+n.id;
    for(const n of g.querySelectorAll('[mask],[clip-path]'))for(const attr of ['mask','clip-path']){
-    const value=n.getAttribute(attr);if(value)n.setAttribute(attr,value.replace('url(#','url(#probe-')));}
+    const value=n.getAttribute(attr);if(value)n.setAttribute(attr,value.replace('url(#','url(#probe-'));}
    window.scaleCrossingProbe=z=>{g.setAttribute('transform','translate(150 100) scale('+z+')');scaleCrossings(g,z);};
   }""",build)
   for zoom in (.125,1.728,.22,2.5):
