@@ -81,7 +81,7 @@ test('medidas faltantes o extremos inexistentes se rechazan expresamente',()=>{
  input.metrics.set('p1',{w:140,h:56});input.edges.push({from:'p1',to:'missing'});
  assert.throws(()=>runner.compute({mode:'02',...input}),/inexistente/);
 });
-test('03 retirado y distribución determinista para 02 y 04',()=>{
+test('los identificadores históricos de JSON siguen estables y las distribuciones son deterministas',()=>{
  assert.deepEqual(ViewLayouts.MODES,['01','02','04']);
  assert.throws(()=>runner.compute({mode:'03',...args}),/no reconocida/);
  for(const mode of ['02','04']){

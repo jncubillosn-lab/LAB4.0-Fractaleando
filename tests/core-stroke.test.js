@@ -22,10 +22,10 @@ test('el grosor aumenta suavemente hacia J0, conserva el mínimo y tiene un tech
  const levels=Object.fromEntries(nodes.map((n,i)=>[n.id,i]));
  const profile=hierarchyStrokeProfile({mode:'02',nodes,levels});
  const widths=nodes.slice(1).map(n=>profile({from:n.parent,to:n.id}).width);
- assert.deepEqual(widths,[2.05,1.875,1.7,1.525,1.35]);
+ assert.deepEqual(widths,[3.15,2.7,2.25,1.8,1.35]);
  const deep=hierarchyStrokeProfile({mode:'02',nodes,levels:{...levels,remote:1000}});
- assert.equal(deep({from:'j0',to:'j1'}).width,2.05);
+ assert.equal(deep({from:'j0',to:'j1'}).width,3.15);
  assert.equal(profile({from:'j1',to:'j5',kind:'transversal'}).width,1.35);
- for(const mode of ['01','04'])assert.equal(hierarchyStrokeProfile({mode,nodes,levels})({from:'j0',to:'j1'}).width,2.05);
+ for(const mode of ['01','04'])assert.equal(hierarchyStrokeProfile({mode,nodes,levels})({from:'j0',to:'j1'}).width,3.15);
  assert.equal(hierarchyStrokeProfile({mode:'02',nodes:nodes.slice(0,2),levels:{j0:0,j1:1}})({from:'j0',to:'j1'}).width,1.35);
 });

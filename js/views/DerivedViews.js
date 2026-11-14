@@ -9,6 +9,9 @@ import {GeometryValidator} from '../geometry/GeometryValidator.js';
 import {hierarchySelection} from '../core/HierarchySelection.js';
 import {paintNodeLabel} from '../ui/NodeTypography.js';
 import {emphasizeCrossings,visibleCrossings} from '../ui/CircuitSvg.js';
+import {RAUP_DEFAULTS,raupCaption,validateRaup} from '../geometry/RaupModel.js';
+
+const viewNumber=mode=>mode==='04'?'03':mode;
 
 // Vistas derivadas read-only: conservan el grafo y el plano 01.
 // Cada vista tiene su punto de control y comparte la referencia topológica 01.
@@ -21,15 +24,30 @@ export class DerivedViews {
   this.validator=new GeometryValidator({router:this.router,rectOverlap:(a,b)=>ViewLayouts.overlap(a,b,0)});
   this.cache=new Map();this.mode='01';this.version=0;
   this.pending=null;this.staged={};this.rejected=null;
-  this.names={'01':['Plano conceptual / 01','Construcción y fractaleo','Núcleo · trayectorias editables'],
-   '02':['Rayos compactos / 02','Agrupación radial','Ramas próximas · radios según el espacio disponible'],
-   '04':['Espiral / 04','Crecimiento espiral','Brazos más estrechos · giro continuo · T = 0']};
+  this.spiralParameters={...RAUP_DEFAULTS};
+  this.names={'01':['Editor / 01','Construcción y fractaleo','Núcleo · trayectorias editables'],
+   '02':['Compacto / 02','Agrupación radial','Ramas próximas · radios según el espacio disponible'],
+   '04':['Espiral / 03','Crecimiento espiral',raupCaption(RAUP_DEFAULTS)]};
   this.derivedLines=sEl('g',{id:'derivedLines'});
   this.derivedNodes=sEl('g',{id:'derivedNodes'});
   camera.append(this.derivedLines,this.derivedNodes);
   this.renderer=new SvgRenderer({linesEl:this.derivedLines,sEl,router:this.router,edgeKey});
   this.current=null;
   this.graphIdentity=null;
+  const controls=document.createElement('form');controls.id='spiralControls';controls.className='spiral-controls';controls.hidden=true;
+  for(const [key,title,step,min,max] of [['W','Expansión por vuelta W','any',1.0001,null],['D','Distancia relativa al eje D',.01,0,.9999],['T','Traslación axial T',.05,null,null]]){
+   const label=document.createElement('label');label.textContent=key;
+   const input=document.createElement('input');input.id='spiral'+key;input.name=key;input.type='number';input.step=String(step);
+   if(min!==null)input.min=String(min);if(max!==null)input.max=String(max);
+   input.value=String(this.spiralParameters[key]);input.required=true;input.setAttribute('aria-label',title);label.append(input);controls.append(label);
+  }
+  const apply=document.createElement('button');apply.type='submit';apply.className='action';apply.textContent='Aplicar';controls.append(apply);
+  controls.addEventListener('submit',event=>{
+   event.preventDefault();const parameters=Object.fromEntries(['W','D','T'].map(k=>[k,Number(controls.elements.namedItem(k).value)]));
+   try{validateRaup(parameters);}catch(error){this.toast(error.message);return;}
+   this.spiralParameters=parameters;this.cache.delete('04');delete this.staged['04'];this.select('04');
+  });
+  document.querySelector('.toplabel').append(controls);
  }
  sourceKey(){return JSON.stringify([...this.plane.positions].sort(([a],[b])=>a.localeCompare(b)).map(([id,p])=>[id,Math.round(p.x*100)/100,Math.round(p.y*100)/100]));}
  referenceKey(){return JSON.stringify(this.referenceTopology?.()??null);}
@@ -64,11 +82,13 @@ export class DerivedViews {
  }
  updateLabels(mode){
   const text=this.names[mode];
+  if(mode==='04')text[2]=raupCaption(this.spiralParameters);
   for(const [index,selector] of ['.toplabel .eyebrow','.toplabel .maptitle','.toplabel .mapcaption'].entries()){
    const el=document.querySelector(selector);if(el)el.textContent=text[index];
   }
   const footer=document.getElementById('viewState');
-  if(footer)footer.textContent=mode==='01'?'01 · EDITABLE':mode+' · LECTURA';
+  if(footer)footer.textContent=mode==='01'?'01 · EDITABLE':viewNumber(mode)+' · LECTURA';
+  document.getElementById('spiralControls').hidden=mode!=='04';
  }
  metrics(){
   return new Map(this.state.nodes.map(n=>[n.id,this.geometry(n)]));
@@ -85,7 +105,7 @@ export class DerivedViews {
    };
    const timeout=setTimeout(()=>finish(new Error('Límite de cálculo (75 s)')),75000);
    worker.onmessage=({data})=>{
-    if(data.progress){this.status('Compactando '+data.progress.mode+' · comprobando conexiones · paso '+data.progress.pass);return;}
+    if(data.progress){this.status('Compactando '+viewNumber(data.progress.mode)+' · comprobando conexiones · paso '+data.progress.pass);return;}
     data.error?finish(new Error(data.error)):finish(null,data.result);
    };
    worker.onerror=event=>finish(new Error(event.message||'Error de distribución'));
@@ -138,11 +158,11 @@ export class DerivedViews {
   if(!cached)cached=this.tryRestore(mode,key);
   if(!cached)this.current=null;
   if(cached){this.cache.set(mode,cached);this.current=cached;this.draw(cached);this.fit();return;}
-  this.status('Calculando la vista '+mode+' y sus conexiones…');
+  this.status('Calculando la vista '+viewNumber(mode)+' y sus conexiones…');
   const token=this.version,metrics=this.metrics();
   try{
    const base=this.cache.get('02');
-   const scene=await this.computeScene({mode,nodes:this.state.nodes,edges:this.state.edges,metrics,
+   const scene=await this.computeScene({mode,...this.spiralParameters,nodes:this.state.nodes,edges:this.state.edges,metrics,
     sourcePositions:this.plane.positions,topologyReference:this.referenceTopology?.(),
     baseScene:mode==='04'&&base?{layout:base.layout,result:{routes:[...base.routes]}}:undefined});
    if(token!==this.version)return;
@@ -155,7 +175,7 @@ export class DerivedViews {
    if(token!==this.version)return;
    this.derivedLines.replaceChildren();this.derivedNodes.replaceChildren();
    this.linesEl.style.display='';this.nodesEl.style.display='';
-   this.status('No se completó la vista '+mode+'. Se muestra 01 Plano. '+error.message,true);this.fit();
+   this.status('No se completó la vista '+viewNumber(mode)+'. Se muestra 01 Editor. '+error.message,true);this.fit();
   }
  }
  drawNodes(layout){
@@ -195,7 +215,7 @@ export class DerivedViews {
   if(!current){
    if(this.rejected){
     const s=this.rejected,violations=s.distanceViolations||[],worst=[...violations].sort((a,b)=>b.gap-a.gap)[0];
-    this.status('02 no resuelto · Se muestra 01 Plano. '+s.overlaps+' solapes; '+violations.length+
+    this.status('02 no resuelto · Se muestra 01 Editor. '+s.overlaps+' solapes; '+violations.length+
      ' enlaces superan 2H ('+s.maxAllowedGap.toFixed(1)+' px). '+
      (worst?'Mayor separación: '+worst.from+' → '+worst.to+' = '+worst.gap.toFixed(1)+' px. ':'')+
      (s.orderViolations?.length||0)+' inversiones de orden; '+(s.sectorViolations?.length||0)+' cuadros fuera de sector; '+
@@ -216,7 +236,8 @@ export class DerivedViews {
   visibleCrossings(this.derivedLines,visibleEdges);
   const s=current.layout.stats,problems=current.audit.invalid+current.audit.boxes+current.audit.portsRepeated+
    (current.report.issueCount||0)+current.unfinished;
-  const prefix='Vista '+this.mode+' · '+shown.size+' conceptos · '+drawn+' vínculos · separación media '+s.meanGap.toFixed(0)+' px';
+  if(this.mode==='04')document.querySelector('.toplabel .mapcaption').textContent=raupCaption(s);
+  const prefix='Vista '+viewNumber(this.mode)+' · '+shown.size+' conceptos · '+drawn+' vínculos · separación media '+s.meanGap.toFixed(0)+' px';
   const warning=problems>0||!current.valid;
   this.status(prefix+' · '+(warning?
     ('En revisión: '+current.unfinished+' pendientes, '+current.audit.invalid+
@@ -226,7 +247,7 @@ export class DerivedViews {
     ('Geometría y topología comprobadas · '+current.audit.crossings+' cruces · validación normativa pendiente · '+s.arms+' brazos J1'+
      (this.mode==='02'?' · separación máxima '+s.maxGap.toFixed(1)+' / '+s.maxAllowedGap.toFixed(1)+' px (2H)':''))),warning);
   const footer=document.getElementById('footHint');
-  if(footer)footer.textContent='Vista '+this.mode+' · '+drawn+' conexiones visibles · referencia 01';
+  if(footer)footer.textContent='Vista '+viewNumber(this.mode)+' · '+drawn+' conexiones visibles · referencia 01';
   const scope=document.getElementById('scopeInfo'),stats=document.getElementById('stats');
   if(scope)scope.textContent=shown.size+' conceptos visibles · '+drawn+' vínculos trazados · '+pending+' pendientes';
   if(stats)stats.textContent=this.state.nodes.length+' conceptos · '+this.state.edges.length+' vínculos · '+current.unfinished+' rutas pendientes';
@@ -246,9 +267,9 @@ export class DerivedViews {
  exportNotice(){
   if(this.mode==='01')return '';
   const c=this.current;
-  if(!c)return 'BORRADOR · vista '+this.mode+' sin resultado aprobado';
-  if(!c.valid)return 'EN REVISIÓN · vista '+this.mode+' · '+c.unfinished+' rutas pendientes · '+(c.report.issueCount||0)+' diferencias topológicas';
-  return 'BORRADOR · vista '+this.mode+' · validación normativa pendiente';
+  if(!c)return 'BORRADOR · vista '+viewNumber(this.mode)+' sin resultado aprobado';
+  if(!c.valid)return 'EN REVISIÓN · vista '+viewNumber(this.mode)+' · '+c.unfinished+' rutas pendientes · '+(c.report.issueCount||0)+' diferencias topológicas';
+  return 'BORRADOR · vista '+viewNumber(this.mode)+' · validación normativa pendiente';
  }
  // Recuperación segura de una vista previamente calculada: mismos datos y
  // geometría de 01, mismas posiciones deterministas, DRC independiente y
@@ -259,7 +280,7 @@ export class DerivedViews {
      !Array.isArray(stored.positions)||!Array.isArray(stored.routes)||
      !TopologyRegister.validShape(stored.topology))return null;
   if(stored.coreGapFactor!==undefined&&(!Number.isFinite(stored.coreGapFactor)||stored.coreGapFactor<=0||stored.coreGapFactor>1))return null;
-  const input={nodes:this.state.nodes,edges:this.state.edges,metrics:this.metrics(),sourcePositions:this.plane.positions,topologyReference:this.referenceTopology?.()};
+  const input={...this.spiralParameters,nodes:this.state.nodes,edges:this.state.edges,metrics:this.metrics(),sourcePositions:this.plane.positions,topologyReference:this.referenceTopology?.()};
   const policy={coreClearances:stored.coreClearances||{},coreGapFactor:stored.coreGapFactor??.5};
   const baseLayout=mode==='04'?this.layoutEngine.compute({mode:'02',...input,...policy,nodeClearances:stored.baseNodeClearances||{}}):undefined;
   const layout=this.layoutEngine.compute({mode,...input,...policy,baseLayout,nodeClearances:stored.nodeClearances||{}});
@@ -296,7 +317,7 @@ export class DerivedViews {
    unfinished:0,valid:true,calculations:0,restored:true};
  }
  exportData(){
-  const output={};
+  const output={spiralParameters:{...this.spiralParameters}};
   const identity=this.graphKey()+this.sourceKey()+this.referenceKey();
   for(const [mode,c] of this.cache)if(c.valid&&c.identity===identity)
    output[mode]={layoutVersion:SCENE_VERSION,nodeClearances:c.layout.stats.nodeClearances,baseNodeClearances:c.layout.stats.baseNodeClearances,
@@ -310,6 +331,8 @@ export class DerivedViews {
  restoreData(data){
   this.staged={};
   if(!data||typeof data!=='object')return;
+  try{validateRaup(data.spiralParameters||{});this.spiralParameters={...data.spiralParameters};}catch{this.spiralParameters={...RAUP_DEFAULTS};}
+  for(const k of ['W','D','T'])document.getElementById('spiral'+k).value=String(this.spiralParameters[k]);
   for(const mode of ['02','04'])if(TopologyRegister.validShape(data[mode]?.topology))
    this.staged[mode]=data[mode];
  }

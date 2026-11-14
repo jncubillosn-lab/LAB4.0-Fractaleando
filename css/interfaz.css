@@ -28,3 +28,13 @@
 .line-styles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:0 0 11px}
 .line-styles .action{min-width:0;padding:9px 2px;font-size:10px}
 .line-styles button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.identity .monogram{font-family:Rajdhani,Arial,sans-serif;font-size:29px;letter-spacing:-.035em;font-weight:700}
+.identity .brand{font-size:9px;letter-spacing:.06em;max-width:270px}
+.identity .brand span{font-size:10px;letter-spacing:.01em}
+@media(max-width:1150px){.identity .brand{max-width:180px;font-size:8px;letter-spacing:.02em}}
+@media(max-width:900px){.toplabel .mapcaption{display:block;font-size:10px}}
+.spiral-controls{display:flex;gap:10px;align-items:end;margin-top:12px;pointer-events:auto}
+.spiral-controls[hidden]{display:none}
+.spiral-controls label{display:flex;flex-direction:column;gap:4px;font-size:10px;letter-spacing:.1em}
+.spiral-controls input{width:76px;padding:6px;border:1px solid var(--hair);border-radius:4px;background:var(--paper);font-size:12px;letter-spacing:0}
+.spiral-controls .action{padding:7px 10px}

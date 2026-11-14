@@ -2,7 +2,12 @@
 
 **[▶ Abrir la aplicación en GitHub Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/)**
 
-**Implementación actual 0.2.8:** [cruces unificados, letra fija y estilos de conexión](CIERRE_VISUAL_0_2_8.md).
+**Implementación actual 0.2.9:** [Fractalear, exportación 4K y modelo W–D–T](FRACTALEAr_0_2_9.md).
+El grafo completo aparece al iniciar. La exportación PNG incluye todas las capas,
+con 4096 píxeles en el lado mayor y proporción propia del grafo. Las vistas son
+01 Editor, 02 Compacto y 03 Espiral. Esta última permite aplicar W, D y T.
+
+**Base 0.2.8:** [cruces unificados, letra fija y estilos de conexión](CIERRE_VISUAL_0_2_8.md).
 Las tres vistas comparten las franjas blancas. La letra se mantiene en
 24 px y los cuadros crecen en altura. Se pueden crear vínculos continuos,
 punteados o segmentados. 04 utiliza brazos más estrechos y mayor giro.

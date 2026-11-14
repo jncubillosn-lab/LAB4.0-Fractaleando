@@ -12,8 +12,8 @@ export function hierarchySelection({nodes,edges,selectedId,levels={}}){
  }
  if(byId.has(selectedId))for(const e of edges){
   const other=e.from===selectedId?e.to:e.to===selectedId?e.from:null;
-  if(other&&(byId.get(other)?.parent===selectedId||
-    Number.isFinite(levels[selectedId])&&levels[other]===levels[selectedId]+1)){
+  // Cross-links are direct neighbours too; they never substitute for ancestry.
+  if(other&&byId.has(other)){
    nodeIds.add(other);edgeKeys.add(key(e));
   }
  }

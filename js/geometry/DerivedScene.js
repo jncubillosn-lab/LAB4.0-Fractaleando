@@ -4,7 +4,7 @@ import {bevelRoutes} from './CircuitRoutes.js';
 import {PcbRouter} from './PcbRouter.js';
 import {GeometryValidator} from './GeometryValidator.js';
 
-export const SCENE_VERSION='packed-fixed-type-0.2.8';
+export const SCENE_VERSION='raup-fixed-type-0.2.9';
 
 // Placement and routing share the same capacity model. Space is requested
 // only beside congested corridors, never by expanding every generation.

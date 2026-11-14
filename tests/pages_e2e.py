@@ -1,5 +1,5 @@
 """Browser acceptance tests against the actual relative ES module URLs of GitHub Pages."""
-import http.server, socketserver, threading, time, json, math, re
+import http.server, socketserver, threading, time, json, math, re, struct
 import os
 from pathlib import Path
 from playwright.sync_api import sync_playwright
@@ -14,7 +14,11 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   b=p.chromium.launch(**({'executable_path':os.environ['P1_BROWSER_PATH']} if os.environ.get('P1_BROWSER_PATH') else {'channel':'chrome'}), headless=True)
   page=b.new_page(viewport={'width':1360,'height':820},accept_downloads=True)
   errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-  page.goto(url,wait_until='domcontentloaded');page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes === 3',timeout=30000)
+  page.goto(url,wait_until='domcontentloaded');page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===217',timeout=30000)
+  assert page.locator('#depth').input_value()==page.locator('#depth').get_attribute('max')
+  assert page.locator('[data-view="01"]').inner_text()=='01 · Editor'
+  assert page.locator('[data-view="02"]').inner_text()=='02 · Compacto'
+  assert page.locator('[data-view="04"]').inner_text()=='03 · Espiral'
   page.locator('#showAllBtn').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.visible === 210',timeout=30000)
   d0=page.evaluate('({...window.P1_PLANO_DIAGNOSTICO,audit:window.P1_PLANO_DIAGNOSTICO.audit()})')
@@ -32,6 +36,17 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   print('TOPOLOGIA_INICIAL',t,flush=True)
   before=page.evaluate('window.P1_PLANO_DIAGNOSTICO.routeCalculations')
   page.locator('#depth').evaluate('(e)=>{e.value="1";e.dispatchEvent(new Event("input",{bubbles:true}))}')
+  camera_before=page.locator('#camera').get_attribute('transform')
+  with page.expect_download() as png:page.locator('#pngBtn').click()
+  raw=Path(png.value.path()).read_bytes()
+  assert raw[:8]==b'\x89PNG\r\n\x1a\n'
+  assert max(struct.unpack('>II',raw[16:24]))==4096
+  png_info=page.evaluate('window.P1_PLANO_DIAGNOSTICO.pngExport')
+  assert png_info['nodes']==210 and png_info['edges']==217,png_info
+  assert png_info['fontPixels']>=10,png_info
+  assert page.locator('#depth').input_value()=='1'
+  assert page.locator('#camera').get_attribute('transform')==camera_before
+  print('PNG 4K completo con 210 conceptos aunque se filtre la pantalla; letra',png_info['fontPixels'],flush=True)
   assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.routeCalculations')==before
   assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.topology().crossings')==t['crossings']
   page.locator('[data-node-id="p1"]').evaluate('(e)=>e.dispatchEvent(new MouseEvent("click",{bubbles:true}))')
@@ -73,13 +88,15 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   parent=next(n for n in graph['nodes'] if n['id']=='b0')
   children=[n for n in graph['nodes'] if n['parent']=='b0']
   assert len(children)==12 and all(n['branch']==parent['branch'] for n in children),children
-  hours=[round((math.atan2(n['x']-parent['x'],parent['y']-n['y'])*6/math.pi+12)%12)%12 for n in children]
-  assert hours==[0,5,10,3,8,1,6,11,4,9,2,7],hours
+  hours=[round((math.atan2(n['x']-parent['x'],parent['y']-n['y'])*12/math.pi+24)%24)%24 for n in children]
+  steps=[n['clockStep'] for n in children]
+  assert hours==[(step*7)%24 for step in steps],hours
+  assert steps[0] in (0,1) and all(b-a in (1,2) for a,b in zip(steps,steps[1:])),steps
   routes={r['key']:r for r in graph['planeCheckpoint']['routes']}
   child_routes=[routes['b0|'+n['id']] for n in children]
-  assert {r['toPort']['side'] for r in child_routes}=={'top','right','bottom','left'},child_routes
-  for hour,side in [(0,'bottom'),(3,'left'),(6,'top'),(9,'right')]:
-   assert child_routes[hours.index(hour)]['toPort']['side']==side,child_routes[hours.index(hour)]
+  assert len({r['toPort']['side'] for r in child_routes})>=3,child_routes
+  for hour,side in [(0,'bottom'),(6,'left'),(12,'top'),(18,'right')]:
+   if hour in hours:assert child_routes[hours.index(hour)]['toPort']['side']==side,child_routes[hours.index(hour)]
   assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.pending')==0
   page.locator('#undoBtn').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===14',timeout=30000)
@@ -101,6 +118,9 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   page.locator('#nodes [data-node-id="t0"]').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.topology().referenceEdges===15',timeout=30000)
   assert page.locator('#lines [data-edge-key="f0|t0"] .svgline').get_attribute('stroke-dasharray')=='0 5'
+  for endpoint in ('f0','t0'):
+   page.locator('#nodes [data-node-id="'+endpoint+'"]').click()
+   assert 'active' in page.locator('#lines [data-edge-key="f0|t0"] .svgline').get_attribute('class')
   page.locator('#lineDashed').click()
   page.locator('#nodes [data-node-id="f0"]').click()
   page.locator('#addBtn').click()
@@ -126,6 +146,23 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   page.wait_for_function("""()=>document.querySelector('#lines [data-edge-key="f0|t0"] .svgline')?.getAttribute('stroke-dasharray')==='0 5'""",timeout=30000)
   assert page.locator('#lines [data-edge-key="f0|n13"] .svgline').get_attribute('stroke-dasharray')=='7 5'
   print('Cruces unificados; letra fija y cuadro creciente; tres estilos guardados y restaurados',flush=True)
+  for mode in ('02','04'):
+   page.locator('[data-view="'+mode+'"]').click()
+   page.wait_for_function('(m)=>window.P1_PLANO_DIAGNOSTICO.views().current?.mode===m',arg=mode,timeout=120000)
+   assert page.locator('#derivedLines .svgline').count()==17
+   for endpoint in ('f0','t0'):
+    page.locator('#derivedNodes [data-node-id="'+endpoint+'"]').click()
+    assert 'hierarchy-focus' in page.locator('#derivedLines [data-edge-key="f0|t0"]').get_attribute('class')
+  print('El vínculo nuevo entre pares aparece y se resalta desde cualquiera de sus puntas en las tres vistas',flush=True)
+  page.locator('#spiralT').fill('0.1')
+  page.locator('#spiralControls button').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().current?.T===.1',timeout=120000)
+  assert 'T = 0.1' in page.locator('.mapcaption').inner_text()
+  assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current.pending')==0
+  with page.expect_download() as parameters:page.locator('#jsonBtn').click()
+  saved=json.loads(Path(parameters.value.path()).read_text(encoding='utf8'))
+  assert saved['derivedViews']['spiralParameters']['T']==.1
+  print('W–D–T aplicables: T modifica la proyección y se conserva en JSON',flush=True)
   assert not errors,errors
   b.close()
  srv.shutdown()

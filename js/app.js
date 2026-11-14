@@ -9,7 +9,8 @@ import {SvgRenderer} from './ui/SvgRenderer.js';
 import {loadNodeTypography,paintNodeLabel,exportedNodeFonts,nodeGeometry} from './ui/NodeTypography.js';
 import {scaleCrossings,emphasizeCrossings,visibleCrossings} from './ui/CircuitSvg.js';
 import {validLinkStyle} from './ui/LinkStyles.js';
-import {clockChildPosition} from './geometry/ClockPlacement.js';
+import {clockChildPosition,nextClockIndex} from './geometry/ClockPlacement.js';
+import {pngExportPlan,completeGraphClone} from './ui/PngExport.js';
 import {routeFacingLink} from './geometry/FacingPorts.js';
 import {computeInitialRoutes} from './workers/initial-route.worker.js';
 // P1 application coordinator: preserves the approved HTML, controls and data model.
@@ -527,7 +528,7 @@ function paintVisibility(){
  $('depthOut').textContent=`${state.depth} / ${maximumDepth()} · ${count} conceptos`;
  $('scopeInfo').textContent=`${count} conceptos visibles · ${routes} vínculos trazados`;
  $('stats').textContent=`${state.nodes.length} conceptos · ${state.edges.length} vínculos · ${[...plane.routes.values()].filter(r=>!r.points).length} rutas pendientes`;
- $('footHint').textContent=`Plano 01 · ${routes} conexiones visibles · control ${plane.revision}`;
+ $('footHint').textContent=`Editor 01 · ${routes} conexiones visibles · control ${plane.revision}`;
  const note=$('readHint'),topologyDiff=topology.report.issueCount||0;
  if(pending||topologyDiff){
   const parts=[];
@@ -610,7 +611,7 @@ function addConcept(){
  const node=makeNode(id,'Nuevo concepto',newArm?nextBranchIndex():n.branch,n.id,newArm?190:180);
  const parent=plane.rects.get(n.id)||rectAt(n.id,n,geometry(n));
  const rects=state.nodes.map(other=>plane.rects.get(other.id)||rectAt(other.id,other,geometry(other)));
- Object.assign(node,clockChildPosition({parent,metric:geometry(node),index:treeChildren(n.id).length,rects,segments:savedSegments()}));
+ Object.assign(node,clockChildPosition({parent,metric:geometry(node),index:nextClockIndex(treeChildren(n.id)),rects,segments:savedSegments()}));
  state.nodes.push(node);state.edges.push({from:n.id,to:id,style:state.linkStyle});
  state.depth=Math.max(state.depth,(readDepthMap()[id]??state.depth));
  updatePanel();schedule();
@@ -638,10 +639,11 @@ function ensureNodeVisible(id){
 function fit(){
  if(!nodesEl.childNodes.length){centerOn();return;}
  const b=camera.getBBox();if(!Number.isFinite(b.width)||b.width<=0)return;
- const pad=85,sw=Math.max(80,stage.clientWidth-pad*2),sh=Math.max(80,stage.clientHeight-pad*2);
+ const pad=85,topPad=Math.max(pad,(document.querySelector('.toplabel')?.offsetHeight||0)+35);
+ const sw=Math.max(80,stage.clientWidth-pad*2),sh=Math.max(80,stage.clientHeight-topPad-pad);
  state.zoom=clamp(Math.min(sw/b.width,sh/b.height,1.1),.055,2.5);
  state.tx=stage.clientWidth/2-(b.x+b.width/2)*state.zoom;
- state.ty=stage.clientHeight/2-(b.y+b.height/2)*state.zoom;
+ state.ty=topPad+sh/2-(b.y+b.height/2)*state.zoom;
  updateCamera();
 }
 function focusCore(){centerOn();}
@@ -687,7 +689,7 @@ function download(filename,data,mime){const blob=new Blob([data],{type:mime});co
 $('jsonBtn').onclick=()=>{download('p1-grafo.json',JSON.stringify({schema:'p1.graph.v1',nodes:state.nodes,edges:state.edges,planeCheckpoint:saveCheckpoint(),topologyRegister:topology.reference,derivedViews:derived.exportData()},null,2),'application/json;charset=utf-8');toast('Se exportó el grafo completo, independiente de la vista.');};
 $('loadBtn').onclick=()=>$('fileInput').click();
 $('fileInput').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!Array.isArray(data.nodes)||!Array.isArray(data.edges))throw Error('Formato de grafo no reconocido');const ids=new Set(data.nodes.map(n=>n.id));if(ids.size!==data.nodes.length||!ids.has('p1'))throw Error('Debe existir un núcleo P1 único.');if(!data.nodes.every(n=>typeof n.id==='string'&&typeof n.text==='string'&&Number.isFinite(n.width)&&n.width>=90&&n.width<=500&&Number.isInteger(n.branch)&&n.branch>=-1&&Number.isFinite(n.x)&&Number.isFinite(n.y))||!data.edges.every(o=>ids.has(o.from)&&ids.has(o.to)&&(o.style===undefined||validLinkStyle(o.style)))||!data.nodes.filter(n=>n.parent==='p1').every(n=>data.edges.some(e=>e.from==='p1'&&e.to===n.id))||data.edges.some(e=>e.to==='p1'||(e.from==='p1'&&data.nodes.find(n=>n.id===e.to)?.parent!=='p1'))||!data.nodes.every(n=>n.parent==null||ids.has(n.parent)))throw Error('Hay nodos, conexiones o vínculos del núcleo inválidos.');
- cancelInitialBuild();guardedMove=null;saveUndo();derived.reset();derived.restoreData(data.derivedViews);topology.reset();stagedTopology=data.topologyRegister??null;state.nodes=data.nodes.map(n=>({...n}));state.focusRoot='p1';state.edges=data.edges.map(e=>({...e}));state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;setLinkStyle('solid');state.idSerial=Math.max(0,...state.nodes.map(n=>Number(n.id.match(/^n(\d+)$/)?.[1]||0)));plane.ready=false;plane.nodeEls.clear();plane.routeEls.clear();linesEl.replaceChildren();nodesEl.replaceChildren();if(!validateSavedCheckpoint(data.planeCheckpoint)&&!validateSavedCheckpoint(data.planeCheckpoint,legacyGeometry)){plane.ready=false;}pendingAutoFit=true;updatePanel();schedule();toast('Grafo importado.');}catch(error){toast('No se pudo importar: '+error.message);}finally{e.target.value='';}});
+ cancelInitialBuild();guardedMove=null;saveUndo();derived.reset();derived.restoreData(data.derivedViews);topology.reset();stagedTopology=data.topologyRegister??null;state.nodes=data.nodes.map(n=>({...n}));state.focusRoot='p1';state.edges=data.edges.map(e=>({...e}));state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;state.depth=maximumDepth();setLinkStyle('solid');state.idSerial=Math.max(0,...state.nodes.map(n=>Number(n.id.match(/^n(\d+)$/)?.[1]||0)));plane.ready=false;plane.nodeEls.clear();plane.routeEls.clear();linesEl.replaceChildren();nodesEl.replaceChildren();if(!validateSavedCheckpoint(data.planeCheckpoint)&&!validateSavedCheckpoint(data.planeCheckpoint,legacyGeometry)){plane.ready=false;}pendingAutoFit=true;updatePanel();schedule();toast('Grafo importado.');}catch(error){toast('No se pudo importar: '+error.message);}finally{e.target.value='';}});
 // Exportación sin cambiar el modelo, el zoom ni la posición del lienzo.
 // SVG autónomo: incluye los estilos de los nodos, las líneas y las máscaras.
 const themeButton=$('themeBtn');
@@ -743,38 +745,23 @@ $('svgBtn').onclick=async()=>{
  try{await loadNodeTypography();}catch{toast('No se pudo cargar la tipografía para exportar.');return;}
  await new Promise(requestAnimationFrame);
  const svgText=makeExportSvg(Math.max(1,stage.clientWidth),Math.max(1,stage.clientHeight));
- download('p1-plano.svg',svgText,'image/svg+xml;charset=utf-8');
+ download('fractalear-vista.svg',svgText,'image/svg+xml;charset=utf-8');
  toast('Vista actual exportada en SVG.');
 };
-// PNG sin recorte: la resolución se calcula a partir de la extensión REAL del grafo.
-// No se hace fit en el viewport ni se disminuye la fuente de los conceptos.
-// La escala 2.0 conserva el tamaño ajustado de cada etiqueta a alta resolución.
-const PNG_TEXT_SCALE=2;
-const PNG_MARGIN=100; // en unidades del propio diagrama
-const PNG_CANVAS_MAX_SIDE=16384;
-const PNG_CANVAS_MAX_PIXELS=120000000;
 function pngExportBounds(){
- const bbox=camera.getBBox();
- if(!Number.isFinite(bbox.width)||!Number.isFinite(bbox.height)||bbox.width<=0||bbox.height<=0)
-  throw new Error('No hay contenido de grafo representado para exportar.');
- // Escala de alta densidad hasta el límite seguro de la memoria del navegador.
- // Un grafo grande conserva texto legible sin recortarlo, antes que fallar por píxeles.
- const uw=bbox.width+2*PNG_MARGIN,uh=bbox.height+2*PNG_MARGIN;
- const scale=Math.min(PNG_TEXT_SCALE,PNG_CANVAS_MAX_SIDE/uw,PNG_CANVAS_MAX_SIDE/uh,Math.sqrt(PNG_CANVAS_MAX_PIXELS/(uw*uh)))*.999;
- if(scale<1.4)throw new Error('El grafo supera el tamaño PNG seguro sin reducir la legibilidad. Exporta SVG para conservar todos los conceptos.');
- const width=Math.ceil(uw*scale),height=Math.ceil(uh*scale);
- return{bbox,width,height,scale};
+ if(derived.mode!=='01'&&!derived.current)throw Error('Espera a que termine el cálculo de esta vista.');
+ const scene=derived.mode==='01'?{rects:plane.rects,routes:plane.routes}:derived.current;
+ return pngExportPlan({rects:scene.rects||scene.layout.rects,routes:scene.routes,notice:Boolean(derived.exportNotice())});
 }
 function makeCompletePngSvg(bounds){
- const {bbox,width,height,scale}=bounds;
- const graph=camera.cloneNode(true);
+ const {width,height,scale,offsetX,offsetY}=bounds;
+ const graph=completeGraphClone({lines:derived.mode==='01'?linesEl:derived.derivedLines,
+  nodes:derived.mode==='01'?nodesEl:derived.derivedNodes,sEl});
  // PNG scales strokes with the graph; masks must use the same world units.
  scaleCrossings(graph,1);
  // Importantísimo: la cámara solo gobierna la pantalla. No debe trasladarse al PNG.
  graph.removeAttribute('transform');
  const picture=exportCamera(graph);
- const offsetX=(PNG_MARGIN-bbox.x)*scale;
- const offsetY=(PNG_MARGIN-bbox.y)*scale;
  // En una exportación a alta densidad el grosor de línea se escala junto al texto.
  const style=exportStyles().replace(/vector-effect\s*:\s*non-scaling-stroke\s*;?/g,'');
  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="${width}" height="${height}" fill="${exportColor('paper')}"/><style>${style}</style><g transform="translate(${offsetX.toFixed(2)} ${offsetY.toFixed(2)}) scale(${scale})">${picture}</g>${exportValidationNotice()}</svg>`;
@@ -803,12 +790,13 @@ $('pngBtn').onclick=async()=>{
   context.fillStyle=exportColor('paper');context.fillRect(0,0,canvas.width,canvas.height);
   context.drawImage(pic,0,0,bounds.width,bounds.height);
   const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('No se pudo codificar este PNG de gran tamaño. Puedes exportar SVG.')),'image/png'));
-  downloadBlob(`p1-plano-completo-${bounds.width}x${bounds.height}.png`,blob);
-  toast(`PNG completo: ${bounds.width} × ${bounds.height} px. Sin recorte · escala ${bounds.scale.toFixed(2)}×.`);
+  diag.pngExport={...bounds,fontPixels:24*bounds.scale};
+  downloadBlob(`fractalear-${derived.mode==='04'?'03':derived.mode}-4k-${bounds.width}x${bounds.height}.png`,blob);
+  toast(`PNG 4K: ${bounds.width} × ${bounds.height} px · ${bounds.nodes} conceptos · ${bounds.edges} vínculos.`);
  }catch(err){console.error('Error exportando PNG completo:',err);toast('No se pudo exportar PNG: '+err.message);}
- finally{if(temporaryURL)URL.revokeObjectURL(temporaryURL);btn.disabled=false;btn.textContent='Exportar diagrama completo · PNG';}
+ finally{if(temporaryURL)URL.revokeObjectURL(temporaryURL);btn.disabled=false;btn.textContent='Exportar grafo completo · PNG 4K';}
 };
-function init(useDemo=true){cancelInitialBuild();guardedMove=null;plane.reset();derived.reset();topology.reset();stagedTopology=null;linesEl.replaceChildren();nodesEl.replaceChildren();const demo=useDemo?seed():blankSeed();state.nodes=demo.nodes;state.edges=demo.edges;state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;setLinkStyle('solid');state.focusRoot='p1';state.depth=1;state.undo=[];state.idSerial=0;syncDepth();updatePanel();$('undoBtn').disabled=true;pendingAutoFit=true;schedule();}
+function init(useDemo=true){cancelInitialBuild();guardedMove=null;plane.reset();derived.reset();topology.reset();stagedTopology=null;linesEl.replaceChildren();nodesEl.replaceChildren();const demo=useDemo?seed():blankSeed();state.nodes=demo.nodes;state.edges=demo.edges;state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;setLinkStyle('solid');state.focusRoot='p1';state.depth=maximumDepth();state.undo=[];state.idSerial=0;syncDepth();updatePanel();$('undoBtn').disabled=true;pendingAutoFit=true;schedule();}
 const ro=new ResizeObserver(()=>{updateCamera();});ro.observe(stage);
 const bootButtons=[...document.querySelectorAll('button')];
 bootButtons.forEach(button=>button.disabled=true);
