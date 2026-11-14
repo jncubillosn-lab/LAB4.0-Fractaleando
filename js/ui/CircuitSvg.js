@@ -2,9 +2,19 @@ import {routeCrossings} from '../geometry/CircuitGeometry.js';
 import {hierarchyStrokeProfile} from './HierarchyStroke.js';
 
 const HALO=.6,EMPHASIS=3.4;
+function scaleCut(cut,scale){
+ cut.setAttribute('stroke-width',Number(cut.dataset.screenStroke||cut.dataset.baseStroke)/scale);
+ if(cut.dataset.overDashed==='true')cut.setAttribute('stroke-dasharray',(5/scale)+' '+(5/scale));
+}
+export function scaleCrossings(linesEl,scale=1){
+ const safe=Math.max(.001,scale);linesEl.dataset.crossingScale=String(safe);
+ for(const cut of linesEl.querySelectorAll('[data-over-edge-key]'))scaleCut(cut,safe);
+}
 export function emphasizeCrossings(linesEl,keys){
- for(const cut of linesEl.querySelectorAll('[data-over-edge-key]'))
-  cut.setAttribute('stroke-width',keys.has(cut.dataset.overEdgeKey)?EMPHASIS:cut.dataset.baseStroke);
+ for(const cut of linesEl.querySelectorAll('[data-over-edge-key]')){
+  cut.dataset.screenStroke=keys.has(cut.dataset.overEdgeKey)?String(EMPHASIS):cut.dataset.baseStroke;
+  scaleCut(cut,Number(linesEl.dataset.crossingScale)||1);
+ }
 }
 export function visibleCrossings(linesEl,keys){
  for(const cut of linesEl.querySelectorAll('[data-over-edge-key]'))
@@ -41,16 +51,21 @@ export function drawCircuitSvg({ordered,routes,linesEl,sEl,edgeKey,mode,nodes,le
     defs.append(clip);
     const base=Number((strokeFor(upper.e).width+HALO).toFixed(3));
     const cutAttrs={d:upper.d,fill:'none',stroke:'black','stroke-width':base,'stroke-linecap':'round','stroke-linejoin':'round',
-     'vector-effect':'non-scaling-stroke','clip-path':'url(#'+clipId+')','data-over-edge-key':upper.key,'data-base-stroke':base};
-    if(upper.e.kind==='transversal')cutAttrs['stroke-dasharray']='5 5';
+     'clip-path':'url(#'+clipId+')','data-over-edge-key':upper.key,'data-base-stroke':base};
+    if(upper.e.kind==='transversal'){cutAttrs['stroke-dasharray']='5 5';cutAttrs['data-over-dashed']='true';}
     const cut=sEl('path',cutAttrs);mask.append(cut);
     if(!cutsByUpper.has(upper.key))cutsByUpper.set(upper.key,[]);cutsByUpper.get(upper.key).push(cut);
    }
    defs.append(mask);attrs.mask='url(#'+id+')';
   }
   group.append(sEl('path',attrs));linesEl.append(group);elements.set(key,group);
-  group.addEventListener('pointerenter',()=>{for(const cut of cutsByUpper.get(key)||[])cut.setAttribute('stroke-width',EMPHASIS);});
-  group.addEventListener('pointerleave',()=>{for(const cut of cutsByUpper.get(key)||[])cut.setAttribute('stroke-width',group.classList.contains('hierarchy-focus')?EMPHASIS:cut.dataset.baseStroke);});
+  const hover=active=>{for(const cut of cutsByUpper.get(key)||[]){
+   cut.dataset.screenStroke=active||group.classList.contains('hierarchy-focus')?String(EMPHASIS):cut.dataset.baseStroke;
+   scaleCut(cut,Number(linesEl.dataset.crossingScale)||1);
+  }};
+  group.addEventListener('pointerenter',()=>hover(true));
+  group.addEventListener('pointerleave',()=>hover(false));
  }
+ scaleCrossings(linesEl,Number(linesEl.dataset.crossingScale)||1);
  return elements;
 }

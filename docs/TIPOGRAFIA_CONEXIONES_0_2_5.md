@@ -23,6 +23,9 @@ superior real: su recorrido, giros, grosor y patrón de guiones. El corte
 normal mide el grosor de esa línea más 0,6 px en pantalla; con selección o
 hover llega a 3,4 px. Los círculos presentes en las definiciones SVG solo
 delimitan ventanas de recorte y no borran el lienzo.
+El ancho y los guiones de la máscara se convierten explícitamente según el
+zoom: no dependen de cómo Chrome interpreta los trazos sin escala dentro de
+una máscara. El PNG normaliza esas unidades para su propia escala de salida.
 
 No se impone distancia mínima entre intersección y giro. La máscara sigue el
 trazo en esos casos. Cuando un filtro oculta la línea superior, también

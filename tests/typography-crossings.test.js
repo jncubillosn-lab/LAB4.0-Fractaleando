@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {fitNodeLabel} from '../js/ui/NodeTypography.js';
 import {portInset} from '../js/geometry/PortPolicy.js';
 import {portAt} from '../js/geometry/OrderedPorts.js';
-import {drawCircuitSvg,emphasizeCrossings,visibleCrossings} from '../js/ui/CircuitSvg.js';
+import {drawCircuitSvg,emphasizeCrossings,visibleCrossings,scaleCrossings} from '../js/ui/CircuitSvg.js';
 
 test('tipografía más grande con ajuste real al contenido y márgenes reservados',()=>{
  const measure=(text,size)=>[...text].length*size*.48;
@@ -44,5 +44,9 @@ test('el cruce copia el trazo superior y sus guiones; selección y filtros no ab
  visibleCrossings(linesEl,new Set(['a|b']));assert.equal(cut.style.display,'none');
  visibleCrossings(linesEl,new Set(['a|b','c|d']));assert.equal(cut.style.display,'');
  emphasizeCrossings(linesEl,new Set());assert.equal(Number(cut.attrs['stroke-width']),1.95);
+ scaleCrossings(linesEl,.125);assert.equal(Number(cut.attrs['stroke-width'])*.125,1.95);
+ assert.equal(cut.attrs['stroke-dasharray'],'40 40');
+ scaleCrossings(linesEl,2);assert.equal(Number(cut.attrs['stroke-width'])*2,1.95);
+ assert.equal(cut.attrs['stroke-dasharray'],'2.5 2.5');
  assert.equal(JSON.stringify([...routes]),before);
 });
