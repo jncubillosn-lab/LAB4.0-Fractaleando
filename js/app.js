@@ -8,6 +8,7 @@ import {GeometryValidator} from './geometry/GeometryValidator.js';
 import {SvgRenderer} from './ui/SvgRenderer.js';
 import {loadNodeTypography,paintNodeLabel,exportedNodeFonts} from './ui/NodeTypography.js';
 import {scaleCrossings} from './ui/CircuitSvg.js';
+import {clockChildPosition} from './geometry/ClockPlacement.js';
 import {computeInitialRoutes} from './workers/initial-route.worker.js';
 // P1 application coordinator: preserves the approved HTML, controls and data model.
 const NS='http://www.w3.org/2000/svg';
@@ -496,7 +497,7 @@ function syncGraphics(geometryChanged){
   // Reusar exactamente el punto de control; presentar cruces sin descartarlos.
   const levels=readDepthMap();const ordered=state.edges.map((e,i)=>({...e,__index:i}))
    .sort((a,b)=>pathPriority(a,levels)-pathPriority(b,levels)||a.__index-b.__index);
-  plane.routeEls=renderer.draw(ordered,plane.routes);
+  plane.routeEls=renderer.draw(ordered,plane.routes,{mode:'01',nodes:state.nodes,levels:graph.depthMap()});
  }
  paintVisibility();updateCamera();
 }
@@ -590,11 +591,13 @@ function addConcept(){
  saveUndo();const id='n'+(++state.idSerial);
  // R01: un hijo directo de J0 es siempre un NUEVO brazo, con índice propio.
  const node=makeNode(id,'Nuevo concepto',newArm?nextBranchIndex():n.branch,n.id,newArm?190:180);
- state.nodes.push(node);state.edges.push({from:n.id,to:id});state.selected=id;
+ const parent=plane.rects.get(n.id)||rectAt(n.id,n,geometry(n));
+ const rects=state.nodes.map(other=>plane.rects.get(other.id)||rectAt(other.id,other,geometry(other)));
+ Object.assign(node,clockChildPosition({parent,metric:geometry(node),index:treeChildren(n.id).length,rects,segments:savedSegments()}));
+ state.nodes.push(node);state.edges.push({from:n.id,to:id});
  state.depth=Math.max(state.depth,(readDepthMap()[id]??state.depth));
- updatePanel();schedule();requestAnimationFrame(()=>requestAnimationFrame(()=>ensureNodeVisible(id)));
+ updatePanel();schedule();
  toast(newArm?'Nuevo brazo J1 añadido al núcleo.':'Concepto añadido a los datos.');
- $('nodeText').focus();$('nodeText').select();
 }
 function deleteSelected(){const n=selected();if(!n||n.id==='p1')return;const childCount=treeChildren(n.id).length;if(childCount&&!confirm(`Este concepto tiene ${childCount} descendientes directos, que quedarán sin padre. ¿Continuar?`))return;saveUndo();if(state.focusRoot===n.id)state.focusRoot=n.parent||'p1';state.unlinkFrom=null;state.nodes=state.nodes.filter(o=>o.id!==n.id);state.edges=state.edges.filter(e=>e.from!==n.id&&e.to!==n.id);for(const q of state.nodes)if(q.parent===n.id)q.parent=null;state.selected=n.parent&&nodeById(n.parent)?n.parent:'p1';updatePanel();schedule();toast('Concepto eliminado. Las relaciones restantes se conservan sin inventar sustituciones.');}
 function centerOn(){
@@ -687,7 +690,7 @@ function exportCamera(node=camera){
 }
 const EXPORT_STYLE=`
 .svgline{fill:none;stroke:#1c1c1b;stroke-width:var(--hierarchy-width,1.35);stroke-opacity:.50;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-.svgline.active{stroke-width:2;stroke-opacity:1}
+.svgline.active{stroke-width:calc(var(--hierarchy-width,1.35) * 1px + .75px);stroke-opacity:1}
 .svgline.transverse{stroke-dasharray:5 5;stroke-opacity:.52}
 .node rect{fill:#f7f6f1;stroke:#1c1c1b;stroke-width:1.4}
 .node.core rect{stroke-width:2.4}.node.anchor rect{stroke-width:1.9}.node.selected rect{stroke-width:2.7}
@@ -696,7 +699,7 @@ const EXPORT_STYLE=`
 .node.hierarchy-focus rect{stroke-width:2.8;stroke-opacity:1}
 .node.hierarchy-focus text{font-weight:700}
 .node.selected.hierarchy-focus rect{stroke-width:3.5}
-.hierarchy-focus .svgline{stroke-width:2.8;stroke-opacity:1}
+.hierarchy-focus .svgline{stroke-width:calc(var(--hierarchy-width,1.35) * 1px + .75px);stroke-opacity:1}
 `;
 function makeExportSvg(outputW,outputH){
  const sourceW=Math.max(1,stage.clientWidth),sourceH=Math.max(1,stage.clientHeight);

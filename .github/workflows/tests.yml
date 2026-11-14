@@ -47,7 +47,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: p1-vistas-0.2.5
+          name: p1-vistas-0.2.6
           path: artifacts/views/
           if-no-files-found: ignore
 

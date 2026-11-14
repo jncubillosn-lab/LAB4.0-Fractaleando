@@ -8,7 +8,7 @@ export function hierarchyStrokeProfile({mode,nodes=[],levels={}}){
  return edge=>{
   const depth=Math.max(levels[edge.from]??0,levels[edge.to]??0);
   const tree=edge.kind!=='transversal'&&(byId.get(edge.to)?.parent===edge.from||byId.get(edge.from)?.parent===edge.to);
-  const weight=mode==='02'&&tree&&maxDepth>1?Math.max(0,Math.min(1,(maxDepth-depth)/(maxDepth-1))):0;
+  const weight=tree&&maxDepth>1?Math.max(0,Math.min(1,(maxDepth-depth)/(maxDepth-1))):0;
   return {depth,width:Number((minimum+(maximum-minimum)*weight).toFixed(3))};
  };
 }

@@ -1,5 +1,5 @@
 """Browser acceptance tests against the actual relative ES module URLs of GitHub Pages."""
-import http.server, socketserver, threading, time, json
+import http.server, socketserver, threading, time, json, math
 import os
 from pathlib import Path
 from playwright.sync_api import sync_playwright
@@ -47,6 +47,35 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.topology().referenceEdges === 218',timeout=30000)
   restored=page.evaluate('window.P1_PLANO_DIAGNOSTICO.topology()')
   assert restored['valid'] and restored['crossings']==after['crossings'],restored
+  page.on('dialog',lambda dialog:dialog.accept())
+  page.locator('#newBtn').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===3',timeout=30000)
+  page.locator('#nodes [data-node-id="b0"]').click()
+  original=page.locator('#nodes .node').evaluate_all('(els)=>Object.fromEntries(els.map(el=>[el.dataset.nodeId,el.getAttribute("transform")]))')
+  parent_text=page.locator('#nodeText').input_value()
+  # Repeated clicks in one frame must create siblings, with independent slots.
+  page.locator('#addBtn').evaluate('(el)=>{for(let i=0;i<7;i++)el.click()}')
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===10',timeout=30000)
+  assert page.locator('#nodes .selected').get_attribute('data-node-id')=='b0'
+  assert page.locator('#nodeText').input_value()==parent_text
+  assert page.evaluate('document.activeElement.id')!='nodeText'
+  for node_id,transform in original.items():assert page.locator('#nodes [data-node-id="'+node_id+'"]').get_attribute('transform')==transform
+  with page.expect_download() as siblings:page.locator('#jsonBtn').click()
+  graph=json.loads(Path(siblings.value.path()).read_text(encoding='utf8'))
+  parent=next(n for n in graph['nodes'] if n['id']=='b0')
+  children=[n for n in graph['nodes'] if n['parent']=='b0']
+  assert len(children)==7 and all(n['branch']==parent['branch'] for n in children),children
+  hours=[round((math.atan2(n['x']-parent['x'],parent['y']-n['y'])*6/math.pi+12)%12)%12 for n in children]
+  assert hours==[0,5,10,3,8,1,6],hours
+  assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.pending')==0
+  page.locator('#undoBtn').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===9',timeout=30000)
+  assert page.locator('#nodes .selected').get_attribute('data-node-id')=='b0'
+  with page.expect_download() as undone:page.locator('#jsonBtn').click()
+  undo_graph=json.loads(Path(undone.value.path()).read_text(encoding='utf8'))
+  positions={n['id']:(n['x'],n['y']) for n in graph['nodes']}
+  assert all(positions[n['id']]==(n['x'],n['y']) for n in undo_graph['nodes']),undo_graph
+  print('Más concepto: siete hermanos, reloj y selección persistente; deshacer conserva posiciones',flush=True)
   assert not errors,errors
   b.close()
  srv.shutdown()
