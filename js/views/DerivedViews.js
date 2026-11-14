@@ -331,7 +331,7 @@ export class DerivedViews {
  restoreData(data){
   this.staged={};
   if(!data||typeof data!=='object')return;
-  try{validateRaup(data.spiralParameters||{});this.spiralParameters={...data.spiralParameters};}catch{this.spiralParameters={...RAUP_DEFAULTS};}
+  try{validateRaup(data.spiralParameters||{});this.spiralParameters=Object.fromEntries(['W','D','T'].map(k=>[k,data.spiralParameters[k]]));}catch{this.spiralParameters={...RAUP_DEFAULTS};}
   for(const k of ['W','D','T'])document.getElementById('spiral'+k).value=String(this.spiralParameters[k]);
   for(const mode of ['02','04'])if(TopologyRegister.validShape(data[mode]?.topology))
    this.staged[mode]=data[mode];
