@@ -21,7 +21,7 @@ export async function computeDerivedScene(input,{load,onProgress=()=>{}}={}){
    onProgress({mode,pass:pass+1,phase:'placed'});
    if(!layout.stats.geometricallySafe)throw Error('Distribución incompleta o con solapes.');
    const result=await computeAvoidRoutes({...input,positions:layout.positions,rects:layout.rects,levels:layout.levels,
-    repairAttempts:mode==='04'?0:20},{load,onProgress:phase=>onProgress({mode,pass:pass+1,phase})});
+    repairAttempts:mode==='04'?8:20},{load,onProgress:phase=>onProgress({mode,pass:pass+1,phase})});
    const pending=result.routes.filter(([,r])=>!r.points).length;
    onProgress({mode,pass:pass+1,phase:'routed',pending});
    const candidate={layout,result};

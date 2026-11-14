@@ -44,10 +44,13 @@ comprime al 85 % y el coeficiente interno de giro pasa de 0,23 a 0,25.
 Se permite un ajuste angular local adicional para colocar cuadros sin
 solapes, antes de aumentar su radio. Los textos permanecen horizontales,
 el núcleo central y el avance hacia fuera se verifican como antes.
-Las rutas de 04 recuperan corredores con una búsqueda local acotada y
+Las rutas de 04 prueban carriles locales y hasta ocho reparaciones nativas por
+conexión, seguidas de una búsqueda local acotada, y
 devuelven los que no se resuelven al modelo de capacidad de la distribución.
-Así no se acumulan reconstrucciones nativas de obstáculos en un corredor
-estrecho. Cada ruta recuperada pasa la misma auditoría independiente.
+La preparación nativa para agrupar carriles compartidos se desactiva en 04:
+ese agrupamiento se rechazaría luego por la auditoría de tramos compartidos
+y consumía gran parte del tiempo de cálculo. Cada ruta recuperada pasa la
+misma auditoría independiente.
 Si solo quedan unas pocas conexiones, también se prueban otros puertos
 libres usando el emparejamiento ya empleado en 01, con una comprobación
 adicional del orden circular. No se permite intercambiar vecinos para

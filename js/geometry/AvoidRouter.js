@@ -95,17 +95,16 @@ export async function computeAvoidRoutes({nodes,edges,positions,rects,levels,top
     const candidate={edge:e,fromPort,toPort,points:checker.simplify([start,...middle,end])};
     if(validator.validateRoute(candidate,[...rectMap.values()],occupied,used).ok)accepted=candidate;
    };
-   // The tighter spiral uses bounded local search; unresolved corridors feed
-   // the placement capacity model instead of rebuilding many native wall scenes.
+   // Try short local lanes first. The tighter spiral bounds native repairs;
+   // unresolved corridors then feed the placement capacity model.
    if(compactRecovery){
     consider(checker.fastCandidates(s,t,[...rectMap.values()],occupied,[e.from,e.to])?.points);
     if(!accepted)consider(checker.wideCandidates(start,s,t,end,[...rectMap.values()],occupied,[e.from,e.to])?.points);
-    if(!accepted)consider(checker.findRouteGrid(s,t,[...rectMap.values()],occupied,true,350,300));
    }
    // Resolve shared native lanes with an incremental obstacle search. Each
    // failed segment adds only its conflicting occupied lane as a wall; the
    // rest of the scene stays available for genuine transverse crossings.
-   if(!accepted&&repairAttempts>0&&rejected.length<=16){
+   if(!accepted&&repairAttempts>0&&(compactRecovery||rejected.length<=16)){
     const walls=new Set();let trial=item.points;
     for(let attempt=0;attempt<repairAttempts&&!accepted;attempt++){
      const previous=walls.size;
@@ -131,6 +130,7 @@ export async function computeAvoidRoutes({nodes,edges,positions,rects,levels,top
      }finally{local.delete();for(const object of values.reverse())object.delete();}
     }
    }
+   if(!accepted&&compactRecovery)consider(checker.findRouteGrid(s,t,[...rectMap.values()],occupied,true,350,300));
    if(!accepted&&!compactRecovery&&rejected.length<=3)consider(checker.fastCandidates(s,t,[...rectMap.values()],occupied,[e.from,e.to])?.points);
    for(const margin of !accepted&&!compactRecovery&&rejected.length<=3?[100,300,700]:[]){
     if(accepted)break;
