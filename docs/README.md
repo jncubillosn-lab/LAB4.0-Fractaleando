@@ -1,6 +1,15 @@
-# P1 — Diagramador de relaciones conceptuales
+# Fractalear — Documentación y antecedentes
 
 **[▶ Abrir la aplicación en GitHub Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/)**
+
+**Punto de referencia vigente · 14 de noviembre de 2026:**
+[estado, decisiones, arquitectura y evidencia del corte 0.2.11](CORTE_0_2_11.md).
+Para trabajar con la aplicación, consultar la [guía de uso](GUIA_USO.md).
+
+Los apartados que siguen conservan el historial y el documento inicial de
+referencia. Sus nombres de vistas, experimentos, bloqueos del Editor y estados
+de publicación deben leerse con la fecha de cada corte. El estado funcional
+actual se describe en la referencia anterior.
 
 **Implementación actual 0.2.11:** [palabras completas y ancho automático](PALABRAS_COMPLETAS_0_2_11.md).
 Los cuadros se ensanchan para contener la palabra más larga, con letra fija de
@@ -39,7 +48,7 @@ Conserva el [núcleo compacto y grosor por jerarquía](NUCLEO_JERARQUIAS_0_2_4.m
 Las vistas siguen **EN REVISIÓN** por cruces frente a 01 y cota 2H.
 Los cortes históricos que siguen no sustituyen este estado ni las normas vigentes.
 
-**Lectura actualizada al 13 de noviembre de 2026:** consultar [Memoria del proyecto](MEMORIA_PROYECTO_P1.md) y [Normas jerarquizadas v0.1](NORMAS_JERARQUIZADAS_P1.md). Este archivo conserva cortes históricos; las afirmaciones sobre etapas futuras, estado observacional o cuatro vistas deben leerse con sus fechas. El radial sigue en borrador y no está aprobado.
+**Antecedentes del 13 de noviembre de 2026:** [Memoria del proyecto](MEMORIA_PROYECTO_P1.md) y [Normas jerarquizadas v0.1](NORMAS_JERARQUIZADAS_P1.md). Las afirmaciones de ese corte sobre etapas futuras, estado observacional, cuatro vistas o radial sin publicar son históricas. Compacto y Espiral están publicados en 0.2.11 y mantienen la revisión normativa pendiente.
 
 **Documento inicial de referencia · Requerimientos, normas y arquitectura del motor gráfico**  
 **Corte de referencia:** 10 de noviembre de 2026  
