@@ -21,7 +21,22 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   print('E2E: abriendo sitio construido',flush=True)
   page.goto('http://127.0.0.1:'+str(srv.server_address[1])+'/index.html',wait_until='domcontentloaded')
   build=page.locator('meta[name="application-build"]').get_attribute('content')
-  assert '0.2.4' in page.locator('meta[name="application-version"]').get_attribute('content')
+  assert '0.2.5' in page.locator('meta[name="application-version"]').get_attribute('content')
+  page.wait_for_function('[...document.fonts].filter(f=>f.family==="Rajdhani"&&f.status==="loaded").length===2')
+  def check_labels(selector):
+   labels=page.locator(selector).evaluate_all("""els=>els.map(el=>{
+    const rect=el.querySelector('rect'),text=el.querySelector('text'),style=getComputedStyle(text);
+    const ctx=document.createElement('canvas').getContext('2d');
+    ctx.font=style.fontWeight+' '+style.fontSize+' '+style.fontFamily;ctx.textAlign='center';
+    const x=+rect.getAttribute('x'),y=+rect.getAttribute('y'),w=+rect.getAttribute('width'),h=+rect.getAttribute('height');
+    const margins=[...text.querySelectorAll('tspan')].map(t=>{
+     const m=ctx.measureText(t.textContent),ty=+t.getAttribute('y');
+     return [-m.actualBoundingBoxLeft-x,x+w-m.actualBoundingBoxRight,ty-m.actualBoundingBoxAscent-y,y+h-ty-m.actualBoundingBoxDescent];
+    }).flat();
+    return {id:el.dataset.nodeId,family:style.fontFamily,size:parseFloat(style.fontSize),margin:Math.min(...margins)};
+   })""")
+   assert all('Rajdhani' in label['family'] and label['margin']>=8.5 for label in labels),[l for l in labels if l['margin']<8.5]
+   assert next(l['size'] for l in labels if l['id']=='p1')==30,labels
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===3',timeout=60000)
   page.locator('#showAllBtn').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===217',timeout=60000)
@@ -29,6 +44,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   baseline=page.evaluate('window.P1_PLANO_DIAGNOSTICO.topology()')
   original=page.locator('#nodes [data-node-id="p1"]').get_attribute('transform')
   assert baseline['valid'] and baseline['crossings']==71
+  check_labels('#nodes .node')
   results={}
   for mode in ('02','04'):
    print('E2E: calculando',mode,flush=True)
@@ -41,11 +57,19 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    assert result['audit']['invalid']==result['audit']['boxes']==result['audit']['portsRepeated']==0,result
    assert result['meanGap']<475,result
    assert page.locator('#derivedNodes .node').count()==210
-   assert page.locator('#derivedLines path').count()==217
+   assert page.locator('#derivedLines .svgline').count()==217
    assert page.locator('#nodes').evaluate('(el)=>getComputedStyle(el).display')=='none'
    assert result['topology']['hasReference'] and result['topology']['crossings']==71
    assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.topology()')==baseline
    assert page.locator('#derivedLines circle').count()==result['audit']['crossings']
+   check_labels('#derivedNodes .node')
+   cuts=page.locator('#derivedLines [data-over-edge-key]').evaluate_all("""els=>els.map(el=>{
+    const group=[...document.querySelectorAll('#derivedLines > g')].find(g=>g.dataset.edgeKey===el.dataset.overEdgeKey);
+    const upper=group.querySelector('.svgline');
+    return {same:el.getAttribute('d')===upper.getAttribute('d'),width:+el.getAttribute('stroke-width'),
+     dashed:el.getAttribute('stroke-dasharray')===(upper.classList.contains('transverse')?'5 5':null)};
+   })""")
+   assert cuts and all(c['same'] and c['dashed'] and c['width']<=3.4 for c in cuts),cuts
    # Select J3 by click: actual ancestry plus its J4 neighbours, with no reroute.
    before_selection=page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current.calculations')
    positions=page.locator('#derivedNodes .node').evaluate_all('(els)=>els.map(el=>el.getAttribute("transform"))')
@@ -72,16 +96,21 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
     assert abs(float(focused.evaluate('(el)=>parseFloat(getComputedStyle(el).strokeWidth)'))-2.8)<.001
     with page.expect_download() as weighted_svg:page.locator('#svgBtn').click()
     weighted=Path(weighted_svg.value.path()).read_text(encoding='utf8')
+    assert '@font-face' in weighted and 'data:font/ttf;base64,' in weighted and 'SIL OPEN FONT LICENSE' in weighted
     assert re.search(r'--hierarchy-width:\s*2\.05',weighted) and re.search(r'--hierarchy-width:\s*1\.35',weighted)
    before=page.evaluate('window.P1_PLANO_DIAGNOSTICO.routeCalculations')
    page.locator('#depth').evaluate('(el)=>{el.value="1";el.dispatchEvent(new Event("input",{bubbles:true}))}')
+   assert page.locator('#derivedLines [data-over-edge-key]').evaluate_all("""els=>els.every(el=>{
+    const upper=[...document.querySelectorAll('#derivedLines > g')].find(g=>g.dataset.edgeKey===el.dataset.overEdgeKey);
+    return (el.style.display==='none')===(upper.style.display==='none');
+   })""")
    page.locator('#showAllBtn').click()
    assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.routeCalculations')==before
    if mode=='02':assert page.locator('#derivedLines .svgline').evaluate_all('(els)=>els.map(el=>[el.dataset.hierarchyLevel,el.style.getPropertyValue("--hierarchy-width")])')==widths
    output=os.environ.get('P1_SCREENSHOTS')
    if output:
     Path(output).mkdir(parents=True,exist_ok=True)
-    page.screenshot(path=str(Path(output)/('Fractaleando_0_2_4_'+mode+'.png')))
+    page.screenshot(path=str(Path(output)/('Fractaleando_0_2_5_'+mode+'.png')))
   assert results['04']['baseBounds']==results['02']['bounds']
   assert results['04']['baseMeanGap']==results['02']['meanGap']
   page.locator('#themeBtn').click()

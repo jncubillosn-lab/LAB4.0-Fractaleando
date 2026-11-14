@@ -54,8 +54,14 @@ export class RayPackingLayout {
   }
   const roots=orderRoots(children.get('p1'),topologyReference);
   children.set('p1',roots);
-  const pairClearance=(size,r)=>r.id==='p1'&&byId.get(size.id)?.parent==='p1'?0:
-   Math.max(clearance,size.routingClearance||0,r.routingClearance||0);
+  const pairClearance=(size,r)=>{
+   const rootChild=byId.get(size.id)?.parent==='p1';
+   if(rootChild&&r.id==='p1')return 0;
+   // J1 heads share the core region; their outward fan capacity must not
+   // inflate the empty space between heads. Routes still pass full DRC.
+   if(rootChild&&byId.get(r.id)?.parent==='p1')return clearance;
+   return Math.max(clearance,size.routingClearance||0,r.routingClearance||0);
+  };
   // Halve the actual free gap between borders, not the box dimensions or
   // centre-to-centre radius. Freeze the reference capacity across route retries.
   const coreTarget=(id,angle)=>{

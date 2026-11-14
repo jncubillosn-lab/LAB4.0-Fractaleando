@@ -7,6 +7,8 @@ import {computeDerivedScene,SCENE_VERSION} from '../geometry/DerivedScene.js';
 import {PcbRouter} from '../geometry/PcbRouter.js';
 import {GeometryValidator} from '../geometry/GeometryValidator.js';
 import {hierarchySelection} from '../core/HierarchySelection.js';
+import {paintNodeLabel} from '../ui/NodeTypography.js';
+import {emphasizeCrossings,visibleCrossings} from '../ui/CircuitSvg.js';
 
 // Vistas derivadas read-only: conservan el grafo y el plano 01.
 // Cada vista tiene su punto de control y comparte la referencia topológica 01.
@@ -14,6 +16,7 @@ export class DerivedViews {
  constructor({state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast,referenceTopology,onSelect}){
   Object.assign(this,{state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast,referenceTopology,onSelect});
   this.layoutEngine=new ViewLayouts();
+  this.textContext=document.createElement('canvas').getContext('2d');
   this.router=new PcbRouter({state,nodeById:id=>state.nodes.find(n=>n.id===id),mode:'02',clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});
   this.validator=new GeometryValidator({router:this.router,rectOverlap:(a,b)=>ViewLayouts.overlap(a,b,0)});
   this.cache=new Map();this.mode='01';this.version=0;
@@ -168,11 +171,7 @@ export class DerivedViews {
    g.addEventListener('click',event=>{event.stopPropagation();select();});
    g.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();select();}});
    g.append(this.sEl('rect',{x:-m.w/2,y:-m.h/2,width:m.w,height:m.h,rx:8,ry:8}));
-   const label=this.sEl('text'),wrapped=m.wrapped||[node.text];
-   for(let i=0;i<wrapped.length;i++){
-    const t=this.sEl('tspan',{x:0,y:-(wrapped.length-1)*m.lineheight/2+i*m.lineheight});
-    t.textContent=wrapped[i];label.append(t);
-   }
+   const label=this.sEl('text');paintNodeLabel(label,node,m,this.textContext);
    g.append(label);
    const title=this.sEl('title');title.textContent=node.text;g.append(title);
    this.derivedNodes.append(g);
@@ -183,6 +182,12 @@ export class DerivedViews {
   this.drawNodes(snapshot.layout);
   this.renderer.draw(snapshot.ordered,snapshot.routes,{mode:snapshot.mode,nodes:this.state.nodes,levels:snapshot.layout.levels});
   this.paintVisibility();
+ }
+ refreshTypography(){
+  const elements=new Map([...this.derivedNodes.children].map(el=>[el.dataset.nodeId,el]));
+  for(const node of this.state.nodes){const text=elements.get(node.id)?.querySelector('text');
+   if(text)paintNodeLabel(text,node,this.geometry(node),this.textContext);
+  }
  }
  paintVisibility(){
   if(this.mode==='01')return;
@@ -201,13 +206,14 @@ export class DerivedViews {
   const shown=new Set(this.state.nodes.filter(n=>
    (current.layout.levels[n.id]??Infinity)<=this.state.depth).map(n=>n.id));
   for(const el of this.derivedNodes.children)el.style.display=shown.has(el.dataset.nodeId)?'':'none';
-  let drawn=0,pending=0;
+  let drawn=0,pending=0;const visibleEdges=new Set();
   for(const [key,rt] of current.routes){
    const show=shown.has(rt.edge.from)&&shown.has(rt.edge.to);
    const el=this.derivedLines.querySelector('[data-edge-key="'+CSS.escape(key)+'"]');
    if(el)el.style.display=show?'':'none';
-   if(show){if(rt.points)drawn++;else pending++;}
+   if(show){if(rt.points){drawn++;visibleEdges.add(key);}else pending++;}
   }
+  visibleCrossings(this.derivedLines,visibleEdges);
   const s=current.layout.stats,problems=current.audit.invalid+current.audit.boxes+current.audit.portsRepeated+
    (current.report.issueCount||0)+current.unfinished;
   const prefix='Vista '+this.mode+' · '+shown.size+' conceptos · '+drawn+' vínculos · separación media '+s.meanGap.toFixed(0)+' px';
@@ -235,6 +241,7 @@ export class DerivedViews {
   }
   for(const el of this.derivedLines.querySelectorAll('[data-edge-key]'))
    el.classList.toggle('hierarchy-focus',focus.edgeKeys.has(el.dataset.edgeKey));
+  emphasizeCrossings(this.derivedLines,focus.edgeKeys);
  }
  exportNotice(){
   if(this.mode==='01')return '';

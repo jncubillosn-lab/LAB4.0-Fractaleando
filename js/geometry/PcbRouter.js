@@ -1,5 +1,6 @@
 import {routeSegments,segmentAxis,segmentIntersection,segmentEntersRect,leavesRect} from './SegmentGeometry.js';
 import {circuitRelation} from './CircuitGeometry.js';
+import {assignOrderedPorts} from './OrderedPorts.js';
 // Routing of individual semantic links on a single 2D plane.
 // The class is instantiated for the active document; its algorithms are
 // extracted from the last approved R01 implementation, not a retired engine.
@@ -29,6 +30,7 @@ export class PcbRouter {
    return Math.abs(dx)>Math.abs(dy)*.72?(dx>0?'right':'left'):(dy>0?'bottom':'top');
   }
   function assignPorts(edges,positions,rects){
+   if(mode!=='01')return assignOrderedPorts({nodes:state.nodes,edges,positions,rects});
    const requests=new Map();
    for(const [idx,e] of edges.entries()){
     for(const [id,other] of [[e.from,e.to],[e.to,e.from]]){

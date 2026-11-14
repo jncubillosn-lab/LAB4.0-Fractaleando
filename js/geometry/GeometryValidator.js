@@ -1,5 +1,6 @@
 import {segmentAxis,segmentEntersRect,leavesRect,segmentIntersection} from './SegmentGeometry.js';
 import {circuitAxis} from './CircuitGeometry.js';
+import {portClearOfCorners} from './PortPolicy.js';
 // Independent DRC-like checks. Cannot approve a path merely because
 // it avoids third-party boxes: endpoints, ports, and continuity matter (H02).
 export class GeometryValidator {
@@ -7,6 +8,7 @@ export class GeometryValidator {
  close(a,b,epsilon=.12){return Math.hypot(a.x-b.x,a.y-b.y)<=epsilon;}
  isPortOnRect(p,r){
   if(!p||!['top','right','bottom','left'].includes(p.side))return false;
+  if(this.router.circuit45&&!portClearOfCorners(p,r))return false;
   if(![p.x,p.y,p.sx,p.sy].every(Number.isFinite))return false;
   const stub=p.stub??this.router.portStub;
   if(!Number.isFinite(stub)||stub<=0||stub>this.router.portStub)return false;
