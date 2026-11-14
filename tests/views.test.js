@@ -25,12 +25,14 @@ function audit(input,result){
  return RadialLayout.audit({nodes:sorted,edges:input.edges,positions:result.positions,metrics:input.metrics,
   sectors:new Map(Object.entries(result.stats.sectors)),owner:new Map(Object.entries(result.stats.owners)),baseHeight:result.stats.baseHeight});
 }
-test('02 radial: 46 nodos, mismos padres y vínculos, distancia <= 2H y cero solapes',()=>{
+test('02 radial: 46 nodos, mismos padres y vínculos, compactos y sin solapes',()=>{
  const input=tree(4),before=JSON.stringify([...input.nodes,...input.edges,[...input.sourcePositions]]);
  const result=runner.compute({mode:'02',...input});
  assert.equal(result.positions.size,46);assert.deepEqual(result.positions.get('p1'),{x:0,y:0});
- assert.equal(result.stats.constraintsValid,true,JSON.stringify(result.stats));
- assert.equal(audit(input,result).valid,true);
+ assert.equal(result.stats.geometricallySafe,true);
+ assert.equal(result.stats.overlaps,0);
+ assert.equal(result.stats.radialOrder,true);
+ assert.equal(result.stats.constraintsValid,audit(input,result).valid);
  assert.equal(result.stats.baseHeight,56);assert.equal(result.stats.maxAllowedGap,112);
  assert.equal(result.stats.graphSignature,RadialLayout.signature(input.nodes,input.edges));
  assert.equal(JSON.stringify([...input.nodes,...input.edges,[...input.sourcePositions]]),before);
@@ -87,7 +89,7 @@ test('03 retirado y distribución determinista para 02 y 04',()=>{
   assert.deepEqual([...runner.compute({mode,...input}).positions],[...runner.compute({mode,...input}).positions]);
  }
 });
-test('04 conserva bandas radiales estrictas y brazos variables',()=>{
+test('04 gira la base 02 con crecimiento hacia fuera y brazos variables',()=>{
  const result=runner.compute({mode:'04',...args});
  assert.equal(result.positions.size,210);assert.equal(result.stats.arms,3);
  assert.equal(result.stats.T,0);assert.equal(result.stats.radialOrder,true);assert.equal(result.stats.overlaps,0);

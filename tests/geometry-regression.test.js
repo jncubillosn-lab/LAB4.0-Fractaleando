@@ -25,6 +25,12 @@ test('simplification does not accumulate tolerance into a diagonal accepted by t
  assert.equal(router.simplify(points).length,3);
  assert.equal(router.routeShapeValid([points[0],points[2]],[],[],[],true),null);
 });
+test('simplification preserves a short orthogonal dogleg instead of inventing a diagonal',()=>{
+ const points=[{x:0,y:0},{x:40,y:0},{x:40,y:.0398},{x:80,y:.0398}];
+ const simplified=router.simplify(points);
+ assert.deepEqual(simplified,points);
+ assert.notEqual(router.routeShapeValid(simplified,[],[],[],true),null);
+});
 test('compact diagonal branches choose the faces with physical clearance, without artificial crossings',()=>{
  const nodes=[{id:'p1',parent:null,x:0,y:0},
   {id:'a',parent:'p1',x:-110,y:-110},{id:'b',parent:'p1',x:-110,y:110},

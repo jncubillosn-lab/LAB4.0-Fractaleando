@@ -1,9 +1,9 @@
 import {RadialLayout} from './RadialLayout.js';
-import {orderRoots} from '../core/RootOrder.js';
+import {SpiralLayout} from './SpiralLayout.js';
 // Vistas derivadas y deterministas del mismo grafo conceptual P1.
 // Nunca modifica los nodos, los vínculos ni el punto de control de 01.
 // 02: radial acotado; 03 retirado;
-// 04: N brazos espirales (N=#J1), T=0 y bandas radiales estrictas.
+// 04: giro continuo de 02, con radios locales y T=0.
 export class ViewLayouts {
  static MODES=['01','02','04'];
  constructor(){this.last=null;}
@@ -68,162 +68,11 @@ export class ViewLayouts {
   }
   return count;
  }
- compute({mode,nodes,edges,metrics,sourcePositions,topologyReference}){
-  if(mode==='02')return new RadialLayout().compute({nodes,edges,metrics,sourcePositions,topologyReference});
-  if(mode!=='04')throw Error('Vista no reconocida');
-  if(!nodes.length)return {mode,positions:new Map(),rects:new Map(),levels:{},stats:{}};
-  const {levels,disconnected,adj}=ViewLayouts.graphLevels(nodes,edges);
-  const {owner,roots:originalRoots}=ViewLayouts.branches(nodes,adj);
-  const roots=orderRoots(originalRoots,topologyReference);
-  const byId=new Map(nodes.map(n=>[n.id,n]));
-  const positions=new Map(),rects=new Map();
-  const metricsMap=metrics instanceof Map?metrics:new Map(metrics);
-  const source=sourcePositions instanceof Map?sourcePositions:new Map(sourcePositions);
-  const set=(id,p)=>{const m=metricsMap.get(id);if(!m)return;positions.set(id,p);rects.set(id,ViewLayouts.rect(id,p,m));};
-  const makeStats=(extra={})=>({
-   mode,nodes:positions.size,overlaps:ViewLayouts.countOverlaps(rects,14),
-   disconnected:[...disconnected],arms:roots.length,
-   ...extra
-  });
-  const maxLevel=Math.max(...levels.values());
-  const rootIds=roots.map(n=>n.id);
-  const grouped=new Map();
-  for(const n of nodes)if(n.id!=='p1'){
-   const l=levels.get(n.id),branch=owner.get(n.id)||'orphan';
-   if(!grouped.has(l))grouped.set(l,new Map());
-   if(!grouped.get(l).has(branch))grouped.get(l).set(branch,[]);
-   grouped.get(l).get(branch).push(n);
-  }
-  const sectors=[...rootIds];
-  if([...grouped.values()].some(g=>g.has('orphan')))sectors.push('orphan');
-  if(!sectors.length)sectors.push('orphan');
-  const needs=new Map(sectors.map(id=>[id,1]));
-  for(const ring of grouped.values())for(const [id,array] of ring){
-   // La amplitud fija de sector se determina por la densidad máxima.
-   needs.set(id,Math.max(needs.get(id)||1,array.length));
-  }
-  const sum=[...needs.values()].reduce((a,b)=>a+Math.sqrt(b),0);
-  const spans=new Map(),centers=new Map();let cursor=-Math.PI/2;
-  for(const id of sectors){
-   const span=(2*Math.PI)*Math.sqrt(needs.get(id))/sum;
-   spans.set(id,span);centers.set(id,cursor+span/2);cursor+=span;
-  }
-  // Mismo orden dentro de un brazo al avanzar las jerarquías.
-  // Aumenta proximidad entre relacionados evitando dispersión aleatoria.
-  const preorder=new Map();let seq=0;
-  const visited=new Set();
-  const traverse=id=>{
-   if(visited.has(id))return;visited.add(id);preorder.set(id,seq++);
-   const children=nodes.filter(n=>n.parent===id).sort((a,b)=>
-    (source.get(a.id)?.y??0)-(source.get(b.id)?.y??0)||a.id.localeCompare(b.id));
-   for(const c of children)traverse(c.id);
-  };
-  traverse('p1');for(const n of nodes)traverse(n.id);
-  for(const group of grouped.values())for(const list of group.values())
-   list.sort((a,b)=>(preorder.get(a.id)??0)-(preorder.get(b.id)??0));
-  // Barrido baricéntrico dentro de cada brazo: los vecinos de otras
-  // jerarquías influyen en la posición angular, pero nunca se mezclan brazos.
-  // El objetivo es reducir el entrecruzamiento ANTES del enrutamiento PCB.
-  function estimatedAngle(id){
-   const level=levels.get(id),branch=owner.get(id)||'orphan';
-   const list=grouped.get(level)?.get(branch);
-   const center=centers.get(branch)||0,span=spans.get(branch)||0;
-   if(!list?.length)return center;
-   const index=list.findIndex(n=>n.id===id);
-   return center+((index+.5)/list.length-.5)*span;
-  }
-  const originalRank=new Map([...preorder]);
-  function sweep(level,direction){
-   const ring=grouped.get(level);
-   if(!ring)return;
-   for(const list of ring.values()){
-    if(list.length<2)continue;
-    const scores=new Map();
-    for(let k=0;k<list.length;k++){
-     const node=list[k];
-     let numerator=estimatedAngle(node.id)*.7,denominator=.7;
-     for(const other of adj.get(node.id)||[]){
-      if(levels.get(other)!==level+direction)continue;
-      const sameBranch=owner.get(other)===owner.get(node.id);
-      const weight=sameBranch?3:0.8;
-      numerator+=estimatedAngle(other)*weight;denominator+=weight;
-     }
-     scores.set(node.id,numerator/denominator);
-    }
-    list.sort((a,b)=>scores.get(a.id)-scores.get(b.id)||
-     originalRank.get(a.id)-originalRank.get(b.id));
-   }
-  }
-  for(let pass=0;pass<4;pass++){
-   for(let level=2;level<=maxLevel;level++)sweep(level,-1);
-   for(let level=maxLevel-1;level>=1;level--)sweep(level,1);
-  }
-  // Carril angular de cada jerarquía: espaciamiento suficiente para cuadros.
-  const radii=new Map([[0,0]]);
-  const maxHalf=new Map([[0,Math.hypot(metricsMap.get('p1')?.w||108,metricsMap.get('p1')?.h||67)/2]]);
-  for(let l=1;l<=maxLevel;l++){
-   const group=grouped.get(l)||new Map();
-   let required=0;let diag=0;
-   for(const [id,items] of group){
-    const span=spans.get(id)||2*Math.PI;
-    const pad=Math.min(0.25,span*.12);
-    const dims=items.map(n=>metricsMap.get(n.id));
-    const widths=dims.reduce((sum,m)=>sum+Math.hypot(m.w,m.h)*.8+32,0);
-    required=Math.max(required,widths/Math.max(.16,span-2*pad));
-    for(const m of dims)diag=Math.max(diag,Math.hypot(m.w,m.h)/2);
-   }
-   maxHalf.set(l,diag);
-   const prev=radii.get(l-1);
-   const minGap=(maxHalf.get(l-1)||65)+diag+135;
-   radii.set(l,Math.max(required,prev+minGap,220+l*90));
-  }
-  const TAU=2*Math.PI;
-  const spiral=mode==='04';
-  const W=spiral?0.23:0; // progreso angular por jerarquía (radianes)
-  const D=spiral?0.16:0; // variación radial intrajerárquica, relativa al ancho de banda
-  const T=0;
-  // Una separación angular relativa de conceptos entre ramas no se mezcla:
-  // cada brazo es un sector, cuyo eje rota con la jerarquía en espiral.
-  const place=(multiplier=1)=>{
-   positions.clear();rects.clear();
-   set('p1',{x:0,y:0});
-   for(let l=1;l<=maxLevel;l++){
-    const ring=grouped.get(l)||new Map(),r=radii.get(l)*multiplier;
-    const before=l>1?radii.get(l-1)*multiplier:0;
-    const after=l<maxLevel?radii.get(l+1)*multiplier:r+(r-before);
-    const radialBudget=Math.max(0,Math.min(r-before,after-r)-2*(maxHalf.get(l)||0)-65);
-    for(const id of sectors){
-     const items=ring.get(id)||[];
-     const span=spans.get(id),center=centers.get(id);
-     const pad=Math.min(.20,span*.10);
-     for(let j=0;j<items.length;j++){
-      const u=(j+.5)/items.length-.5;
-      const angle=center+u*(span-2*pad)+W*(l-1);
-      const radius=spiral?r+u*D*radialBudget:r;
-      set(items[j].id,{x:Math.cos(angle)*radius,y:Math.sin(angle)*radius});
-     }
-    }
-   }
-  };
-  // Agrandar radios, nunca reordenar a posteriori ni intercambiar puertos.
-  // Respeta exactamente r(Jn) para 03 y bandas disjuntas para 04.
-  let multiplier=1;
-  for(let tries=0;tries<10;tries++){
-   place(multiplier);
-   if(ViewLayouts.countOverlaps(rects,14)===0)break;
-   multiplier*=1.18;
-  }
-  const radialExtremes={};
-  for(const [id,p] of positions){
-   const l=levels.get(id)||0;
-   const d=Math.hypot(p.x,p.y);
-   if(!radialExtremes[l])radialExtremes[l]={min:d,max:d};
-   else{radialExtremes[l].min=Math.min(radialExtremes[l].min,d);radialExtremes[l].max=Math.max(radialExtremes[l].max,d);}
-  }
-  const layers=Object.keys(radialExtremes).map(Number).sort((a,b)=>a-b);
-  const radialOrder=layers.every((l,i)=>i===0||radialExtremes[layers[i-1]].max<radialExtremes[l].min-1e-3);
-  return {mode,positions,rects,levels:Object.fromEntries(levels),
-   stats:makeStats({radialOrder,radialExtremes,
-    W,D,T,radiusByLevel:Object.fromEntries([...radii].map(([k,r])=>[k,r*multiplier]))})};
+ compute({mode,baseLayout,...input}){
+  if(mode!=='02'&&mode!=='04')throw Error('Vista no reconocida');
+  const base=baseLayout||new RadialLayout().compute(input);
+  if(mode==='02')return base;
+  if(base.stats.graphSignature!==RadialLayout.signature(input.nodes,input.edges))throw Error('La base 02 pertenece a otro grafo.');
+  return new SpiralLayout().compute({base,...input});
  }
 }

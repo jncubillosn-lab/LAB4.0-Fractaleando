@@ -14,12 +14,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Comprobaciones sin dependencias externas
+      - run: npm ci
+      - name: Comprobar grafo, geometría y motor
         run: npm test
   browser:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npm run build
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -29,6 +35,8 @@ jobs:
           command -v google-chrome
           google-chrome --version
       - name: Probar la página modular real y el worker
+        env:
+          P1_SITE_ROOT: _site
         run: |
           python tests/pages_e2e.py
           python tests/views_e2e.py
@@ -49,16 +57,19 @@ jobs:
     steps:
       - name: Descargar la versión aprobada
         uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
       - name: Preparar únicamente los archivos del sitio estático
         run: |
-          mkdir -p _site
-          cp index.html .nojekyll _site/
-          cp -R css js _site/
+          npm run build
           test -f _site/index.html
           test -f _site/js/geometry/ViewLayouts.js
           test -f _site/js/views/DerivedViews.js
+          test -f _site/js/vendor/libavoid.wasm
           grep -q 'data-view="04"' _site/index.html
           grep -q 'id="themeBtn"' _site/index.html
       - name: Empaquetar sitio

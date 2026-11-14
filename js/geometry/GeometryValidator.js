@@ -7,7 +7,8 @@ export class GeometryValidator {
  isPortOnRect(p,r){
   if(!p||!['top','right','bottom','left'].includes(p.side))return false;
   if(![p.x,p.y,p.sx,p.sy].every(Number.isFinite))return false;
-  const stub=this.router.portStub;
+  const stub=p.stub??this.router.portStub;
+  if(!Number.isFinite(stub)||stub<=0||stub>this.router.portStub)return false;
   if(p.side==='top'||p.side==='bottom')return Math.abs(p.y-(p.side==='top'?r.t:r.b))<.12&&p.x>r.l+3&&p.x<r.r-3&&
    Math.abs(p.sx-p.x)<.12&&Math.abs(p.sy-p.y-(p.side==='top'?-stub:stub))<.12;
   return Math.abs(p.x-(p.side==='left'?r.l:r.r))<.12&&p.y>r.t+3&&p.y<r.b-3&&
