@@ -1,6 +1,8 @@
 // Registro topológico independiente de la geometría métrica de P1.
 // Conserva órdenes y cruces, no coordenadas ni distancias absolutas.
 // No modifica rutas ni cuadros: describe, compara y valida puntos de control.
+import {segmentIntersection} from '../geometry/SegmentGeometry.js';
+
 export class TopologyRegister {
  constructor({edgeKey}) {
   this.edgeKey=edgeKey;
@@ -114,8 +116,6 @@ export class TopologyRegister {
    }
   }
   const crossEvents=new Map(keys.map(k=>[k,[]]));
-  const between=(v,a,b)=>v>Math.min(a,b)+.05&&v<Math.max(a,b)-.05;
-  const near=(v,a,b)=>v>=Math.min(a,b)-.05&&v<=Math.max(a,b)+.05;
   const sortedPair=(a,b)=>a<b?[a,b]:[b,a];
   // Cada cruce se reconoce por las dos rutas y por su posición relativa
   // a lo largo de cada una; no se guarda la coordenada del cruce.
@@ -124,12 +124,11 @@ export class TopologyRegister {
    for(let j=0;j<i;j++){
     const v=segments[j];
     if(u.key===v.key||u.h===v.h)continue;
-    const x=u.h?v.a.x:u.a.x,y=u.h?u.a.y:v.a.y;
-    if(!near(x,u.a.x,u.b.x)||!near(x,v.a.x,v.b.x)||
-       !near(y,u.a.y,u.b.y)||!near(y,v.a.y,v.b.y))continue;
+    const point=segmentIntersection(u.a,u.b,v.a,v.b);
+    if(!point)continue;
+    const {x,y,t}=point;
     // Los extremos no se interpretan como cruces entre rutas.
-    if(!between(x,u.a.x,u.b.x)&&u.h || !between(y,u.a.y,u.b.y)&&!u.h ||
-       !between(x,v.a.x,v.b.x)&&v.h || !between(y,v.a.y,v.b.y)&&!v.h)continue;
+    if(Math.min(t,1-t)*u.len<=.05||Math.min(point.u,1-point.u)*v.len<=.05)continue;
     const [a,b]=sortedPair(u.key,v.key);
     const pairKey=JSON.stringify([a,b]);
     const old=crossingPairs.get(pairKey)||{a,b,count:0,over:null};
@@ -196,7 +195,7 @@ export class TopologyRegister {
    crossingOrders,neighbors,pending:keys.filter(k=>!routed.has(k))};
  }
  compare(reference,candidate){
-  const issues=[],counts={nodeOrder:0,portSide:0,portOrder:0,crossing:0,crossingOrder:0,neighbor:0,unresolved:0};
+  const issues=[],counts={portOrder:0,crossing:0,crossingOrder:0,unresolved:0};
   const add=(kind,detail)=>{
    counts[kind]++;
    if(issues.length<24)issues.push({kind,...detail});
@@ -213,27 +212,15 @@ export class TopologyRegister {
    for(const p of prior){
     const next=curr.get(p.edge);
     if(!next){add('unresolved',{edge:p.edge,node:id,reason:'missing-port'});continue;}
-    if(next.side!==p.side)add('portSide',{edge:p.edge,node:id,was:p.side,now:next.side});
     if(next.id!==p.id)add('portOrder',{edge:p.edge,node:id,was:p.id,now:next.id,reason:'port-id-changed'});
    }
    const oldOrder=prior.map(p=>p.edge).filter(k=>curr.has(k));
    const newOrder=now.map(p=>p.edge).filter(k=>oldOrder.includes(k));
-   if(oldOrder.join('\u0000')!==newOrder.join('\u0000'))add('portOrder',{node:id,was:oldOrder,now:newOrder});
-  }
-  // El orden entre bandas de conceptos tiene significado. Conceptos inicialmente
-  // alineados entre sí quedan libres de separarse, pero no pueden invertir
-  // una relación izquierda/derecha o arriba/abajo previamente definida.
-  for(const axis of ['x','y']){
-   const old=reference.nodeOrders[axis],now=candidate.nodeOrders[axis];
-   const ranks=new Map(now.flatMap((g,i)=>g.map(id=>[id,i])));
-   for(let a=0;a<old.length;a++){
-    for(let b=a+1;b<old.length;b++){
-     for(const left of old[a])for(const right of old[b]){
-      if(!ranks.has(left)||!ranks.has(right))continue;
-      if(ranks.get(left)>=ranks.get(right))add('nodeOrder',{axis,first:left,second:right});
-     }
-    }
-   }
+   // N1.1 permite rotar el inicio del recorrido horario; N1.2 permite
+   // cambiar de cara. Las coordenadas no definen la topología.
+   const start=newOrder.indexOf(oldOrder[0]);
+   if(oldOrder.length!==newOrder.length||oldOrder.some((key,i)=>newOrder[(start+i)%newOrder.length]!==key))
+    add('portOrder',{node:id,was:oldOrder,now:newOrder});
   }
   const pairKey=o=>JSON.stringify([o.a,o.b]);
   const oldPairs=new Map(reference.crossings.filter(c=>common.has(c.a)&&common.has(c.b)).map(c=>[pairKey(c),c]));
@@ -251,20 +238,8 @@ export class TopologyRegister {
    const now=(candidate.crossingOrders[key]||[]).filter(k=>common.has(k));
    if(prior.join('\u0000')!==now.join('\u0000'))add('crossingOrder',{edge:key,was:prior,now});
   }
-  // No desaparecen silenciosamente relaciones de carril registradas. La
-  // ausencia se informa como pérdida de vecindad, no se convierte en certeza.
-  const tagged=r=>JSON.stringify([r.a,r.b,r.axis,r.side]);
-  const existing=new Set(candidate.neighbors.filter(r=>common.has(r.a)&&common.has(r.b)).map(tagged));
-  const prior=new Set(reference.neighbors.filter(r=>common.has(r.a)&&common.has(r.b)).map(tagged));
-  for(const r of reference.neighbors){
-   if(!common.has(r.a)||!common.has(r.b))continue;
-   if(!existing.has(tagged(r)))add('neighbor',{a:r.a,b:r.b,axis:r.axis,side:r.side,reason:'lost-or-inverted'});
-  }
-  for(const r of candidate.neighbors){
-   if(!common.has(r.a)||!common.has(r.b))continue;
-   if(!prior.has(tagged(r))&&prior.has(JSON.stringify([r.a,r.b,r.axis,-r.side])))
-    add('neighbor',{a:r.a,b:r.b,axis:r.axis,side:r.side,reason:'inverted'});
-  }
+  // nodeOrders y neighbors permanecen como diagnóstico del formato v1.
+  // No se imponen como invariantes de una redistribución (N1.1/N1.2).
   const total=Object.values(counts).reduce((a,b)=>a+b,0);
   return {valid:total===0,issueCount:total,issues,counts,compared:true};
  }

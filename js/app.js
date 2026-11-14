@@ -123,11 +123,10 @@ window.P1_PLANO_DIAGNOSTICO=diag; // lectura técnica, no herramienta de interfa
 const validator=new GeometryValidator({router,rectOverlap});
 const renderer=new SvgRenderer({linesEl,sEl,router,edgeKey:e=>edgeKey(e)});
 const edgeKey=e=>[e.from,e.to].sort().map(encodeURIComponent).join('|');
-const derived=new DerivedViews({state,plane,camera,linesEl,nodesEl,sEl,router,validator,
- edgeKey,readDepthMap,fit,geometry,toast});
-
 // Registro relacional paralelo al punto de control geométrico.
 const topology=new TopologyRegister({edgeKey});
+const derived=new DerivedViews({state,plane,camera,linesEl,nodesEl,sEl,router,validator,
+ edgeKey,readDepthMap,fit,geometry,toast,referenceTopology:()=>topology.reference});
 let stagedTopology=null;
 let guardedMove=null;
 // Solo los arrastres manuales son transacciones geométricas estrictas.
@@ -678,6 +677,10 @@ themeButton.onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'
 function exportColor(name){return document.documentElement.dataset.theme==='dark'?
  (name==='paper'?'#171917':'#e9e9e4'):(name==='paper'?'#f7f6f1':'#1c1c1b');}
 function exportStyles(){return EXPORT_STYLE.replaceAll('#f7f6f1',exportColor('paper')).replaceAll('#1c1c1b',exportColor('ink'));}
+function exportValidationNotice(){
+ const notice=derived.exportNotice();
+ return notice?`<desc>${notice}</desc><g><rect x="0" y="0" width="100%" height="34" fill="${exportColor('paper')}"/><text x="16" y="23" fill="${exportColor('ink')}" font-family="Arial,sans-serif" font-size="14">${notice}</text></g>`:'';
+}
 function exportCamera(node=camera){
  const text=new XMLSerializer().serializeToString(node);
  return text.replaceAll('fill="var(--paper)"','fill="'+exportColor('paper')+'"');
@@ -697,7 +700,7 @@ function makeExportSvg(outputW,outputH){
  const scale=Math.min(outputW/sourceW,outputH/sourceH);
  const x=(outputW-sourceW*scale)/2,y=(outputH-sourceH*scale)/2;
  const picture=exportCamera();
- return `<svg xmlns="http://www.w3.org/2000/svg" width="${outputW}" height="${outputH}" viewBox="0 0 ${outputW} ${outputH}"><rect width="${outputW}" height="${outputH}" fill="${exportColor('paper')}"/><style>${exportStyles()}</style><g transform="translate(${x} ${y}) scale(${scale})">${picture}</g></svg>`;
+ return `<svg xmlns="http://www.w3.org/2000/svg" width="${outputW}" height="${outputH}" viewBox="0 0 ${outputW} ${outputH}"><rect width="${outputW}" height="${outputH}" fill="${exportColor('paper')}"/><style>${exportStyles()}</style><g transform="translate(${x} ${y}) scale(${scale})">${picture}</g>${exportValidationNotice()}</svg>`;
 }
 function downloadBlob(filename,blob){
  const url=URL.createObjectURL(blob),a=document.createElement('a');
@@ -739,7 +742,7 @@ function makeCompletePngSvg(bounds){
  const offsetY=(PNG_MARGIN-bbox.y)*scale;
  // En una exportación a alta densidad el grosor de línea se escala junto al texto.
  const style=exportStyles().replace(/vector-effect\s*:\s*non-scaling-stroke\s*;?/g,'');
- return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="${width}" height="${height}" fill="${exportColor('paper')}"/><style>${style}</style><g transform="translate(${offsetX.toFixed(2)} ${offsetY.toFixed(2)}) scale(${scale})">${picture}</g></svg>`;
+ return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="${width}" height="${height}" fill="${exportColor('paper')}"/><style>${style}</style><g transform="translate(${offsetX.toFixed(2)} ${offsetY.toFixed(2)}) scale(${scale})">${picture}</g>${exportValidationNotice()}</svg>`;
 }
 $('pngBtn').onclick=async()=>{
  const btn=$('pngBtn');if(btn.disabled)return;

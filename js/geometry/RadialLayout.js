@@ -1,6 +1,8 @@
 // Pure bounded radial layout. No edits to the graph or to 01 coordinates.
 // A finite search may fail; audit() is independent of the search and decides
 // acceptance. Never enlarge the edge-distance limit to make a drawing pass.
+import {orderRoots} from '../core/RootOrder.js';
+
 export class RadialLayout {
  static gap(a,b){
   return Math.hypot(Math.max(0,Math.abs(a.x-b.x)-(a.w+b.w)/2),
@@ -55,7 +57,7 @@ export class RadialLayout {
    complete,centered,overlaps:collisions.length,collisions,distanceViolations,outwardViolations,sectorViolations,orderViolations,
    baseHeight,maxAllowedGap:2*baseHeight,maxGap};
  }
- compute({nodes,edges,metrics,sourcePositions}){
+ compute({nodes,edges,metrics,sourcePositions,topologyReference}){
   if(!nodes.length)return {mode:'02',positions:new Map(),rects:new Map(),levels:{},stats:{nodes:0,overlaps:0,constraintsValid:true}};
   const source=sourcePositions instanceof Map?sourcePositions:new Map(sourcePositions||[]);
   metrics=metrics instanceof Map?metrics:new Map(metrics);
@@ -67,7 +69,7 @@ export class RadialLayout {
   nodes.forEach((n,i)=>{if(i!==root&&parent[i]>=0)children[parent[i]].push(i);});
   const order=(a,b)=>(source.get(nodes[a].id)?.y??0)-(source.get(nodes[b].id)?.y??0)||nodes[a].id.localeCompare(nodes[b].id);
   children.forEach(c=>c.sort(order));
-  children[root].sort((a,b)=>(nodes[a].branch??0)-(nodes[b].branch??0)||order(a,b));
+  children[root]=orderRoots(children[root].map(i=>nodes[i]),topologyReference).map(n=>byId.get(n.id));
   if(nodes[root].parent)throw Error('El núcleo p1 no puede tener padre.');
   const auditNodes=[...nodes].sort((a,b)=>order(byId.get(a.id),byId.get(b.id)));
   const roots=children[root],owner=new Map(),levels={},disconnected=[],weight=new Map(),visited=new Set();

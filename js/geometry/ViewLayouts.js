@@ -1,4 +1,5 @@
 import {RadialLayout} from './RadialLayout.js';
+import {orderRoots} from '../core/RootOrder.js';
 // Vistas derivadas y deterministas del mismo grafo conceptual P1.
 // Nunca modifica los nodos, los vínculos ni el punto de control de 01.
 // 02: radial acotado; 03 retirado;
@@ -67,12 +68,13 @@ export class ViewLayouts {
   }
   return count;
  }
- compute({mode,nodes,edges,metrics,sourcePositions}){
-  if(mode==='02')return new RadialLayout().compute({nodes,edges,metrics,sourcePositions});
+ compute({mode,nodes,edges,metrics,sourcePositions,topologyReference}){
+  if(mode==='02')return new RadialLayout().compute({nodes,edges,metrics,sourcePositions,topologyReference});
   if(mode!=='04')throw Error('Vista no reconocida');
   if(!nodes.length)return {mode,positions:new Map(),rects:new Map(),levels:{},stats:{}};
   const {levels,disconnected,adj}=ViewLayouts.graphLevels(nodes,edges);
-  const {owner,roots}=ViewLayouts.branches(nodes,adj);
+  const {owner,roots:originalRoots}=ViewLayouts.branches(nodes,adj);
+  const roots=orderRoots(originalRoots,topologyReference);
   const byId=new Map(nodes.map(n=>[n.id,n]));
   const positions=new Map(),rects=new Map();
   const metricsMap=metrics instanceof Map?metrics:new Map(metrics);

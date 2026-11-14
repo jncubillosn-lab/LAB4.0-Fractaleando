@@ -2,13 +2,14 @@ import {RadialLayout} from '../geometry/RadialLayout.js';
 import {ViewLayouts} from '../geometry/ViewLayouts.js';
 import {SvgRenderer} from '../ui/SvgRenderer.js';
 import {TopologyRegister} from '../core/TopologyRegister.js';
+import {checkDerivedTopology} from '../core/DerivedTopology.js';
 import {computeInitialRoutes} from '../workers/initial-route.worker.js';
 
 // Vistas derivadas read-only: conservan el grafo y el plano 01.
-// Cada vista tiene su propio punto de control y registro topológico.
+// Cada vista tiene su punto de control y comparte la referencia topológica 01.
 export class DerivedViews {
- constructor({state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast}){
-  Object.assign(this,{state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast});
+ constructor({state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast,referenceTopology}){
+  Object.assign(this,{state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast,referenceTopology});
   this.layoutEngine=new ViewLayouts();
   this.cache=new Map();this.mode='01';this.version=0;
   this.pending=null;this.staged={};this.rejected=null;
@@ -23,6 +24,7 @@ export class DerivedViews {
   this.graphIdentity=null;
  }
  sourceKey(){return JSON.stringify([...this.plane.positions].sort(([a],[b])=>a.localeCompare(b)).map(([id,p])=>[id,Math.round(p.x*100)/100,Math.round(p.y*100)/100]));}
+ referenceKey(){return JSON.stringify(this.referenceTopology?.()??null);}
  graphKey(){
   return JSON.stringify({nodes:this.state.nodes.map(n=>[n.id,n.text,n.width,n.branch,n.parent]),
    edges:this.state.edges.map(e=>[e.from,e.to,e.kind||''])});
@@ -134,7 +136,7 @@ export class DerivedViews {
    this.toast('La geometría original todavía se está calculando.');
    return;
   }
-  const key=this.graphKey(),identity=key+this.sourceKey();
+  const key=this.graphKey(),identity=key+this.sourceKey()+this.referenceKey();
   if(this.graphIdentity!==identity){
    this.cache.clear();this.graphIdentity=identity;
   }
@@ -147,7 +149,7 @@ export class DerivedViews {
   let layout;
   try{
    layout=await this.computeLayout({mode,nodes:this.state.nodes,edges:this.state.edges,
-    metrics,sourcePositions:this.plane.positions});
+    metrics,sourcePositions:this.plane.positions,topologyReference:this.referenceTopology?.()});
   }catch(error){
    if(token!==this.version)return;
    this.derivedLines.replaceChildren();this.derivedNodes.replaceChildren();
@@ -184,18 +186,13 @@ export class DerivedViews {
      return pr(a)-pr(b)||a.__index-b.__index;
     });
    const audit=this.validator.audit([...layout.rects.values()],[...routes.values()]);
-   const topology=new TopologyRegister({edgeKey:this.edgeKey});
-   const signature=topology.capture({positions:layout.positions,rects:layout.rects,routes,edges:ordered});
-   const stored=this.staged[mode]?.topology;
-   if(stored&&TopologyRegister.validShape(stored)&&stored.edges.join('|')===signature.edges.join('|')){
-    topology.restore(stored);
-   }
-   const report=topology.observe(signature);
+   const {topology,report}=checkDerivedTopology({reference:this.referenceTopology?.(),edgeKey:this.edgeKey,
+    positions:layout.positions,rects:layout.rects,routes,edges:ordered});
    const unfinished=[...routes.values()].filter(r=>!r?.points).length;
    const valid=audit.boxes===0&&audit.invalid===0&&audit.portsRepeated===0&&
      layout.stats.overlaps===0&&layout.stats.radialOrder!==false&&
-     layout.stats.constraintsValid!==false&&report.valid&&unfinished===0&&routes.size===this.state.edges.length;
-   const snapshot={mode,layout,routes,ordered,topology,audit,report,unfinished,valid,calculations:result.calculations};
+     layout.stats.constraintsValid!==false&&report.valid&&report.compared&&unfinished===0&&routes.size===this.state.edges.length;
+   const snapshot={mode,identity,layout,routes,ordered,topology,audit,report,unfinished,valid,budgetExceeded:result.budgetExceeded,calculations:result.calculations};
    this.cache.set(mode,snapshot);this.current=snapshot;
    this.draw(snapshot);
    this.fit();
@@ -259,22 +256,33 @@ export class DerivedViews {
   const warning=problems>0||!current.valid;
   this.status(prefix+' · '+(warning?
     ('En revisión: '+current.unfinished+' pendientes, '+current.audit.invalid+
-     ' rutas inválidas, '+(current.report.issueCount||0)+' diferencias topológicas.'):
-    ('Rutas completas · '+current.audit.crossings+' cruces registrados · '+s.arms+' brazos J1'+
+     ' rutas inválidas, '+(current.report.issueCount||0)+' diferencias topológicas.'+
+     (current.budgetExceeded?' Se alcanzó el límite de cálculo.':'')):
+    ('Geometría y topología comprobadas · '+current.audit.crossings+' cruces · validación normativa pendiente · '+s.arms+' brazos J1'+
      (this.mode==='02'?' · separación máxima '+s.maxGap.toFixed(1)+' / '+s.maxAllowedGap.toFixed(1)+' px (2H)':''))),warning);
   const footer=document.getElementById('footHint');
-  if(footer)footer.textContent='Vista '+this.mode+' · '+drawn+' conexiones visibles · control propio';
+  if(footer)footer.textContent='Vista '+this.mode+' · '+drawn+' conexiones visibles · referencia 01';
+  const scope=document.getElementById('scopeInfo'),stats=document.getElementById('stats');
+  if(scope)scope.textContent=shown.size+' conceptos visibles · '+drawn+' vínculos trazados · '+pending+' pendientes';
+  if(stats)stats.textContent=this.state.nodes.length+' conceptos · '+this.state.edges.length+' vínculos · '+current.unfinished+' rutas pendientes';
+ }
+ exportNotice(){
+  if(this.mode==='01')return '';
+  const c=this.current;
+  if(!c)return 'BORRADOR · vista '+this.mode+' sin resultado aprobado';
+  if(!c.valid)return 'EN REVISIÓN · vista '+this.mode+' · '+c.unfinished+' rutas pendientes · '+(c.report.issueCount||0)+' diferencias topológicas';
+  return 'BORRADOR · vista '+this.mode+' · validación normativa pendiente';
  }
  // Recuperación segura de una vista previamente calculada: mismos datos y
  // geometría de 01, mismas posiciones deterministas, DRC independiente y
  // firma de relaciones intacta. No acepta archivos que inventan caminos.
  tryRestore(mode,graphKey){
   const stored=this.staged[mode];
-  if(!stored||stored.graphKey!==graphKey||stored.sourceKey!==this.sourceKey()||
+  if(!stored||stored.graphKey!==graphKey||stored.sourceKey!==this.sourceKey()||stored.referenceKey!==this.referenceKey()||
      !Array.isArray(stored.positions)||!Array.isArray(stored.routes)||
      !TopologyRegister.validShape(stored.topology))return null;
   const layout=this.layoutEngine.compute({mode,nodes:this.state.nodes,edges:this.state.edges,
-   metrics:this.metrics(),sourcePositions:this.plane.positions});
+   metrics:this.metrics(),sourcePositions:this.plane.positions,topologyReference:this.referenceTopology?.()});
   if(layout.stats.overlaps||layout.stats.radialOrder===false||layout.stats.constraintsValid===false)return null;
   const saved=new Map(stored.positions.map(p=>[p.id,p]));
   if(saved.size!==layout.positions.size)return null;
@@ -301,18 +309,18 @@ export class DerivedViews {
    .sort((a,b)=>priority(a)-priority(b)||a.__index-b.__index);
   const audit=this.validator.audit([...layout.rects.values()],[...routes.values()]);
   if(audit.invalid||audit.boxes||audit.portsRepeated||audit.drawn!==edges.size)return null;
-  const topology=new TopologyRegister({edgeKey:this.edgeKey});
-  if(!topology.restore(stored.topology))return null;
-  const now=topology.capture({positions:layout.positions,rects:layout.rects,routes,edges:ordered});
-  const report=topology.observe(now);
-  if(!report.valid)return null;
-  return {mode,layout,routes,ordered,topology,audit,report,
+  const {topology,report}=checkDerivedTopology({reference:this.referenceTopology?.(),edgeKey:this.edgeKey,
+   positions:layout.positions,rects:layout.rects,routes,edges:ordered});
+  if(!report.valid||!report.compared)return null;
+  return {mode,identity:graphKey+this.sourceKey()+this.referenceKey(),layout,routes,ordered,topology,audit,report,
    unfinished:0,valid:true,calculations:0,restored:true};
  }
  exportData(){
   const output={};
-  for(const [mode,c] of this.cache)if(c.valid)
-   output[mode]={graphKey:this.graphKey(),sourceKey:this.sourceKey(),
+  const identity=this.graphKey()+this.sourceKey()+this.referenceKey();
+  for(const [mode,c] of this.cache)if(c.valid&&c.identity===identity)
+   output[mode]={graphKey:this.graphKey(),sourceKey:this.sourceKey(),referenceKey:this.referenceKey(),
+    validation:{geometry:true,topology:true,normative:'pending-definition',pendingDefinitions:['D1','D2','D3','D4']},
     topology:c.topology.reference,
     positions:[...c.layout.positions].map(([id,p])=>({id,x:p.x,y:p.y})),
     routes:[...c.routes].map(([key,r])=>({key,points:r.points,fromPort:r.fromPort,toPort:r.toPort}))};
@@ -327,7 +335,7 @@ export class DerivedViews {
  diagnostic(){
   const value=this.current;
   return {mode:this.mode,cached:[...this.cache.keys()],rejected:this.rejected,
-   current:value?{...value.layout.stats,valid:value.valid,audit:value.audit,
+   current:value?{...value.layout.stats,valid:value.valid,normative:'pending-definition',budgetExceeded:Boolean(value.budgetExceeded),audit:value.audit,
     topology:value.topology.status(),pending:value.unfinished,restored:Boolean(value.restored),pendingKeys:[...value.routes].filter(([,r])=>!r?.points).map(([key])=>key),calculations:value.calculations}:null};
  }
 }

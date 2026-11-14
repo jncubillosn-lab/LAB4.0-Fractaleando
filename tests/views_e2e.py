@@ -6,7 +6,7 @@ ROOT=Path(__file__).resolve().parents[1]
 class Quiet(http.server.SimpleHTTPRequestHandler):
  def log_message(self,*args):pass
  def __init__(self,*args,**kwargs):super().__init__(*args,directory=str(ROOT),**kwargs)
-with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
+with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
  threading.Thread(target=srv.serve_forever,daemon=True).start()
  with sync_playwright() as p:
   browser=p.chromium.launch(**({'executable_path':os.environ['P1_BROWSER_PATH']} if os.environ.get('P1_BROWSER_PATH') else {'channel':'chrome'}), headless=True)
@@ -41,7 +41,11 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
    if mode in ('03','04'):assert result['radialOrder'],result
    assert result['audit']['boxes']==0,result
    assert result['audit']['invalid']==0,result
-   assert result['valid'] and result['pending']==0,result
+   # Regression: complete-looking 04 must not certify its own changed topology.
+   assert not result['valid'] and result['topology']['compared'],result
+   assert result['topology']['counts']['crossing']>0,result
+   assert result['audit']['drawn']+result['pending']==217,result
+   assert result['topology']['referenceEdges']==217 and result['topology']['crossings']==71,result
    assert page.locator('#derivedLines circle').count()==result['audit']['crossings'],result
    assert result['topology']['hasReference'],result
    # El filtro de profundidad no vuelve a calcular el enrutamiento.
@@ -54,6 +58,9 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
   with page.expect_download() as exp_svg:page.locator('#svgBtn').click()
   svg=Path(exp_svg.value.path()).read_text(encoding='utf8')
   assert '#171917' in svg and '#e9e9e4' in svg
+  assert 'EN REVISIÓN' in svg
+  with page.expect_download() as full_json:page.locator('#jsonBtn').click()
+  assert '04' not in json.loads(Path(full_json.value.path()).read_text(encoding='utf8'))['derivedViews']
 
   bg=page.locator('body').evaluate('(el)=>getComputedStyle(el).backgroundColor')
   assert bg=='rgb(23, 25, 23)',bg
@@ -71,26 +78,31 @@ with socketserver.TCPServer(('127.0.0.1',0),Quiet) as srv:
   page.locator('[data-view="04"]').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().current!==null',timeout=60000)
   four=page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current')
+  print('CUATRO_ANTES_DE_VALIDAR',json.dumps(four,ensure_ascii=False)[:2200],flush=True)
   assert four['arms']==4 and four['nodes']==5 and four['radialOrder'] and four['overlaps']==0 and four['valid'],four
-  # Four-arm radial must actually route and validate, not just reject.
+  # Local radial placement succeeds, but its routes still add crossings.
+  # This known unresolved case must not be certified against itself.
   page.locator('[data-view="02"]').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().current?.mode==="02"',timeout=60000)
   radial=page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current')
-  assert radial['valid'] and radial['constraintsValid'],radial
+  assert radial['constraintsValid'] and not radial['valid'],radial
+  assert radial['topology']['compared'] and radial['topology']['counts']['crossing']>0,radial
   assert radial['maxGap']<=radial['maxAllowedGap']+.001 and radial['arms']==4,radial
   assert radial['pending']==0 and radial['audit']['invalid']==0,radial
   assert not page.locator('[data-view="03"]').count()
-  # Persistencia completa: recuperar vista válida sin computar rutas nuevas.
+  # Positive persistence case: the four-arm 04 is compatible with 01.
   page.locator('[data-view="01"]').click()
   with page.expect_download() as dl:page.locator('#jsonBtn').click()
   filename=dl.value.path()
   saved=json.loads(Path(filename).read_text(encoding='utf8'))
-  assert saved['derivedViews']['02']['topology']['schema']=='p1.topology.v1'
+  assert '02' not in saved['derivedViews']
+  assert saved['derivedViews']['04']['topology']['schema']=='p1.topology.v1'
+  assert saved['derivedViews']['04']['validation']['normative']=='pending-definition'
   assert '03' not in saved['derivedViews']
   page.locator('#fileInput').set_input_files(filename)
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===4',timeout=60000)
-  page.locator('[data-view="02"]').click()
-  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().current?.mode==="02"',timeout=60000)
+  page.locator('[data-view="04"]').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().current?.mode==="04"',timeout=60000)
   restored=page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current')
   assert restored['valid'] and restored['restored'] and restored['calculations']==0,restored
 
