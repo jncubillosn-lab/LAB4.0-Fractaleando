@@ -69,16 +69,19 @@ export function assignOrderedPorts({nodes,edges,positions,rects,reference,spacin
 
 // Pair the endpoints, rather than selecting their coordinates independently.
 // A line of sight may replace two elbows only if both perimeter cycles survive.
-export function alignStraightPorts({edges,rects,ports}){
+export function portCycle({edges,ports,id}){
  const sideRank={top:0,right:1,bottom:2,left:3};
- const cycle=id=>edges.flatMap((e,i)=>{
+ return edges.flatMap((e,i)=>{
   if(e.from!==id&&e.to!==id)return [];
   const p=ports.get(i+':'+id);return p?[{edge:edgeKey(e),p}]:[];
  }).sort((a,b)=>sideRank[a.p.side]-sideRank[b.p.side]||
   (['bottom','left'].includes(a.p.side)?-1:1)*
   ((['top','bottom'].includes(a.p.side)?a.p.x:a.p.y)-(['top','bottom'].includes(b.p.side)?b.p.x:b.p.y)))
   .map(e=>e.edge);
- const sameCycle=(a,b)=>a.length===b.length&&a.every((key,i)=>key===b[(i+b.indexOf(a[0]))%b.length]);
+}
+export const samePortCycle=(a,b)=>a.length===b.length&&a.every((key,i)=>key===b[(i+b.indexOf(a[0]))%b.length]);
+export function alignStraightPorts({edges,rects,ports}){
+ const cycle=id=>portCycle({edges,ports,id}),sameCycle=samePortCycle;
  const available=(id,p,index)=>edges.every((e,i)=>{
   if(i===index||e.from!==id&&e.to!==id)return true;
   const other=ports.get(i+':'+id);return !other||Math.hypot(p.x-other.x,p.y-other.y)>=8;

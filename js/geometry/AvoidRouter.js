@@ -1,4 +1,6 @@
-import {assignOrderedPorts} from './OrderedPorts.js';
+import {assignOrderedPorts,portAt,portCycle,samePortCycle} from './OrderedPorts.js';
+import {portInset} from './PortPolicy.js';
+import {routeFacingLink} from './FacingPorts.js';
 import {PcbRouter} from './PcbRouter.js';
 import {GeometryValidator} from './GeometryValidator.js';
 
@@ -10,8 +12,9 @@ async function browserRuntime(){
  return runtime;
 }
 
-export async function computeAvoidRoutes({nodes,edges,positions,rects,levels,topologyReference},{load=browserRuntime}={}){
+export async function computeAvoidRoutes({nodes,edges,positions,rects,levels,topologyReference,repairAttempts=20},{load=browserRuntime,onProgress=()=>{}}={}){
  const A=await load(),positionMap=new Map(positions),rectMap=new Map(rects),byId=new Map(nodes.map(n=>[n.id,n]));
+ const compactRecovery=repairAttempts<20;
  const priority=e=>Math.min(levels[e.from]??1000,levels[e.to]??1000)*10+(e.kind==='transversal'?5:0)+(Math.abs((levels[e.from]??1000)-(levels[e.to]??1000))>1?2:0);
  const ordered=edges.map((e,i)=>({...e,__index:i})).sort((a,b)=>priority(a)-priority(b)||a.__index-b.__index);
  const ports=assignOrderedPorts({nodes,edges:ordered,positions:positionMap,rects:rectMap,reference:topologyReference});
@@ -22,10 +25,14 @@ export async function computeAvoidRoutes({nodes,edges,positions,rects,levels,top
  const point=(x,y)=>keep(new A.Point(x,y));
  try{
   for(const [name,value] of Object.entries({segmentPenalty:10,crossingPenalty:0,fixedSharedPathPenalty:0,
-   idealNudgingDistance:8,shapeBufferDistance:9}))router.setRoutingParameter(A.RoutingParameter[name],value);
+   idealNudgingDistance:compactRecovery?4:8,shapeBufferDistance:9}))router.setRoutingParameter(A.RoutingParameter[name],value);
   router.setRoutingOption(A.RoutingOption.nudgeOrthogonalTouchingColinearSegments,true);
   router.setRoutingOption(A.RoutingOption.nudgeOrthogonalSegmentsConnectedToShapes,false);
   router.setRoutingOption(A.RoutingOption.penaliseOrthogonalSharedPathsAtConnEnds,false);
+  if(compactRecovery){
+   router.setRoutingOption(A.RoutingOption.performUnifyingNudgingPreprocessingStep,false);
+   router.setRoutingOption(A.RoutingOption.nudgeSharedPathsWithCommonEndPoint,false);
+  }
   const shapes=new Map();
   for(const r of rectMap.values())shapes.set(r.id,new A.ShapeRef(router,keep(new A.Rectangle(point(r.l,r.t),point(r.r,r.b)))));
   for(const [i,e] of ordered.entries()){
@@ -41,7 +48,7 @@ export async function computeAvoidRoutes({nodes,edges,positions,rects,levels,top
    conn.setRoutingType(A.ConnType.ConnType_Orthogonal);
    connections.push({e,conn,fromPort,toPort});
   }
-  router.processTransaction();
+  onProgress('native-start');router.processTransaction();onProgress('native-done');
   const routes=[],occupied=[],used=new Map(),failures=[],clearanceRequests={},rejected=[];
   const requestSpace=points=>{
    let hits=0;
@@ -88,12 +95,18 @@ export async function computeAvoidRoutes({nodes,edges,positions,rects,levels,top
     const candidate={edge:e,fromPort,toPort,points:checker.simplify([start,...middle,end])};
     if(validator.validateRoute(candidate,[...rectMap.values()],occupied,used).ok)accepted=candidate;
    };
+   // Try short local lanes first. The tighter spiral bounds native repairs;
+   // unresolved corridors then feed the placement capacity model.
+   if(compactRecovery){
+    consider(checker.fastCandidates(s,t,[...rectMap.values()],occupied,[e.from,e.to])?.points);
+    if(!accepted)consider(checker.wideCandidates(start,s,t,end,[...rectMap.values()],occupied,[e.from,e.to])?.points);
+   }
    // Resolve shared native lanes with an incremental obstacle search. Each
    // failed segment adds only its conflicting occupied lane as a wall; the
    // rest of the scene stays available for genuine transverse crossings.
-   if(rejected.length<=16){
+   if(!accepted&&repairAttempts>0&&(compactRecovery||rejected.length<=16)){
     const walls=new Set();let trial=item.points;
-    for(let attempt=0;attempt<20&&!accepted;attempt++){
+    for(let attempt=0;attempt<repairAttempts&&!accepted;attempt++){
      const previous=walls.size;
      for(const a of checker.allSegments(trial))for(let i=0;i<occupied.length;i++){
       const b=occupied[i];if(checker.segmentRelation(a.a,a.b,b.a,b.b).overlap)walls.add(i);
@@ -117,8 +130,9 @@ export async function computeAvoidRoutes({nodes,edges,positions,rects,levels,top
      }finally{local.delete();for(const object of values.reverse())object.delete();}
     }
    }
-   if(!accepted&&rejected.length<=3)consider(checker.fastCandidates(s,t,[...rectMap.values()],occupied,[e.from,e.to])?.points);
-   for(const margin of !accepted&&rejected.length<=3?[100,300,700]:[]){
+   if(!accepted&&compactRecovery)consider(checker.findRouteGrid(s,t,[...rectMap.values()],occupied,true,350,300));
+   if(!accepted&&!compactRecovery&&rejected.length<=3)consider(checker.fastCandidates(s,t,[...rectMap.values()],occupied,[e.from,e.to])?.points);
+   for(const margin of !accepted&&!compactRecovery&&rejected.length<=3?[100,300,700]:[]){
     if(accepted)break;
     consider(checker.findRouteGrid(s,t,[...rectMap.values()],occupied,true,margin,180));
    }
@@ -127,7 +141,58 @@ export async function computeAvoidRoutes({nodes,edges,positions,rects,levels,top
     for(const [id,p] of [[e.from,fromPort],[e.to,toPort]]){if(!used.has(id))used.set(id,[]);used.get(id).push(p);}
    }else {requestSpace(item.points);failures.push({edge:key,reason:item.reason});}
   }
-  return {routes,calculations:connections.length,engine:'libavoid-0.5.0-beta.5',failures,clearanceRequests,budgetExceeded:false};
+  let extraCalculations=0;
+  if(compactRecovery&&routes.filter(([,r])=>!r.points).length<=4)for(const [index,e] of ordered.entries()){
+   const key=[e.from,e.to].sort().map(encodeURIComponent).join('|'),entry=routes.find(([k])=>k===key);
+   if(entry[1].points)continue;
+   const a=rectMap.get(e.from),b=rectMap.get(e.to);
+   const reserved=id=>ordered.flatMap((edge,i)=>i===index||edge.from!==id&&edge.to!==id?[]:[ports.get(i+':'+id)]).filter(Boolean);
+   const candidates=id=>{
+    const r=rectMap.get(id),out=[ports.get(index+':'+id)].filter(Boolean);
+    for(const side of ['top','right','bottom','left']){
+     const horizontal=side==='top'||side==='bottom',length=horizontal?r.w:r.h,inset=portInset(r,side);
+     for(const f of [.5,.25,.75,0,1,.125,.875,.375,.625]){
+      const at=inset+f*(length-2*inset),p=portAt(side,horizontal?r.l+at:side==='left'?r.l:r.r,
+       horizontal?(side==='top'?r.t:r.b):r.t+at,rectMap,id);if(p)out.push(p);
+     }
+    }
+    return out;
+   };
+   const before=new Map([e.from,e.to].map(id=>[id,portCycle({edges:ordered,ports,id})]));
+   const admissible=(id,p)=>{
+    const k=index+':'+id,previous=ports.get(k);ports.set(k,p);
+    const ok=samePortCycle(before.get(id),portCycle({edges:ordered,ports,id}));
+    previous?ports.set(k,previous):ports.delete(k);return ok;
+   };
+   const makePort=(r,side,f)=>{
+    const horizontal=side==='top'||side==='bottom';
+    return portAt(side,horizontal?r.l+f*r.w:side==='left'?r.l:r.r,
+     horizontal?(side==='top'?r.t:r.b):r.t+f*r.h,rectMap,r.id);
+   };
+   const recover=(from,to)=>{
+    const s={x:from.sx,y:from.sy},t={x:to.sx,y:to.sy},own=[e.from,e.to];
+    const middle=checker.fastCandidates(s,t,[...rectMap.values()],occupied,own)?.points||
+     checker.findRouteGrid(s,t,[...rectMap.values()],occupied,true,350,100);
+    if(!middle)return null;
+    const points=checker.simplify([{x:from.x,y:from.y},...middle,{x:to.x,y:to.y}]);
+    const check=validator.validateRoute({edge:e,points,fromPort:from,toPort:to},[...rectMap.values()],occupied,used);
+    return check.ok?{points,crosses:check.crossings||0}:null;
+   };
+   const result=routeFacingLink({edge:e,a,b,fromPorts:candidates(e.from),toPorts:candidates(e.to),makePort,
+    usedFrom:reserved(e.from),usedTo:reserved(e.to),router:checker,obstacles:[...rectMap.values()],occupied,
+    acceptPair:(from,to)=>admissible(e.from,from)&&admissible(e.to,to),routeCandidate:recover,
+    portSpacing:8,allowAnyFace:true,allowCrossings:true,deadline:performance.now()+400,onAttempt:()=>extraCalculations++});
+   if(!result)continue;
+   const candidate={edge:e,points:result.points,fromPort:result.fromPort,toPort:result.toPort};
+   if(!validator.validateRoute(candidate,[...rectMap.values()],occupied,used).ok)continue;
+   entry[1]=candidate;occupied.push(...checker.allSegments(candidate.points));
+   for(const [id,p] of [[e.from,candidate.fromPort],[e.to,candidate.toPort]]){
+    ports.set(index+':'+id,p);if(!used.has(id))used.set(id,[]);used.get(id).push(p);
+   }
+   const failure=failures.findIndex(f=>f.edge===key);if(failure>=0)failures.splice(failure,1);
+  }
+  onProgress('repairs-done');
+  return {routes,calculations:connections.length+extraCalculations,engine:'libavoid-0.5.0-beta.5',failures,clearanceRequests,budgetExceeded:false};
  }finally{
   router.delete();for(const object of owned.reverse())object.delete();
  }

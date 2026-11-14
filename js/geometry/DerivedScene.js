@@ -4,7 +4,7 @@ import {bevelRoutes} from './CircuitRoutes.js';
 import {PcbRouter} from './PcbRouter.js';
 import {GeometryValidator} from './GeometryValidator.js';
 
-export const SCENE_VERSION='packed-ports-0.2.5';
+export const SCENE_VERSION='packed-fixed-type-0.2.8';
 
 // Placement and routing share the same capacity model. Space is requested
 // only beside congested corridors, never by expanding every generation.
@@ -18,9 +18,12 @@ export async function computeDerivedScene(input,{load,onProgress=()=>{}}={}){
   for(let pass=0;pass<12;pass++){
    onProgress({mode,pass:pass+1});
    const layout=engine.compute({...input,mode,baseLayout,nodeClearances,coreClearances});
+   onProgress({mode,pass:pass+1,phase:'placed'});
    if(!layout.stats.geometricallySafe)throw Error('Distribución incompleta o con solapes.');
-   const result=await computeAvoidRoutes({...input,positions:layout.positions,rects:layout.rects,levels:layout.levels},{load});
+   const result=await computeAvoidRoutes({...input,positions:layout.positions,rects:layout.rects,levels:layout.levels,
+    repairAttempts:mode==='04'?8:20},{load,onProgress:phase=>onProgress({mode,pass:pass+1,phase})});
    const pending=result.routes.filter(([,r])=>!r.points).length;
+   onProgress({mode,pass:pass+1,phase:'routed',pending});
    const candidate={layout,result};
    if(!best||pending<best.pending||pending===best.pending&&layout.stats.meanGap<best.layout.stats.meanGap)best={...candidate,pending};
    layout.stats.capacityPasses=pass+1;

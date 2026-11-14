@@ -52,3 +52,14 @@ test('los biseles reducen longitud y la auditoría mide las diagonales dibujadas
  assert.equal(validator.audit([...rects.values()],result.routes.map(([,r])=>r)).invalid,0);
  assert.ok(result.routes[0][1].points.some((p,i,all)=>i&&circuitAxis(all[i-1],p)==='d'));
 });
+import {portCycle,samePortCycle} from '../js/geometry/OrderedPorts.js';
+
+test('la recuperación puede cambiar de cara conservando el ciclo y rechaza intercambiar vecinos',()=>{
+ const edges=[{from:'a',to:'b'},{from:'a',to:'c'},{from:'a',to:'d'}];
+ const ports=new Map([['0:a',{side:'top',x:0,y:-30}],['1:a',{side:'right',x:80,y:0}],['2:a',{side:'bottom',x:0,y:30}]]);
+ const before=portCycle({edges,ports,id:'a'});
+ ports.set('0:a',{side:'left',x:-80,y:0});
+ assert.equal(samePortCycle(before,portCycle({edges,ports,id:'a'})),true);
+ ports.set('0:a',{side:'bottom',x:30,y:30});
+ assert.equal(samePortCycle(before,portCycle({edges,ports,id:'a'})),false);
+});

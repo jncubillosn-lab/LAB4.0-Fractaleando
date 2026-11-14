@@ -148,16 +148,20 @@ export class PcbRouter {
    const minx=Math.min(start.x,end.x)-margin,maxx=Math.max(start.x,end.x)+margin;
    const miny=Math.min(start.y,end.y)-margin,maxy=Math.max(start.y,end.y)+margin;
    const near=allRects.filter(r=>r.r>=minx&&r.l<=maxx&&r.b>=miny&&r.t<=maxy);
+   const localOccupied=limitMs===undefined?occupied:occupied.filter(z=>
+    Math.max(z.a.x,z.b.x)>=minx-ROUTE_SEPARATION&&Math.min(z.a.x,z.b.x)<=maxx+ROUTE_SEPARATION&&
+    Math.max(z.a.y,z.b.y)>=miny-ROUTE_SEPARATION&&Math.min(z.a.y,z.b.y)<=maxy+ROUTE_SEPARATION);
    const xs=[start.x,end.x,minx,maxx],ys=[start.y,end.y,miny,maxy];
    for(const r of near){xs.push(r.l-ROUTE_CLEAR-3,r.r+ROUTE_CLEAR+3);ys.push(r.t-ROUTE_CLEAR-3,r.b+ROUTE_CLEAR+3);}
    // Los cruces lejanos conservan los obstáculos, pero no multiplican los ejes
    // por cada tramo ya dibujado. El solapamiento se sigue validando íntegro.
-   if(Math.abs(start.x-end.x)+Math.abs(start.y-end.y)<1400)for(const z of occupied){
+   if(Math.abs(start.x-end.x)+Math.abs(start.y-end.y)<1400)for(const z of localOccupied){
     if(z.h&&z.a.y>=miny&&z.a.y<=maxy){ys.push(z.a.y-ROUTE_SEPARATION-3,z.a.y+ROUTE_SEPARATION+3);}
     if(!z.h&&z.a.x>=minx&&z.a.x<=maxx){xs.push(z.a.x-ROUTE_SEPARATION-3,z.a.x+ROUTE_SEPARATION+3);}
    }
    const uniq=v=>[...new Set(v.filter(Number.isFinite).map(n=>Math.round(n*100)/100))].sort((a,b)=>a-b);
-   const xx=uniq(xs),yy=uniq(ys),nx=xx.length,ny=yy.length;
+   const xx=uniq(limitMs===undefined?xs:xs.filter(x=>x>=minx&&x<=maxx));
+   const yy=uniq(limitMs===undefined?ys:ys.filter(y=>y>=miny&&y<=maxy)),nx=xx.length,ny=yy.length;
    if(nx*ny>60000)return null;
    const xi=xx.indexOf(Math.round(start.x*100)/100),yi=yy.indexOf(Math.round(start.y*100)/100),
          tx=xx.indexOf(Math.round(end.x*100)/100),ty=yy.indexOf(Math.round(end.y*100)/100);
@@ -169,15 +173,16 @@ export class PcbRouter {
    const startKey=source*3;g.set(startKey,0);push({k:startKey,f:Math.abs(start.x-end.x)+Math.abs(start.y-end.y),v:0});
    const blocked=new Map();
    function candidate(a,b){const key=`${a.x},${a.y}|${b.x},${b.y}`;
+    if(performance.now()>=searchDeadline)return null;
     if(blocked.has(key))return blocked.get(key);
     let penalty=0;
     for(const r of near){if(segmentHitsRect(a,b,r)){blocked.set(key,null);return null;}}
-    for(const old of occupied){const rel=segmentRelation(a,b,old.a,old.b);if(rel.overlap||rel.cross&&!allowCross){blocked.set(key,null);return null;}penalty+=rel.cross*250000;}
+    for(const old of localOccupied){const rel=segmentRelation(a,b,old.a,old.b);if(rel.overlap||rel.cross&&!allowCross){blocked.set(key,null);return null;}penalty+=rel.cross*250000;}
     blocked.set(key,penalty);return penalty;
    }
    let expansions=0,goal=null;
    while(heap.length&&expansions++<130000){
-    if(expansions%128===0&&performance.now()>=searchDeadline)return null;
+    if(expansions%8===0&&performance.now()>=searchDeadline)return null;
     const cur=pop();if(cur.v!==g.get(cur.k))continue;
     const idx=Math.floor(cur.k/3),dir=cur.k%3;
     if(idx===target){goal=cur.k;break;}
@@ -316,7 +321,7 @@ export class PcbRouter {
    return d;
   }
   function intersections(points,occupied){const pointsOut=[];for(const sg of allSegments(points))for(const old of occupied){const rel=segmentRelation(sg.a,sg.b,old.a,old.b);if(rel.cross&&rel.at&&!pointsOut.some(v=>Math.hypot(v.x-rel.at.x,v.y-rel.at.y)<.05))pointsOut.push(rel.at);}return pointsOut;}
-  Object.assign(this,{prefSide,assignPorts,allSegments,segmentHitsRect,onSegmentVal,segmentRelation,routeShapeValid,simplify,fastCandidates,findRouteGrid,routeEdge,linePath,intersections});
+  Object.assign(this,{prefSide,assignPorts,allSegments,segmentHitsRect,onSegmentVal,segmentRelation,routeShapeValid,simplify,fastCandidates,wideCandidates,findRouteGrid,routeEdge,linePath,intersections});
   this.clearance=ROUTE_CLEAR;
   this.separation=ROUTE_SEPARATION;
   this.portStub=PORT_STUB;

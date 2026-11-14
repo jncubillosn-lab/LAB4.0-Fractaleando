@@ -9,15 +9,15 @@ export function reflectedEntry(source,fromRect,toRect,makePort){
  return makePort(toRect,opposite[source.side],1-fraction(source,fromRect));
 }
 
-export function facingPortPairs({a,b,fromPorts,toPorts,makePort,usedFrom=[],usedTo=[]}){
+export function facingPortPairs({a,b,fromPorts,toPorts,makePort,usedFrom=[],usedTo=[],acceptPair=()=>true,portSpacing=11,allowAnyFace=false}){
  const dx=b.x-a.x,dy=b.y-a.y,pairs=[],seen=new Set();
- const free=(p,used)=>!used.some(old=>Math.hypot(old.x-p.x,old.y-p.y)<11);
+ const free=(p,used)=>!used.some(old=>Math.hypot(old.x-p.x,old.y-p.y)<portSpacing);
  const forward=p=>{const [nx,ny]=normal[p.side];return nx*dx+ny*dy>1e-7;};
  const toward=p=>{const [nx,ny]=normal[p.side];return nx*dx+ny*dy< -1e-7;};
  const gapX=Math.abs(dx)-(a.w+b.w)/2,gapY=Math.abs(dy)-(a.h+b.h)/2;
  const preferred=gapX>gapY?(dx>0?'right':'left'):(dy>0?'bottom':'top');
  const add=(from,to,direct=false)=>{
-  if(!free(from,usedFrom)||!free(to,usedTo))return;
+  if(!from||!to||!free(from,usedFrom)||!free(to,usedTo)||!acceptPair(from,to))return;
   const key=[from.x,from.y,to.x,to.y].map(v=>v.toFixed(4)).join('|');if(seen.has(key))return;seen.add(key);
   const opposed=opposite[from.side]===to.side;
   pairs.push({from,to,direct,rank:direct?0:opposed&&from.side===preferred?1:opposed?2:3,
@@ -41,14 +41,15 @@ export function facingPortPairs({a,b,fromPorts,toPorts,makePort,usedFrom=[],used
  for(const from of fromPorts)if(forward(from))add(from,reflectedEntry(from,a,b,makePort));
  // Other free pairs remain available when reflection is occupied or obstructed.
  for(const from of fromPorts)if(forward(from))for(const to of toPorts)if(toward(to))add(from,to);
+ if(allowAnyFace)for(const from of fromPorts)for(const to of toPorts)add(from,to);
  return pairs.sort((p,q)=>p.rank-q.rank||p.distance-q.distance||p.offset-q.offset);
 }
 
 // Local routing only: the initial 01 reference and previously valid links are
 // untouched. Compare safe short candidates before committing to a long detour.
 export function routeFacingLink({edge,a,b,fromPorts,toPorts,makePort,usedFrom,usedTo,router,
- obstacles,occupied,onAttempt=()=>{},deadline=Infinity}){
- const pairs=facingPortPairs({a,b,fromPorts,toPorts,makePort,usedFrom,usedTo});
+ obstacles,occupied,onAttempt=()=>{},deadline=Infinity,acceptPair,routeCandidate,portSpacing,allowAnyFace,allowCrossings=false}){
+ const pairs=facingPortPairs({a,b,fromPorts,toPorts,makePort,usedFrom,usedTo,acceptPair,portSpacing,allowAnyFace});
  const own=[edge.from,edge.to];let best=null;
  const accept=(result,pair)=>{
   if(!result)return;
@@ -63,15 +64,16 @@ export function routeFacingLink({edge,a,b,fromPorts,toPorts,makePort,usedFrom,us
   const fast=router.fastCandidates({x:from.sx,y:from.sy},{x:to.sx,y:to.sy},obstacles,occupied,own);
   if(!fast)continue;
   const points=router.simplify([{x:from.x,y:from.y},...fast.points,{x:to.x,y:to.y}]);
-  if(router.routeShapeValid(points,obstacles,own,occupied,false)!==0)continue;
-  accept({points,crosses:0},pair);
-  if(pair.direct&&points.length===2)return best;
+  const crosses=router.routeShapeValid(points,obstacles,own,occupied,allowCrossings);
+  if(crosses===null)continue;
+  accept({points,crosses},pair);
+  if(pair.direct&&points.length===2&&crosses===0)return best;
  }
  if(best)return best;
  for(const pair of pairs.slice(0,4)){
   if(performance.now()>=deadline)break;
   onAttempt();
-  const result=router.routeEdge({...pair.from,id:edge.from},{...pair.to,id:edge.to},obstacles,occupied);
+  const result=routeCandidate?routeCandidate(pair.from,pair.to):router.routeEdge({...pair.from,id:edge.from},{...pair.to,id:edge.to},obstacles,occupied);
   accept(result,pair);
   if(best?.crosses===0)break;
  }

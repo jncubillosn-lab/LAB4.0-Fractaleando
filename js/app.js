@@ -6,8 +6,9 @@ import {DerivedViews} from './views/DerivedViews.js';
 import {PcbRouter} from './geometry/PcbRouter.js';
 import {GeometryValidator} from './geometry/GeometryValidator.js';
 import {SvgRenderer} from './ui/SvgRenderer.js';
-import {loadNodeTypography,paintNodeLabel,exportedNodeFonts} from './ui/NodeTypography.js';
-import {scaleCrossings} from './ui/CircuitSvg.js';
+import {loadNodeTypography,paintNodeLabel,exportedNodeFonts,nodeGeometry} from './ui/NodeTypography.js';
+import {scaleCrossings,emphasizeCrossings,visibleCrossings} from './ui/CircuitSvg.js';
+import {validLinkStyle} from './ui/LinkStyles.js';
 import {clockChildPosition} from './geometry/ClockPlacement.js';
 import {routeFacingLink} from './geometry/FacingPorts.js';
 import {computeInitialRoutes} from './workers/initial-route.worker.js';
@@ -15,7 +16,7 @@ import {computeInitialRoutes} from './workers/initial-route.worker.js';
 const NS='http://www.w3.org/2000/svg';
 const $=id=>document.getElementById(id);
 const stage=$('stage'), camera=$('camera'), linesEl=$('lines'), nodesEl=$('nodes');
-const state={nodes:[],edges:[],selected:'p1',linkFrom:null,unlinkFrom:null,depth:2,zoom:1,tx:0,ty:0,undo:[],pointer:null,idSerial:0,toastTimer:null,renderQueued:false,focusRoot:"p1",readableZoom:.82,edgeMode:'all'};
+const state={nodes:[],edges:[],selected:'p1',linkFrom:null,unlinkFrom:null,linkStyle:'solid',depth:2,zoom:1,tx:0,ty:0,undo:[],pointer:null,idSerial:0,toastTimer:null,renderQueued:false,focusRoot:"p1",readableZoom:.82,edgeMode:'all'};
 // Los tres identificadores son SOLO los datos iniciales; no fijan el número de brazos.
 const anchors=['b0','f0','t0'];
 const isFirstLevel=n=>Boolean(n&&n.parent==='p1');
@@ -37,7 +38,8 @@ function textLines(text,width,fontsize=14){
  }
  return out;
 }
-function geometry(n){const size=n.id==='p1'?20:isFirstLevel(n)?15:14;const wrapped=textLines(n.text,n.width,size);const lineheight=size===20?25:21;return{w:n.width,h:Math.max(n.id==='p1'?67:53,wrapped.length*lineheight+27),wrapped,size,lineheight};}
+function legacyGeometry(n){const size=n.id==='p1'?20:isFirstLevel(n)?15:14;const wrapped=textLines(n.text,n.width,size);const lineheight=size===20?25:21;return{w:n.width,h:Math.max(n.id==='p1'?67:53,wrapped.length*lineheight+27),wrapped,size,lineheight};}
+const geometry=n=>nodeGeometry(n,ctx);
 // La profundidad es propiedad del grafo. No existe un máximo de seis generaciones.
 // Model-level operations are separate from drawing and route finding.
 const treeChildren=(id,branch)=>graph.treeChildren(id,branch);
@@ -355,12 +357,12 @@ function makeInitialCheckpoint(){
   initialBuilding=false;fallback();return true;
  }
 }
-function validateSavedCheckpoint(payload){
+function validateSavedCheckpoint(payload,measure=geometry){
  if(!payload||payload.version!==1||!Array.isArray(payload.positions)||!Array.isArray(payload.routes))return false;
  const saved=new Map(payload.positions.map(p=>[p.id,p]));
  if(saved.size!==state.nodes.length||state.nodes.some(n=>!saved.has(n.id)))return false;
  const positions=new Map(),metrics=new Map(),rects=new Map();
- for(const n of state.nodes){const p=saved.get(n.id),m=geometry(n);
+ for(const n of state.nodes){const p=saved.get(n.id),m=measure(n);
   if(!Number.isFinite(p.x)||!Number.isFinite(p.y)||Math.abs(p.x)>1e7||Math.abs(p.y)>1e7)return false;
   positions.set(n.id,{x:p.x,y:p.y});metrics.set(n.id,m);rects.set(n.id,rectAt(n.id,p,m));}
  const all=[...rects.values()];for(let i=0;i<all.length;i++)for(let j=0;j<i;j++)if(rectOverlap(all[i],all[j],0))return false;
@@ -511,13 +513,15 @@ function syncGraphics(geometryChanged){
 }
 function paintVisibility(){
  const visible=new Set(currentNodes().map(n=>n.id));let count=0,routes=0,pending=0;
+ const visibleEdges=new Set();
  for(const [id,el] of plane.nodeEls)el.style.display=visible.has(id)?'':'none';
  for(const e of state.edges){const key=edgeKey(e),rt=plane.routes.get(key);
   const show=visible.has(e.from)&&visible.has(e.to);
-  if(show&&rt?.points)routes++;
+  if(show&&rt?.points){routes++;visibleEdges.add(key);}
   if(show&&!rt?.points)pending++;
   const el=plane.routeEls.get(key);if(el)el.style.display=show?'':'none';
  }
+ visibleCrossings(linesEl,visibleEdges);
  count=visible.size;diag.visible=count;diag.routes=routes;diag.pending=pending;
  syncSelectionStyles();
  $('depthOut').textContent=`${state.depth} / ${maximumDepth()} · ${count} conceptos`;
@@ -546,7 +550,7 @@ diag.audit=()=>({...validator.audit([...plane.rects.values()],[...plane.routes.v
 diag.topology=()=>topology.status(); // informe sin enrutamiento ni repintado
 diag.views=()=>derived.diagnostic();
 
-function updateCamera(){camera.setAttribute('transform',`translate(${state.tx.toFixed(2)} ${state.ty.toFixed(2)}) scale(${state.zoom.toFixed(4)})`);scaleCrossings(document.getElementById('derivedLines'),Number(state.zoom.toFixed(4)));}
+function updateCamera(){camera.setAttribute('transform',`translate(${state.tx.toFixed(2)} ${state.ty.toFixed(2)}) scale(${state.zoom.toFixed(4)})`);scaleCrossings(linesEl,Number(state.zoom.toFixed(4)));scaleCrossings(document.getElementById('derivedLines'),Number(state.zoom.toFixed(4)));}
 function schedule(){syncDepth();if(state.renderQueued)return;state.renderQueued=true;requestAnimationFrame(render);}
 function selected(){return nodeById(state.selected);}
 function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(state.toastTimer);state.toastTimer=setTimeout(()=>el.classList.remove('show'),3500);}
@@ -575,8 +579,13 @@ function removeLink(from,to){
  updatePanel();schedule();toast('Vínculo retirado. Ambos conceptos se conservan.');return true;
 }
 function syncSelectionStyles(){
+ const focused=new Set();
  for(const el of nodesEl.children)el.classList.toggle('selected',el.dataset.nodeId===state.selected);
- for(const el of linesEl.querySelectorAll('.svgline'))el.classList.toggle('active',el.dataset.linkFrom===state.selected||el.dataset.linkTo===state.selected);
+ for(const el of linesEl.querySelectorAll('.svgline')){
+  const active=el.dataset.linkFrom===state.selected||el.dataset.linkTo===state.selected;
+  el.classList.toggle('active',active);if(active)focused.add(el.parentElement.dataset.edgeKey);
+ }
+ emphasizeCrossings(linesEl,focused);
 }
 function refreshNodeLabel(n){
  const el=[...nodesEl.children].find(e=>e.dataset.nodeId===n.id);
@@ -589,7 +598,7 @@ function selectNode(id){
  if(derived.mode!=='01'){state.selected=id;updatePanel();derived.switchVisibility(derived.mode);derived.paintSelection();$('editHint').textContent='Selección: ascendencia hasta J0 y conexiones al siguiente nivel.';return;}
  const changingEdges=Boolean(state.unlinkFrom||state.linkFrom);
  if(state.unlinkFrom){const first=state.unlinkFrom;if(first===id){state.unlinkFrom=null;toast('Eliminación cancelada.');}else if(removeLink(first,id)){state.unlinkFrom=null;} }
- else if(state.linkFrom){if(state.linkFrom===id){state.linkFrom=null;toast('Conexión cancelada.');}else if(state.linkFrom==='p1'||id==='p1'){state.linkFrom=null;toast('Para crear otro brazo J1, selecciona P1 y utiliza «+ Concepto».');}else if(!state.edges.some(e=>(e.from===state.linkFrom&&e.to===id)||(e.from===id&&e.to===state.linkFrom))){saveUndo();state.edges.push({from:state.linkFrom,to:id});state.linkFrom=null;toast('Conceptos vinculados.');}else{state.linkFrom=null;toast('Este vínculo ya existe.');}}
+ else if(state.linkFrom){if(state.linkFrom===id){state.linkFrom=null;toast('Conexión cancelada.');}else if(state.linkFrom==='p1'||id==='p1'){state.linkFrom=null;toast('Para crear otro brazo J1, selecciona P1 y utiliza «+ Concepto».');}else if(!state.edges.some(e=>(e.from===state.linkFrom&&e.to===id)||(e.from===id&&e.to===state.linkFrom))){saveUndo();state.edges.push({from:state.linkFrom,to:id,style:state.linkStyle});state.linkFrom=null;toast('Conceptos vinculados.');}else{state.linkFrom=null;toast('Este vínculo ya existe.');}}
  state.selected=id;updatePanel();
  if(changingEdges)schedule();else syncSelectionStyles();
 }
@@ -602,7 +611,7 @@ function addConcept(){
  const parent=plane.rects.get(n.id)||rectAt(n.id,n,geometry(n));
  const rects=state.nodes.map(other=>plane.rects.get(other.id)||rectAt(other.id,other,geometry(other)));
  Object.assign(node,clockChildPosition({parent,metric:geometry(node),index:treeChildren(n.id).length,rects,segments:savedSegments()}));
- state.nodes.push(node);state.edges.push({from:n.id,to:id});
+ state.nodes.push(node);state.edges.push({from:n.id,to:id,style:state.linkStyle});
  state.depth=Math.max(state.depth,(readDepthMap()[id]??state.depth));
  updatePanel();schedule();
  toast(newArm?'Nuevo brazo J1 añadido al núcleo.':'Concepto añadido a los datos.');
@@ -656,6 +665,14 @@ $('coreBtn').onclick=()=>centerOn('p1',1);$('fitBtn').onclick=()=>fit();$('zoomF
 $('resetBtn').onclick=()=>{if(!confirm('¿Cargar el ejemplo PPR? Los cambios no guardados se perderán.'))return;init(true);toast('Ejemplo PPR cargado.');};
 $('newBtn').onclick=()=>{if(!confirm('¿Crear un diagrama nuevo con tres ramas? Guarda antes el JSON actual si deseas conservarlo.'))return;init(false);toast('Nuevo diagrama vacío: núcleo y tres ramas editables.');};
 $('addBtn').onclick=()=>addConcept();$('deleteBtn').onclick=deleteSelected;
+function setLinkStyle(style){
+ if(!validLinkStyle(style))return;
+ state.linkStyle=style;
+ for(const button of document.querySelectorAll('[data-link-style]'))
+  button.setAttribute('aria-pressed',String(button.dataset.linkStyle===style));
+}
+for(const button of document.querySelectorAll('button[data-link-style]'))
+ button.addEventListener('click',()=>setLinkStyle(button.dataset.linkStyle));
 $('linkBtn').onclick=()=>{state.unlinkFrom=null;if(state.linkFrom){state.linkFrom=null;toast('Conexión cancelada.');}else if(selected()){state.linkFrom=state.selected;toast('Ahora selecciona el concepto de destino.');}updatePanel();};
 $('unlinkBtn').onclick=()=>{state.linkFrom=null;if(state.unlinkFrom){state.unlinkFrom=null;toast('Eliminación cancelada.');}else if(selected()){state.unlinkFrom=state.selected;toast('Ahora selecciona el concepto conectado cuyo vínculo quieres retirar.');}updatePanel();};
 let typingStarted=false,geometryTypingTimer=null;$('nodeText').addEventListener('focus',()=>typingStarted=false);$('nodeText').addEventListener('input',e=>{const n=selected();if(!n)return;if(!typingStarted){saveUndo();typingStarted=true;}const oldH=geometry(n).h;n.text=e.target.value||' ';if(geometry(n).h===oldH)refreshNodeLabel(n);else{refreshNodeLabel(n);clearTimeout(geometryTypingTimer);geometryTypingTimer=setTimeout(schedule,240);}});
@@ -669,8 +686,8 @@ window.addEventListener('keydown',e=>{const target=e.target.tagName.toLowerCase(
 function download(filename,data,mime){const blob=new Blob([data],{type:mime});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),500);}
 $('jsonBtn').onclick=()=>{download('p1-grafo.json',JSON.stringify({schema:'p1.graph.v1',nodes:state.nodes,edges:state.edges,planeCheckpoint:saveCheckpoint(),topologyRegister:topology.reference,derivedViews:derived.exportData()},null,2),'application/json;charset=utf-8');toast('Se exportó el grafo completo, independiente de la vista.');};
 $('loadBtn').onclick=()=>$('fileInput').click();
-$('fileInput').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!Array.isArray(data.nodes)||!Array.isArray(data.edges))throw Error('Formato de grafo no reconocido');const ids=new Set(data.nodes.map(n=>n.id));if(ids.size!==data.nodes.length||!ids.has('p1'))throw Error('Debe existir un núcleo P1 único.');if(!data.nodes.every(n=>typeof n.id==='string'&&typeof n.text==='string'&&Number.isFinite(n.width)&&n.width>=90&&n.width<=500&&Number.isInteger(n.branch)&&n.branch>=-1&&Number.isFinite(n.x)&&Number.isFinite(n.y))||!data.edges.every(o=>ids.has(o.from)&&ids.has(o.to))||!data.nodes.filter(n=>n.parent==='p1').every(n=>data.edges.some(e=>e.from==='p1'&&e.to===n.id))||data.edges.some(e=>e.to==='p1'||(e.from==='p1'&&data.nodes.find(n=>n.id===e.to)?.parent!=='p1'))||!data.nodes.every(n=>n.parent==null||ids.has(n.parent)))throw Error('Hay nodos, conexiones o vínculos del núcleo inválidos.');
- cancelInitialBuild();guardedMove=null;saveUndo();derived.reset();derived.restoreData(data.derivedViews);topology.reset();stagedTopology=data.topologyRegister??null;state.nodes=data.nodes.map(n=>({...n}));state.focusRoot='p1';state.edges=data.edges.map(e=>({...e}));state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;state.idSerial=Math.max(0,...state.nodes.map(n=>Number(n.id.match(/^n(\d+)$/)?.[1]||0)));plane.ready=false;plane.nodeEls.clear();plane.routeEls.clear();linesEl.replaceChildren();nodesEl.replaceChildren();if(!validateSavedCheckpoint(data.planeCheckpoint)){plane.ready=false;}pendingAutoFit=true;updatePanel();schedule();toast('Grafo importado.');}catch(error){toast('No se pudo importar: '+error.message);}finally{e.target.value='';}});
+$('fileInput').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;try{const data=JSON.parse(await file.text());if(!Array.isArray(data.nodes)||!Array.isArray(data.edges))throw Error('Formato de grafo no reconocido');const ids=new Set(data.nodes.map(n=>n.id));if(ids.size!==data.nodes.length||!ids.has('p1'))throw Error('Debe existir un núcleo P1 único.');if(!data.nodes.every(n=>typeof n.id==='string'&&typeof n.text==='string'&&Number.isFinite(n.width)&&n.width>=90&&n.width<=500&&Number.isInteger(n.branch)&&n.branch>=-1&&Number.isFinite(n.x)&&Number.isFinite(n.y))||!data.edges.every(o=>ids.has(o.from)&&ids.has(o.to)&&(o.style===undefined||validLinkStyle(o.style)))||!data.nodes.filter(n=>n.parent==='p1').every(n=>data.edges.some(e=>e.from==='p1'&&e.to===n.id))||data.edges.some(e=>e.to==='p1'||(e.from==='p1'&&data.nodes.find(n=>n.id===e.to)?.parent!=='p1'))||!data.nodes.every(n=>n.parent==null||ids.has(n.parent)))throw Error('Hay nodos, conexiones o vínculos del núcleo inválidos.');
+ cancelInitialBuild();guardedMove=null;saveUndo();derived.reset();derived.restoreData(data.derivedViews);topology.reset();stagedTopology=data.topologyRegister??null;state.nodes=data.nodes.map(n=>({...n}));state.focusRoot='p1';state.edges=data.edges.map(e=>({...e}));state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;setLinkStyle('solid');state.idSerial=Math.max(0,...state.nodes.map(n=>Number(n.id.match(/^n(\d+)$/)?.[1]||0)));plane.ready=false;plane.nodeEls.clear();plane.routeEls.clear();linesEl.replaceChildren();nodesEl.replaceChildren();if(!validateSavedCheckpoint(data.planeCheckpoint)&&!validateSavedCheckpoint(data.planeCheckpoint,legacyGeometry)){plane.ready=false;}pendingAutoFit=true;updatePanel();schedule();toast('Grafo importado.');}catch(error){toast('No se pudo importar: '+error.message);}finally{e.target.value='';}});
 // Exportación sin cambiar el modelo, el zoom ni la posición del lienzo.
 // SVG autónomo: incluye los estilos de los nodos, las líneas y las máscaras.
 const themeButton=$('themeBtn');
@@ -699,11 +716,11 @@ function exportCamera(node=camera){
 const EXPORT_STYLE=`
 .svgline{fill:none;stroke:#1c1c1b;stroke-width:var(--hierarchy-width,1.35);stroke-opacity:.50;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .svgline.active{stroke-width:calc(var(--hierarchy-width,1.35) * 1px + .75px);stroke-opacity:1}
-.svgline.transverse{stroke-dasharray:5 5;stroke-opacity:.52}
+.svgline.transverse{stroke-opacity:.52}
 .node rect{fill:#f7f6f1;stroke:#1c1c1b;stroke-width:1.4}
 .node.core rect{stroke-width:2.4}.node.anchor rect{stroke-width:1.9}.node.selected rect{stroke-width:2.7}
 .node text{font-family:Rajdhani,Arial,sans-serif;font-size:var(--node-font-size,24px);fill:#1c1c1b;text-anchor:middle;dominant-baseline:alphabetic;font-weight:600}
-.node.core text{font-size:var(--node-font-size,30px);font-weight:700}.node.anchor text{font-size:var(--node-font-size,25px);font-weight:600}
+.node.core text{font-size:var(--node-font-size,24px);font-weight:700}.node.anchor text{font-size:var(--node-font-size,24px);font-weight:600}
 .node.hierarchy-focus rect{stroke-width:2.8;stroke-opacity:1}
 .node.hierarchy-focus text{font-weight:700}
 .node.selected.hierarchy-focus rect{stroke-width:3.5}
@@ -791,7 +808,10 @@ $('pngBtn').onclick=async()=>{
  }catch(err){console.error('Error exportando PNG completo:',err);toast('No se pudo exportar PNG: '+err.message);}
  finally{if(temporaryURL)URL.revokeObjectURL(temporaryURL);btn.disabled=false;btn.textContent='Exportar diagrama completo · PNG';}
 };
-function init(useDemo=true){cancelInitialBuild();guardedMove=null;plane.reset();derived.reset();topology.reset();stagedTopology=null;linesEl.replaceChildren();nodesEl.replaceChildren();const demo=useDemo?seed():blankSeed();state.nodes=demo.nodes;state.edges=demo.edges;state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;state.focusRoot='p1';state.depth=1;state.undo=[];state.idSerial=0;syncDepth();updatePanel();$('undoBtn').disabled=true;pendingAutoFit=true;schedule();}
+function init(useDemo=true){cancelInitialBuild();guardedMove=null;plane.reset();derived.reset();topology.reset();stagedTopology=null;linesEl.replaceChildren();nodesEl.replaceChildren();const demo=useDemo?seed():blankSeed();state.nodes=demo.nodes;state.edges=demo.edges;state.selected='p1';state.linkFrom=null;state.unlinkFrom=null;setLinkStyle('solid');state.focusRoot='p1';state.depth=1;state.undo=[];state.idSerial=0;syncDepth();updatePanel();$('undoBtn').disabled=true;pendingAutoFit=true;schedule();}
 const ro=new ResizeObserver(()=>{updateCamera();});ro.observe(stage);
-init();
-loadNodeTypography().then(()=>{for(const node of state.nodes)refreshNodeLabel(node);derived.refreshTypography();}).catch(error=>console.warn('Tipografía de respaldo:',error.message));
+const bootButtons=[...document.querySelectorAll('button')];
+bootButtons.forEach(button=>button.disabled=true);
+loadNodeTypography().catch(error=>console.warn('Tipografía de respaldo:',error.message)).then(()=>{
+ bootButtons.forEach(button=>button.disabled=false);init();
+});

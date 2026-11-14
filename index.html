@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="application-version" content="p1-tipografia-trazos-0.2.7">
+<meta name="application-version" content="p1-tipografia-trazos-0.2.8">
 <title>P1 — Estudio de relaciones · editor fractal</title>
 <link rel="stylesheet" href="./css/interfaz.css">
 </head>
@@ -18,7 +18,7 @@
    <div><div class="eyebrow">01 / Estructura</div><h1 class="side-head">Un núcleo,<br>varias trayectorias.</h1><p class="side-note">Fractalea conceptos y conecta sus relaciones.</p></div>
    <div class="rule"></div>
    <div class="side-section"><div class="eyebrow">02 / Concepto seleccionado</div><div id="selectionInfo" class="tip">Selecciona un recuadro para editarlo.</div><div id="sourceInfo" class="tip" style="font-size:10px"></div><label class="fieldlabel" for="nodeText">Contenido</label><textarea id="nodeText" class="editarea" spellcheck="true" placeholder="Escribe un concepto…" disabled></textarea><label class="fieldlabel">Anchura del recuadro</label><div class="widthline"><button id="narrowBtn" title="Reducir anchura">−</button><output id="widthOut">—</output><button id="widenBtn" title="Ampliar anchura">+</button></div></div>
-   <div class="side-section"><div class="side-buttons"><button id="addBtn" class="action primary stretch">+ Concepto</button><button id="linkBtn" class="action stretch">Conectar</button></div><button id="unlinkBtn" class="action" disabled>Eliminar vínculo</button><button id="deleteBtn" class="action" disabled>Eliminar concepto</button><p id="editHint" class="tip">Selecciona un concepto y pulsa «+ Concepto» para desarrollarlo.</p></div>
+   <div class="side-section"><div class="side-buttons"><button id="addBtn" class="action primary stretch">+ Concepto</button><button id="linkBtn" class="action stretch">Conectar</button></div><div class="line-styles" role="group" aria-label="Estilo de las nuevas conexiones"><button type="button" class="action" id="lineSolid" data-link-style="solid" aria-pressed="true" title="Nueva conexión continua">Continua</button><button type="button" class="action" id="lineDotted" data-link-style="dotted" aria-pressed="false" title="Nueva conexión punteada">Punteada</button><button type="button" class="action" id="lineDashed" data-link-style="dashed" aria-pressed="false" title="Nueva conexión segmentada">Segmentada</button></div><button id="unlinkBtn" class="action" disabled>Eliminar vínculo</button><button id="deleteBtn" class="action" disabled>Eliminar concepto</button><p id="editHint" class="tip">Selecciona un concepto y pulsa «+ Concepto» para desarrollarlo.</p></div>
    <div class="rule"></div>
    <div class="side-section"><div class="depthrow"><label class="eyebrow" for="depth">03 / Profundidad de lectura</label><output id="depthOut">1 / 2</output></div><input type="range" class="range" id="depth" min="0" max="2" value="1" step="1"><button id="showAllBtn" class="action" title="Mostrar todas las generaciones reales">Todas las capas</button><div id="scopeInfo" class="tip" aria-live="polite">Diagrama completo · exploración progresiva</div><p class="tip">Cada paso de profundidad incorpora una generación real del grafo. El diagrama completo se puede recorrer con zoom y desplazamiento.</p></div>
    <div class="bottompanel"><div class="rule"></div><div class="eyebrow">04 / Archivo</div><div class="exportrow"><button id="jsonBtn" class="action">Guardar JSON</button><button id="loadBtn" class="action">Abrir JSON</button></div><button id="svgBtn" class="action">Exportar vista SVG</button><button id="pngBtn" class="action" title="Exportar todos los conceptos representados, incluso fuera de pantalla, con resolución proporcional al diagrama y texto legible">Exportar diagrama completo · PNG</button><input type="file" id="fileInput" accept="application/json,.json" hidden><div class="stat" id="stats">—</div></div>
@@ -30,7 +30,7 @@
    <div class="toast" id="toast" role="status"></div>
   </main>
  </div>
- <footer class="foot"><span id="footHint">Edición de conceptos · representación plana</span><span id="viewState">01 · EDITABLE</span><span>P1 / 001 &nbsp;·&nbsp; DOS TINTAS &nbsp;·&nbsp; v0.2.7</span></footer>
+ <footer class="foot"><span id="footHint">Edición de conceptos · representación plana</span><span id="viewState">01 · EDITABLE</span><span>P1 / 001 &nbsp;·&nbsp; DOS TINTAS &nbsp;·&nbsp; v0.2.8</span></footer>
 </div>
 <script type="module" src="./js/app.js"></script>
 </body>

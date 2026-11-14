@@ -8,7 +8,7 @@ const overlap=(a,b,pad)=>a.l<b.r+pad&&a.r>b.l-pad&&a.t<b.b+pad&&a.b>b.t-pad;
 export class SpiralLayout {
  // Historical W is an internal twist coefficient, not Raup's expansion
  // ratio per revolution. D is not parameterized here; this view is planar.
- compute({base,nodes,edges,metrics,nodeClearances={},W=.23}){
+ compute({base,nodes,edges,metrics,nodeClearances={},W=.25,armWidthFactor=.85}){
   metrics=new Map([...(metrics instanceof Map?metrics:new Map(metrics))].map(([id,m])=>
    [id,{...m,routingClearance:Math.max(base.stats.clearance??24,base.rects.get(id)?.routingClearance||0,nodeClearances[id]||0)}]));
   const byId=new Map(nodes.map(n=>[n.id,n])),clearance=base.stats.clearance??24;
@@ -27,8 +27,10 @@ export class SpiralLayout {
    let best=null;
    for(let i=0;i<4000;i++){
     const r=minimum+i*step;if(best&&r-original.r>best.cost+step)break;
-    for(const shift of [0,-.015,.015,-.035,.035,-.07,.07]){
-     const a=original.a+kappa*r+shift,p={x:Math.cos(a)*r,y:Math.sin(a)*r},rect=rayRect(n.id,p,m);
+    for(const shift of [0,-.015,.015,-.035,.035,-.07,.07,-.11,.11,-.16,.16]){
+     const sector=base.stats.sectors?.[base.stats.owners?.[n.id]];
+     const bearing=sector?sector.center+delta(original.a,sector.center)*armWidthFactor:original.a;
+     const a=bearing+kappa*r+shift,p={x:Math.cos(a)*r,y:Math.sin(a)*r},rect=rayRect(n.id,p,m);
      if([...rects.values()].some(other=>overlap(rect,other,Math.max(clearance,rect.routingClearance||0,other.routingClearance||0))))continue;
      const cost=Math.hypot(r-original.r,shift*r);
      if(!best||cost<best.cost)best={p,rect,cost};
@@ -52,8 +54,10 @@ export class SpiralLayout {
    const p=positions.get(n.id),s=base.stats.sectors?.[base.stats.owners?.[n.id]];
    if(s&&Math.abs(delta(Math.atan2(p.y,p.x)-kappa*Math.hypot(p.x,p.y),s.center))>s.span/2+.08)sectorViolations.push(n.id);
   }
+  const radii=order.map(n=>Math.hypot(positions.get(n.id).x,positions.get(n.id).y));
   return {mode:'04',positions,rects,levels:base.levels,
-   stats:{...base.stats,mode:'04',engine:'spiral-from-'+base.stats.engine,sourceView:'02',W,T:0,twistScale,nodeClearances,
+   stats:{...base.stats,mode:'04',engine:'spiral-from-'+base.stats.engine,sourceView:'02',W,T:0,armWidthFactor,twistScale,
+    rotationRange:radii.length?kappa*(Math.max(...radii)-Math.min(...radii)):0,nodeClearances,
     baseNodeClearances:base.stats.nodeClearances,
     overlaps:0,radialOrder:outwardViolations.length===0,outwardViolations,distanceViolations,sectorViolations,
     constraintsValid:!outwardViolations.length&&!distanceViolations.length&&!sectorViolations.length&&!base.stats.disconnected.length,
