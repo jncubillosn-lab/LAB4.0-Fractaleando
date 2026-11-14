@@ -1,5 +1,10 @@
 # Memoria del proyecto P1
 
+**Estado documental:** memoria histórica con corte al 13 de noviembre de 2026
+y notas posteriores. La referencia vigente desde el cierre de 0.2.11 es
+[el corte del 14 de noviembre](CORTE_0_2_11.md), que recoge las tres vistas
+publicadas, la edición libre y la retirada del experimento W–D–T.
+
 **Ajustes 0.2.5 (14 de noviembre de 2026):** [tipografía técnica, cruces y puertos](TIPOGRAFIA_CONEXIONES_0_2_5.md). Esta actualización visual fue solicitada después del corte histórico y conserva los pendientes normativos.
 
 **Ajustes 0.2.4:** [distancia del núcleo y grosor por jerarquía](NUCLEO_JERARQUIAS_0_2_4.md), conservando la revisión normativa pendiente.
