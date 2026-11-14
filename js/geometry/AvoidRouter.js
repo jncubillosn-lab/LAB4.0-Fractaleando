@@ -10,7 +10,7 @@ async function browserRuntime(){
  return runtime;
 }
 
-export async function computeAvoidRoutes({nodes,edges,positions,rects,levels,topologyReference},{load=browserRuntime}={}){
+export async function computeAvoidRoutes({nodes,edges,positions,rects,levels,topologyReference,repairAttempts=20},{load=browserRuntime}={}){
  const A=await load(),positionMap=new Map(positions),rectMap=new Map(rects),byId=new Map(nodes.map(n=>[n.id,n]));
  const priority=e=>Math.min(levels[e.from]??1000,levels[e.to]??1000)*10+(e.kind==='transversal'?5:0)+(Math.abs((levels[e.from]??1000)-(levels[e.to]??1000))>1?2:0);
  const ordered=edges.map((e,i)=>({...e,__index:i})).sort((a,b)=>priority(a)-priority(b)||a.__index-b.__index);
@@ -88,12 +88,18 @@ export async function computeAvoidRoutes({nodes,edges,positions,rects,levels,top
     const candidate={edge:e,fromPort,toPort,points:checker.simplify([start,...middle,end])};
     if(validator.validateRoute(candidate,[...rectMap.values()],occupied,used).ok)accepted=candidate;
    };
+   // The tighter spiral uses bounded local search; unresolved corridors feed
+   // the placement capacity model instead of rebuilding many native wall scenes.
+   if(repairAttempts===0){
+    consider(checker.fastCandidates(s,t,[...rectMap.values()],occupied,[e.from,e.to])?.points);
+    if(!accepted)consider(checker.findRouteGrid(s,t,[...rectMap.values()],occupied,true,300,80));
+   }
    // Resolve shared native lanes with an incremental obstacle search. Each
    // failed segment adds only its conflicting occupied lane as a wall; the
    // rest of the scene stays available for genuine transverse crossings.
-   if(rejected.length<=16){
+   if(!accepted&&repairAttempts>0&&rejected.length<=16){
     const walls=new Set();let trial=item.points;
-    for(let attempt=0;attempt<20&&!accepted;attempt++){
+    for(let attempt=0;attempt<repairAttempts&&!accepted;attempt++){
      const previous=walls.size;
      for(const a of checker.allSegments(trial))for(let i=0;i<occupied.length;i++){
       const b=occupied[i];if(checker.segmentRelation(a.a,a.b,b.a,b.b).overlap)walls.add(i);
@@ -117,8 +123,8 @@ export async function computeAvoidRoutes({nodes,edges,positions,rects,levels,top
      }finally{local.delete();for(const object of values.reverse())object.delete();}
     }
    }
-   if(!accepted&&rejected.length<=3)consider(checker.fastCandidates(s,t,[...rectMap.values()],occupied,[e.from,e.to])?.points);
-   for(const margin of !accepted&&rejected.length<=3?[100,300,700]:[]){
+   if(!accepted&&repairAttempts>0&&rejected.length<=3)consider(checker.fastCandidates(s,t,[...rectMap.values()],occupied,[e.from,e.to])?.points);
+   for(const margin of !accepted&&repairAttempts>0&&rejected.length<=3?[100,300,700]:[]){
     if(accepted)break;
     consider(checker.findRouteGrid(s,t,[...rectMap.values()],occupied,true,margin,180));
    }

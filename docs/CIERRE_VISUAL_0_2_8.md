@@ -44,6 +44,10 @@ comprime al 70 % y el coeficiente interno de giro pasa de 0,23 a 0,30.
 Se permite un ajuste angular local adicional para colocar cuadros sin
 solapes, antes de aumentar su radio. Los textos permanecen horizontales,
 el núcleo central y el avance hacia fuera se verifican como antes.
+Las rutas de 04 recuperan corredores con una búsqueda local acotada y
+devuelven los que no se resuelven al modelo de capacidad de la distribución.
+Así no se acumulan reconstrucciones nativas de obstáculos en un corredor
+estrecho. Cada ruta recuperada pasa la misma auditoría independiente.
 Ese coeficiente interno no es la expansión W del modelo biológico de Raup;
 T continúa en cero y D no es un control de esta implementación.
 

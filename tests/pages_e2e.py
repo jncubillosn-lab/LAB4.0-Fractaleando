@@ -116,6 +116,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   page.locator('#nodeText').press('Tab')
   page.wait_for_function('(old)=>+document.querySelector("#nodes [data-node-id=n14] rect").getAttribute("height")>old',arg=old_height,timeout=30000)
   assert page.locator('#nodes [data-node-id="n14"] text').evaluate('(el)=>getComputedStyle(el).fontSize')=='24px'
+  assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.pending')==0
   with page.expect_download() as styled:page.locator('#jsonBtn').click()
   styled_graph=json.loads(Path(styled.value.path()).read_text(encoding='utf8'))
   assert next(e for e in styled_graph['edges'] if e['from']=='f0' and e['to']=='t0')['style']=='dotted'
