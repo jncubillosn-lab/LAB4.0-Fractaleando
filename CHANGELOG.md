@@ -1,5 +1,13 @@
 # Registro de cambios
 
+## 1.2.5 — 15 de noviembre de 2026
+
+- Corrige la elección de imagen de 1.2.4 usando la propuesta que el usuario
+  identifica en su captura: pixel art con colas negras y separadores verticales.
+- Reutiliza el original, sin regenerarlo. PNG fijo de 768 × 224 píxeles,
+  blanco y negro y 4.731 bytes; restaura la presentación de píxeles definidos.
+- Conserva la tarjeta de carga y todas las funciones del grafo.
+
 ## 1.2.4 — 15 de noviembre de 2026
 
 - Aplica la ilustración minimalista elegida: castor enredado en cables,
