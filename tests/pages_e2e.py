@@ -63,8 +63,17 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   assert page.locator('#undoBtn').is_disabled()
   print('Inicio y Nuevo: un solo J0 editable, sin vínculos; primera rama creada desde el núcleo',flush=True)
   page.evaluate('window.__exampleStarted=performance.now();window.__exampleMeasures=window.__textMeasures;window.__exampleAttempts=window.P1_PLANO_DIAGNOSTICO.routeCalculations')
+  page.evaluate('''()=>{window.__exampleLoadingFrames=[];window.__watchExample=true;
+   const sample=()=>{if(!window.__watchExample)return;
+    if(!document.querySelector('#loadingIndicator').hidden)window.__exampleLoadingFrames.push(getComputedStyle(document.querySelector('.loading-spinner')).transform);
+    requestAnimationFrame(sample);};requestAnimationFrame(sample);}''')
   page.locator('#resetBtn').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===217',timeout=30000)
+  movement=page.evaluate('''()=>{window.__watchExample=false;return {samples:window.__exampleLoadingFrames.length,poses:new Set(window.__exampleLoadingFrames).size}}''')
+  assert movement['samples']>2 and movement['poses']>2,movement
+  assert page.locator('.loading-spinner').evaluate('(img)=>img.naturalWidth===32&&img.naturalHeight===32')
+  assert page.locator('link[rel="icon"]').get_attribute('href').split('?')[0].endswith('/favicon.svg')
+  print('LOADING_EXAMPLE_REAL_210',json.dumps(movement),flush=True)
   assert page.locator('#depth').input_value()==page.locator('#depth').get_attribute('max')
   assert page.locator('[data-view="01"]').inner_text()=='01 · Editor'
   assert page.locator('[data-view="02"]').inner_text()=='02 · Compacto'

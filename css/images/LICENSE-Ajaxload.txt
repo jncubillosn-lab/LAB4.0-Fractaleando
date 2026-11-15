@@ -1,0 +1,15 @@
+Ajax-loader.gif — Ajaxload, 2009
+
+Original, used without changes:
+https://upload.wikimedia.org/wikipedia/commons/d/de/Ajax-loader.gif
+Source and public-domain declaration:
+https://commons.wikimedia.org/wiki/File:Ajax-loader.gif
+
+The author released this work into the public domain worldwide and grants
+anyone the right to use it for any purpose, without conditions unless required
+by law. The source states: "Generated gifs are totally free for use".
+
+loading.gif is the unmodified 32 x 32 original (3,208 bytes, 12 frames).
+loading-still.png is its first frame, converted to PNG for reduced motion.
+SHA-256 of loading.gif:
+aebc793d0064383ee6b1625bf3bb32532ec30a5c12bf9117066107d412119123

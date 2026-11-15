@@ -1,5 +1,16 @@
 # Registro de cambios
 
+## 1.2.2 — 15 de noviembre de 2026
+
+- Sustituye la ilustración por un GIF externo de dominio público de 32 × 32
+  píxeles y 3.208 bytes. Se sirve localmente y conserva alternativa fija para
+  movimiento reducido; retira el GIF de tejido y su script de preparación.
+- El giro del indicador usa únicamente `transform` en una capa de composición,
+  sin temporizadores JavaScript ni cambios del cálculo geométrico.
+- Añade el icono de una red de cinco nodos para la pestaña del navegador.
+- Comprueba el movimiento durante la carga real de los 210 conceptos del
+  ejemplo, además de los controles de imagen, caché y movimiento reducido.
+
 ## 1.2.1 — 15 de noviembre de 2026
 
 - Sustituye el SVG de manos por un GIF real de una persona tejiendo: diez

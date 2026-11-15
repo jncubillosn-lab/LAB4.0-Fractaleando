@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+ <style>:root{--paper:#f7f6f1;--ink:#1c1c1b}@media(prefers-color-scheme:dark){:root{--paper:#171917;--ink:#e9e9e4}}</style>
+ <rect width="32" height="32" rx="7" fill="var(--paper)"/>
+ <path d="M8 7 16 16 25 8M16 16 24 25M16 16 7 24M8 7 25 8M7 24 24 25" fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linecap="round"/>
+ <g fill="var(--ink)"><circle cx="8" cy="7" r="2.7"/><circle cx="25" cy="8" r="2.7"/><circle cx="16" cy="16" r="3.5"/><circle cx="7" cy="24" r="2.7"/><circle cx="24" cy="25" r="2.7"/></g>
+</svg>
