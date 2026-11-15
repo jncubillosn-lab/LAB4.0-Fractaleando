@@ -20,6 +20,8 @@ versión conserva el motor gráfico y sus decisiones numéricas.
 - Compilación limpia de `_site/`, exclusión de cachés de Python y retirada de
   restos de código sin uso. Se corrige el contador del registro de medición
   del ejemplo para informar el incremento total de intentos de ese cálculo.
+- Etiqueta de versión creada por GitHub Actions después de comprobar y publicar
+  el sitio, conservando intactas las etiquetas existentes.
 
 El cierre no declara resueltos los diagnósticos normativos pendientes de
 Compacto y Espiral. Véase [estado y límites de 1.0.0](docs/VERSION_1_0_0.md).

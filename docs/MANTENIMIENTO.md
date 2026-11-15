@@ -75,8 +75,10 @@ en las tres vistas. Las optimizaciones deben mantener los criterios de aceptaci�
 3. Revisar el cambio y exigir Node y las cuatro suites Chrome antes de integrar.
 4. Integrar en `main`. El trabajo de Pages depende de ambas comprobaciones;
    construye solo el sitio estático y publica `_site/`.
-5. Verificar la versión que sirve la URL pública y marcar el corte con una
-   etiqueta `vX.Y.Z` sobre el commit integrado, sin mover etiquetas existentes.
+5. Tras publicar Pages, el trabajo `tag-release` crea `vX.Y.Z` a partir de la
+   versión de `package.json`, sobre el commit que pasó las comprobaciones.
+   Si la etiqueta ya existe, la conserva. Verificar la versión de la URL pública
+   y que la etiqueta remota señale el corte publicado.
 
 Conservar `P1_Plano_R01_brazos_variables.html` como respaldo original: su
 inmutabilidad está comprobada por una prueba. Las muestras y scripts de

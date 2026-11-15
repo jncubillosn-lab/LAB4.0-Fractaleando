@@ -93,3 +93,28 @@ jobs:
       - name: Desplegar Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  tag-release:
+    name: Fijar etiqueta de versión publicada
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: deploy-pages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Crear la etiqueta solo si todavía no existe
+        run: |
+          tag="v$(node -p "require('./package.json').version")"
+          git check-ref-format "refs/tags/$tag"
+          if git show-ref --verify --quiet "refs/tags/$tag"; then
+            echo "La etiqueta $tag ya existe; se conserva intacta."
+          else
+            git tag "$tag" "$GITHUB_SHA"
+            git push origin "refs/tags/$tag"
+          fi
