@@ -134,6 +134,8 @@ o cualquier cantidad de contenido.
 - Se ignoran las cachés de Python. Se conservan dependencias fijadas, licencias,
   pruebas, datos de comparación, documentos históricos y el HTML original de
   respaldo; ninguno de esos respaldos se publica en `_site`.
+- La etiqueta de versión se fija desde GitHub Actions después de las pruebas y
+  de publicar Pages. Usa el número de `package.json` y no reemplaza etiquetas.
 
 ## Validación y límites del corte
 
