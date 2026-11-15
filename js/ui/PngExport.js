@@ -1,4 +1,26 @@
 // 4K longest side, keeping the graph's natural aspect ratio for readable type.
+import {edgeKey} from '../core/GraphIdentity.js';
+
+// Validate the scene against its document, not just the routes that happen
+// to be present. An empty routing map during startup is not a complete graph.
+export function exportScene({plane, derived, state, complete = false}) {
+ const mode=derived.mode;
+ if(mode==='01'?!plane.ready:!derived.current)throw Error('Espera a que termine el cálculo de esta vista.');
+ const scene=mode==='01'?plane:derived.current;
+ const rects=scene.rects||scene.layout.rects,routes=scene.routes;
+ const ids=new Set(state.nodes.map(node=>node.id));
+ if(ids.size!==state.nodes.length||rects.size!==ids.size||[...ids].some(id=>!rects.has(id)))
+  throw Error('La geometría no contiene todos los conceptos del documento.');
+ if(complete){
+  const keys=new Set(state.edges.map(edgeKey));
+  if(keys.size!==state.edges.length||routes.size!==keys.size||[...keys].some(key=>
+   !routes.has(key)||!routes.get(key)?.edge||edgeKey(routes.get(key).edge)!==key))
+   throw Error('Faltan conexiones del documento por calcular.');
+  if([...routes.values()].some(route=>!route.points))throw Error('Hay conexiones pendientes de cálculo.');
+ }
+ return {mode,rects,routes,notice:derived.exportNotice()};
+}
+
 // Bounds come from the entire scene, independently of camera and depth filters.
 // XML text must escape the font licence's ampersand as well as stylesheet text.
 export const svgStyleTag=css=>'<style>'+css.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')+'</style>';

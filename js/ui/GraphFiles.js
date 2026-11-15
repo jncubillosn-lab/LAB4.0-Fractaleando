@@ -18,10 +18,11 @@ export function downloadFile(filename, data, mime) {
   downloadBlob(filename, new Blob([data], {type: mime}));
 }
 
-export function bindGraphFiles({fileInput, loadButton, saveButton, snapshot, onImport, toast}) {
+export function bindGraphFiles({fileInput, loadButton, saveButton, snapshot, onImport, toast, beforeSave = () => {}}) {
   let revision = 0;
   loadButton.onclick = () => fileInput.click();
   saveButton.onclick = () => {
+    beforeSave();
     downloadFile('p1-grafo.json', JSON.stringify(snapshot(), null, 2), 'application/json;charset=utf-8');
     toast('Se exportó el grafo completo, independiente de la vista.');
   };

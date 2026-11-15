@@ -5,7 +5,9 @@ construir conceptos, desarrollar sus jerarquías y representar sus relaciones.
 
 **[Abrir Fractalear en GitHub Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/)**
 
-**Actualización 0.2.13:** [estabilidad y separación de responsabilidades](docs/MANTENIMIENTO_0_2_13.md).
+**Actualización 0.2.14:** [integridad de documentos, exportación y jerarquías](docs/INTEGRIDAD_0_2_14.md).
+
+**Base 0.2.13:** [estabilidad y separación de responsabilidades](docs/MANTENIMIENTO_0_2_13.md).
 
 **Base 0.2.12:** [optimización de carga, mediciones y comprobaciones de
 equivalencia](docs/RENDIMIENTO_0_2_12.md), conservando el funcionamiento de 0.2.11.
@@ -35,5 +37,5 @@ npm run build
 ```
 
 La construcción genera el sitio estático en `_site/`. GitHub Actions comprueba
-además las tres suites de navegador antes de publicar desde `main`.
+además las cuatro suites de navegador antes de publicar desde `main`.
 Los archivos JSON guardados por la aplicación conservan el trabajo editable.

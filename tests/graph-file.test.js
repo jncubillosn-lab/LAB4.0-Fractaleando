@@ -29,6 +29,15 @@ test('los registros de geometría incompletos se identifican como caché no recu
     assert.equal(checkpointHasRecords(data), false);
   }
 });
+test('una caché con identidades repetidas se descarta sin invalidar sus conceptos',()=>{
+ const data=structuredClone(fixture);
+ data.planeCheckpoint.positions.push({...data.planeCheckpoint.positions[0]});
+ assert.equal(checkpointHasRecords(data.planeCheckpoint),false);
+ assert.equal(parseGraphFile(JSON.stringify(data)).nodes.length,fixture.nodes.length);
+ const checkpoint=structuredClone(fixture.planeCheckpoint);
+ checkpoint.routes.push({...checkpoint.routes[0]});
+ assert.equal(checkpointHasRecords(checkpoint),false);
+});
 function fileController() {
   const handlers = {}, imports = [], notices = [];
   const input = {value: '', files: [], addEventListener: (name, fn) => { handlers[name] = fn; }};

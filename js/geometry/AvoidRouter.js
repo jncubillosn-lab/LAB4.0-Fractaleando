@@ -49,7 +49,7 @@ export async function computeAvoidRoutes({nodes,edges,positions,rects,levels,top
    connections.push({e,conn,fromPort,toPort});
   }
   onProgress('native-start');router.processTransaction();onProgress('native-done');
-  const routes=[],occupied=[],used=new Map(),failures=[],clearanceRequests={},rejected=[];
+  const routes=[],occupied=[],used=new Map(),failures=[],clearanceRequests=Object.create(null),rejected=[];
   const requestSpace=points=>{
    let hits=0;
    for(const a of checker.allSegments(points))for(const b of occupied){

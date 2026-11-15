@@ -264,7 +264,7 @@ export class DerivedViews {
   const layout=this.layoutEngine.compute({mode,...input,...policy,baseLayout,nodeClearances:stored.nodeClearances||{}});
   if(layout.stats.overlaps||layout.stats.radialOrder===false||layout.stats.constraintsValid===false)return null;
   const saved=new Map(stored.positions.map(p=>[p.id,p]));
-  if(saved.size!==layout.positions.size)return null;
+  if(saved.size!==stored.positions.length||saved.size!==layout.positions.size)return null;
   for(const [id,p] of layout.positions){
    const q=saved.get(id);
    if(!q||!Number.isFinite(q.x)||!Number.isFinite(q.y)||

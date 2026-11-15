@@ -1,4 +1,5 @@
 import {orderRoots} from '../core/RootOrder.js';
+import {ownValue} from '../core/GraphIdentity.js';
 
 const TAU=2*Math.PI,EPS=.02;
 const delta=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
@@ -32,7 +33,7 @@ export class RayPackingLayout {
  compute({nodes,edges,metrics,sourcePositions,topologyReference,clearance=24,nodeClearances={},coreClearances=nodeClearances,coreGapFactor=.5,refinementPasses=3}){
   if(!Number.isFinite(coreGapFactor)||coreGapFactor<=0||coreGapFactor>1)throw Error('Factor de separación del núcleo inválido.');
   metrics=new Map([...(metrics instanceof Map?metrics:new Map(metrics))].map(([id,m])=>
-   [id,{...m,id,routingClearance:Math.max(clearance,nodeClearances[id]||0)}]));
+   [id,{...m,id,routingClearance:Math.max(clearance,ownValue(nodeClearances,id,0)||0)}]));
   const source=sourcePositions instanceof Map?sourcePositions:new Map(sourcePositions||[]);
   const byId=new Map(nodes.map(n=>[n.id,n]));
   if(byId.size!==nodes.length||!byId.has('p1'))throw Error('Se requiere un núcleo p1 y conceptos únicos.');
@@ -45,7 +46,7 @@ export class RayPackingLayout {
   for(const e of edges){adj.get(e.from).push(e.to);adj.get(e.to).push(e.from);}
   const fallback=(a,b)=>(source.get(a.id)?.y??0)-(source.get(b.id)?.y??0)||a.id.localeCompare(b.id);
   for(const n of nodes){
-   let ring=topologyReference?.ports?.[n.id]||[];
+   let ring=ownValue(topologyReference?.ports,n.id,[]);
    const incoming=n.parent&&key({from:n.parent,to:n.id}),at=ring.findIndex(p=>p.edge===incoming);
    if(at>=0)ring=[...ring.slice(at+1),...ring.slice(0,at+1)];
    const rank=new Map(ring.map((p,i)=>[p.edge,i]));
@@ -68,7 +69,7 @@ export class RayPackingLayout {
   // centre-to-centre radius. Freeze the reference capacity across route retries.
   const coreTarget=(id,angle)=>{
    const a=rayRect('p1',{x:0,y:0},{...metrics.get('p1'),routingClearance:Math.max(clearance,coreClearances.p1||0)});
-   const b={...metrics.get(id),routingClearance:Math.max(clearance,coreClearances[id]||0)};
+   const b={...metrics.get(id),routingClearance:Math.max(clearance,ownValue(coreClearances,id,0)||0)};
    const referenceRadius=firstFreeRadius(angle,1,b,new Map([['p1',a]]),clearance);
    const at=radius=>rayRect(id,{x:Math.cos(angle)*radius,y:Math.sin(angle)*radius},b);
    const referenceGap=gap(a,at(referenceRadius)),requestedGap=Math.max(clearance,referenceGap*coreGapFactor);
@@ -76,7 +77,7 @@ export class RayPackingLayout {
    for(let i=0;i<40;i++){const mid=(lo+hi)/2;if(gap(a,at(mid))<requestedGap)lo=mid;else hi=mid;}
    return {referenceGap,requestedGap,radius:hi+EPS};
   };
-  const levels={p1:0},owner=new Map(),area=new Map(),seen=new Set(),ordered=[];
+  const levels=Object.assign(Object.create(null),{p1:0}),owner=new Map(),area=new Map(),seen=new Set(),ordered=[];
   const visit=(n,level,branch)=>{
    if(seen.has(n.id))return 0;
    seen.add(n.id);ordered.push(n);levels[n.id]=level;if(branch)owner.set(n.id,branch);
@@ -193,7 +194,7 @@ export class RayPackingLayout {
    const score=gaps.reduce((s,v)=>s+v,0)+Math.sqrt(bounds.area)*.5;
    if(!best||score<best.score)best={positions,rects,sectors,intervals,bounds,score,gaps,fallbacks};
   }
-  return {...best,levels,owner,ordered,disconnected,roots,clearance,
+  return {...best,levels:Object.fromEntries(Object.entries(levels)),owner,ordered,disconnected,roots,clearance,
    stats:{engine:RayPackingLayout.VERSION,arms:roots.length,meanGap:best.gaps.reduce((s,v)=>s+v,0)/Math.max(1,edges.length),
     maxGap:Math.max(0,...best.gaps),bounds:best.bounds,clearance,nodeClearances,coreClearances,coreGapFactor,
     coreSpacing:{view:'02',factor:coreGapFactor,minimumGap:clearance,links:roots.map(n=>{

@@ -3,6 +3,7 @@
 // No modifica rutas ni cuadros: describe, compara y valida puntos de control.
 import {segmentIntersection,segmentAxis} from '../geometry/SegmentGeometry.js';
 import {routeCrossings} from '../geometry/CircuitGeometry.js';
+import {ownValue} from './GraphIdentity.js';
 
 export class TopologyRegister {
  constructor({edgeKey}) {
@@ -55,7 +56,7 @@ export class TopologyRegister {
   return true;
  }
  capture({positions,rects,routes,edges}){
-  const keys=[],routed=new Map(),ports={};
+  const keys=[],routed=new Map(),ports=Object.create(null);
   for(const e of edges){
    const key=this.edgeKey(e);
    if(keys.includes(key))continue;
@@ -72,7 +73,7 @@ export class TopologyRegister {
   // Recorrido horario del perímetro: arriba, derecha, abajo, izquierda.
   const sideRank={top:0,right:1,bottom:2,left:3};
   for(const [nodeId,list] of Object.entries(ports)){
-   const old=new Map((this.reference?.ports?.[nodeId]||[]).map(x=>[x.edge,x.id]));
+   const old=new Map(ownValue(this.reference?.ports,nodeId,[]).map(x=>[x.edge,x.id]));
    const used=new Set([...old.values()]);
    let next=0;
    for(const id of used){
@@ -204,7 +205,7 @@ export class TopologyRegister {
   }
   const neighbors=[...corridor.values()].sort((a,b)=>a.a.localeCompare(b.a)||
    a.b.localeCompare(b.b)||a.axis.localeCompare(b.axis)||a.side-b.side);
-  return {schema:'p1.topology.v1',edges:keys,ports,
+  return {schema:'p1.topology.v1',edges:keys,ports:Object.fromEntries(Object.entries(ports)),
    nodeOrders:{x:rankAxis('x'),y:rankAxis('y')},
    crossings:[...crossingPairs.values()].sort((a,b)=>a.a.localeCompare(b.a)||a.b.localeCompare(b.b)),
    crossingOrders,neighbors,pending:keys.filter(k=>!routed.has(k))};
@@ -221,8 +222,8 @@ export class TopologyRegister {
    if(!reference.pending.includes(key)&&candidate.pending.includes(key))add('unresolved',{edge:key});
   }
   for(const id of retainedNodes){
-   const prior=(reference.ports[id]||[]).filter(e=>common.has(e.edge));
-   const now=(candidate.ports[id]||[]).filter(e=>common.has(e.edge));
+   const prior=ownValue(reference.ports,id,[]).filter(e=>common.has(e.edge));
+   const now=ownValue(candidate.ports,id,[]).filter(e=>common.has(e.edge));
    const curr=new Map(now.map(e=>[e.edge,e]));
    for(const p of prior){
     const next=curr.get(p.edge);

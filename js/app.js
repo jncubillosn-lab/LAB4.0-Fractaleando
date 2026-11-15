@@ -15,6 +15,8 @@ import {bindGraphFiles} from './ui/GraphFiles.js';
 import {bindDiagramExports} from './ui/DiagramExport.js';
 import {validLinkStyle} from './ui/LinkStyles.js';
 import {layoutPlane} from './geometry/PlaneLayout.js';
+import {edgeKey,nodeSerial,allocateNodeId} from './core/GraphIdentity.js';
+import {captureEditorState,restoreEditorState} from './core/EditorHistory.js';
 import {routeFacingLink} from './geometry/FacingPorts.js';
 import {computeInitialRoutes} from './workers/initial-route.worker.js';
 // P1 application coordinator: preserves the approved HTML, controls and data model.
@@ -76,7 +78,6 @@ const diag={initialBuilds:0,routeCalculations:0,lastRouteCalculations:0,lastOper
 window.P1_PLANO_DIAGNOSTICO=diag; // lectura técnica, no herramienta de interfaz
 const validator=new GeometryValidator({router,rectOverlap});
 const renderer=new SvgRenderer({linesEl,sEl,router,edgeKey:e=>edgeKey(e)});
-const edgeKey=e=>[e.from,e.to].sort().map(encodeURIComponent).join('|');
 // Registro relacional paralelo al punto de control geométrico.
 const topology=new TopologyRegister({edgeKey});
 const derived=new DerivedViews({state,plane,camera,linesEl,nodesEl,sEl,router,validator,
@@ -466,8 +467,28 @@ function updatePanel(){const n=selected();$('selectionInfo').textContent=n?`${n.
  $('stage').classList.toggle('connecting',false);
 
 }
-function saveUndo(){state.undo.push(JSON.stringify({nodes:state.nodes,edges:state.edges,selected:state.selected}));if(state.undo.length>36)state.undo.shift();$('undoBtn').disabled=false;}
-function undo(){if(derived.mode!=='01'){toast('Regresa a 01 · Editor para editar el grafo.');return;}if(!state.undo.length)return;const s=JSON.parse(state.undo.pop());state.nodes=s.nodes;state.edges=s.edges;state.selected=s.selected;state.linkFrom=null;state.unlinkFrom=null;updatePanel();schedule();$('undoBtn').disabled=!state.undo.length;toast('Cambio deshecho.');}
+function saveUndo(includeGeometry=false){
+ const geometry=includeGeometry?{planeCheckpoint:saveCheckpoint(),topologyRegister:topology.reference}:{};
+ state.undo.push(captureEditorState(state,geometry));
+ if(state.undo.length>36)state.undo.shift();
+ $('undoBtn').disabled=false;
+}
+function undo(){
+ if(derived.mode!=='01'){toast('Regresa a 01 · Editor para editar el grafo.');return;}
+ if(!state.undo.length)return;
+ graphFiles.cancel();
+ cancelPendingTyping();
+ cancelInitialBuild();
+ const snapshot=JSON.parse(state.undo.pop());
+ if(Object.hasOwn(snapshot,'planeCheckpoint'))applyGraph(snapshot,snapshot);
+ else{
+  restoreEditorState(state,snapshot);
+  setLinkStyle(state.linkStyle);
+  updatePanel();schedule();
+ }
+ $('undoBtn').disabled=!state.undo.length;
+ toast('Cambio deshecho.');
+}
 function removeLink(from,to){
  const edge=state.edges.find(e=>(e.from===from&&e.to===to)||(e.from===to&&e.to===from));
  if(!edge){toast('Estos conceptos no tienen un vínculo directo.');return false;}
@@ -506,7 +527,8 @@ function selectNode(id){
 function addConcept(){
  const n=selected()||nodeById('p1');if(!n)return;
  const newArm=n.id==='p1';
- saveUndo();const id='n'+(++state.idSerial);
+ saveUndo();const id=allocateNodeId(state);
+ plane.retired.delete(id);
  // R01: un hijo directo de J0 es siempre un NUEVO brazo, con índice propio.
  const node=makeNode(id,'Nuevo concepto',newArm?nextBranchIndex():n.branch,n.id,newArm?190:180);
  const parent=plane.rects.get(n.id)||rectAt(n.id,n,geometry(n));
@@ -554,6 +576,7 @@ function inFrame(clientX,clientY){const b=stage.getBoundingClientRect();return{x
 for(const button of document.querySelectorAll('[data-view]')){
  button.addEventListener('click',async()=>{
   const mode=button.dataset.view;
+  flushPendingEdits();
   await derived.select(mode);
   if(mode==='01'){updatePanel();syncGraphics(false);fit();}
  });
@@ -593,10 +616,19 @@ $('depth').addEventListener('input',e=>{state.depth=Number(e.target.value);sched
 // El filtro es solo visibilidad: conserva coordenadas, zoom y cámara.
 $('showAllBtn').onclick=()=>{state.depth=maximumDepth();scheduleVisibility();};
 window.addEventListener('keydown',e=>{const target=e.target.tagName.toLowerCase();if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){if(target!=='textarea'&&target!=='input'){e.preventDefault();undo();}}if(e.key==='Escape'&&(state.linkFrom||state.unlinkFrom)){state.linkFrom=null;state.unlinkFrom=null;updatePanel();}});
+function flushPendingEdits(){
+ if(plane.ready&&(state.renderQueued||geometryTypingTimer)){
+  cancelPendingTyping();render();
+ }
+}
 function importGraph(data){
+ flushPendingEdits();
+ saveUndo(true);
+ applyGraph(data);
+}
+function applyGraph(data,editorState=null){
  cancelPendingTyping();
  cancelInitialBuild();
- saveUndo();
  derived.reset();
  derived.restoreData(data.derivedViews);
  topology.reset();
@@ -609,10 +641,12 @@ function importGraph(data){
  state.unlinkFrom=null;
  state.depth=maximumDepth();
  setLinkStyle('solid');
- state.idSerial=Math.max(0,...state.nodes.map(n=>Number(n.id.match(/^n([0-9]+)$/)?.[1]||0)));
+ state.idSerial=nodeSerial(state.nodes);
+ if(editorState){restoreEditorState(state,editorState);setLinkStyle(state.linkStyle);}
  plane.ready=false;
  plane.nodeEls.clear();
  plane.routeEls.clear();
+ plane.retired.clear();
  linesEl.replaceChildren();
  nodesEl.replaceChildren();
  const restored=validateSavedCheckpoint(data.planeCheckpoint)||
@@ -624,7 +658,7 @@ function importGraph(data){
  schedule();
 }
 const graphFiles=bindGraphFiles({
- fileInput:$('fileInput'),loadButton:$('loadBtn'),saveButton:$('jsonBtn'),toast,onImport:importGraph,
+ fileInput:$('fileInput'),loadButton:$('loadBtn'),saveButton:$('jsonBtn'),toast,onImport:importGraph,beforeSave:flushPendingEdits,
  snapshot:()=>({schema:'p1.graph.v1',nodes:state.nodes,edges:state.edges,planeCheckpoint:saveCheckpoint(),
   topologyRegister:topology.reference,derivedViews:derived.exportData()})
 });
@@ -643,7 +677,7 @@ try{selectedTheme=localStorage.getItem('p1-color-theme')==='dark'?'dark':'light'
 setTheme(selectedTheme);
 themeButton.onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
 bindDiagramExports({
- svgButton:$('svgBtn'),pngButton:$('pngBtn'),stage,camera,linesEl,nodesEl,plane,derived,state,diag,toast,sEl
+ svgButton:$('svgBtn'),pngButton:$('pngBtn'),stage,camera,linesEl,nodesEl,plane,derived,state,diag,toast,sEl,beforeExport:flushPendingEdits
 });
 function init(useDemo=true){
  graphFiles.cancel();

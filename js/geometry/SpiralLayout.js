@@ -1,4 +1,5 @@
 import {rayRect} from './RayPackingLayout.js';
+import {ownValue} from '../core/GraphIdentity.js';
 
 const delta=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
 const overlap=(a,b,pad)=>a.l<b.r+pad&&a.r>b.l-pad&&a.t<b.b+pad&&a.b>b.t-pad;
@@ -10,7 +11,7 @@ export class SpiralLayout {
  // ratio per revolution. D is not parameterized here; this view is planar.
  compute({base,nodes,edges,metrics,nodeClearances={},W=.25,armWidthFactor=.85}){
   metrics=new Map([...(metrics instanceof Map?metrics:new Map(metrics))].map(([id,m])=>
-   [id,{...m,routingClearance:Math.max(base.stats.clearance??24,base.rects.get(id)?.routingClearance||0,nodeClearances[id]||0)}]));
+   [id,{...m,routingClearance:Math.max(base.stats.clearance??24,base.rects.get(id)?.routingClearance||0,ownValue(nodeClearances,id,0)||0)}]));
   const byId=new Map(nodes.map(n=>[n.id,n])),clearance=base.stats.clearance??24;
   const lengths=edges.filter(e=>byId.get(e.to)?.parent===e.from).map(e=>{
    const a=base.positions.get(e.from),b=base.positions.get(e.to);return Math.hypot(a.x-b.x,a.y-b.y);

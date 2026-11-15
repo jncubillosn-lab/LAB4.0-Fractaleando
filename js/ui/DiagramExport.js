@@ -1,6 +1,6 @@
 import {loadNodeTypography,exportedNodeFonts} from './NodeTypography.js';
 import {scaleCrossings} from './CircuitSvg.js';
-import {pngExportPlan,completeGraphClone,svgStyleTag} from './PngExport.js';
+import {pngExportPlan,completeGraphClone,svgStyleTag,exportScene} from './PngExport.js';
 import {downloadFile,downloadBlob} from './GraphFiles.js';
 
 const EXPORT_STYLE=`
@@ -32,10 +32,10 @@ function exportStyles() {
 // View/scene dependencies are supplied explicitly; this controller owns file
 // creation and temporary resources, never edits the graph or its camera.
 export function bindDiagramExports({
-  svgButton, pngButton, stage, camera, linesEl, nodesEl, plane, derived, state, diag, toast, sEl
+  svgButton, pngButton, stage, camera, linesEl, nodesEl, plane, derived, state, diag, toast, sEl,
+  beforeExport = () => {}
 }) {
-  function exportValidationNotice() {
-    const notice = derived.exportNotice();
+  function exportValidationNotice(notice = derived.exportNotice()) {
     return notice ? `<desc>${notice}</desc><g><rect x="0" y="0" width="100%" height="34" fill="${exportColor('paper')}"/><text x="16" y="23" fill="${exportColor('ink')}" font-family="Arial,sans-serif" font-size="14">${notice}</text></g>` : '';
   }
 
@@ -44,40 +44,39 @@ export function bindDiagramExports({
       .replaceAll('fill="var(--paper)"', 'fill="' + exportColor('paper') + '"');
   }
 
-  function makeExportSvg(outputW, outputH) {
+  function makeExportSvg(outputW, outputH, notice) {
     const sourceW = Math.max(1, stage.clientWidth);
     const sourceH = Math.max(1, stage.clientHeight);
     const scale = Math.min(outputW / sourceW, outputH / sourceH);
     const x = (outputW - sourceW * scale) / 2;
     const y = (outputH - sourceH * scale) / 2;
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${outputW}" height="${outputH}" viewBox="0 0 ${outputW} ${outputH}"><rect width="${outputW}" height="${outputH}" fill="${exportColor('paper')}"/>${svgStyleTag(exportStyles())}<g transform="translate(${x} ${y}) scale(${scale})">${exportCamera()}</g>${exportValidationNotice()}</svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${outputW}" height="${outputH}" viewBox="0 0 ${outputW} ${outputH}"><rect width="${outputW}" height="${outputH}" fill="${exportColor('paper')}"/>${svgStyleTag(exportStyles())}<g transform="translate(${x} ${y}) scale(${scale})">${exportCamera()}</g>${exportValidationNotice(notice)}</svg>`;
   }
 
-  function completePngSvg(bounds) {
+  function completePngSvg(bounds, scene) {
     const {width, height, scale, offsetX, offsetY} = bounds;
     const graph = completeGraphClone({
-      lines: derived.mode === '01' ? linesEl : derived.derivedLines,
-      nodes: derived.mode === '01' ? nodesEl : derived.derivedNodes,
+      lines: scene.mode === '01' ? linesEl : derived.derivedLines,
+      nodes: scene.mode === '01' ? nodesEl : derived.derivedNodes,
       sEl
     });
     scaleCrossings(graph, 1);
     graph.removeAttribute('transform');
     const style = exportStyles().replace(/vector-effect\s*:\s*non-scaling-stroke\s*;?/g, '');
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="${width}" height="${height}" fill="${exportColor('paper')}"/>${svgStyleTag(style)}<g transform="translate(${offsetX.toFixed(2)} ${offsetY.toFixed(2)}) scale(${scale})">${exportCamera(graph)}</g>${exportValidationNotice()}</svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="${width}" height="${height}" fill="${exportColor('paper')}"/>${svgStyleTag(style)}<g transform="translate(${offsetX.toFixed(2)} ${offsetY.toFixed(2)}) scale(${scale})">${exportCamera(graph)}</g>${exportValidationNotice(scene.notice)}</svg>`;
   }
 
   svgButton.onclick = async () => {
     try {
+      beforeExport();
       await loadNodeTypography();
-    } catch {
-      toast('No se pudo cargar la tipografía para exportar.');
-      return;
-    }
-    await new Promise(requestAnimationFrame);
-    downloadFile('fractalear-vista.svg',
-      makeExportSvg(Math.max(1, stage.clientWidth), Math.max(1, stage.clientHeight)),
-      'image/svg+xml;charset=utf-8');
-    toast('Vista actual exportada en SVG.');
+      await new Promise(requestAnimationFrame);
+      const scene=exportScene({plane,derived,state});
+      downloadFile('fractalear-vista.svg',
+        makeExportSvg(Math.max(1, stage.clientWidth), Math.max(1, stage.clientHeight),scene.notice),
+        'image/svg+xml;charset=utf-8');
+      toast('Vista actual exportada en SVG.');
+    } catch (error) { toast('No se pudo exportar SVG: '+error.message); }
   };
 
   pngButton.onclick = async () => {
@@ -86,19 +85,17 @@ export function bindDiagramExports({
     pngButton.textContent = 'Preparando PNG completo…';
     let temporaryURL = null;
     try {
+      beforeExport();
       await loadNodeTypography();
       if (state.renderQueued) {
         await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       }
-      if (derived.mode !== '01' && !derived.current) {
-        throw new Error('Espera a que termine el cálculo de esta vista.');
-      }
-      const scene = derived.mode === '01' ? {rects: plane.rects, routes: plane.routes} : derived.current;
+      const scene = exportScene({plane,derived,state,complete:true});
       const bounds = pngExportPlan({
-        rects: scene.rects || scene.layout.rects, routes: scene.routes,
-        notice: Boolean(derived.exportNotice())
+        rects: scene.rects, routes: scene.routes,
+        notice: Boolean(scene.notice)
       });
-      const svgText = completePngSvg(bounds);
+      const svgText = completePngSvg(bounds,scene);
       temporaryURL = URL.createObjectURL(new Blob([svgText], {type: 'image/svg+xml;charset=utf-8'}));
       const picture = new Image();
       await new Promise((resolve, reject) => {
@@ -119,7 +116,7 @@ export function bindDiagramExports({
           reject(new Error('No se pudo codificar este PNG de gran tamaño. Puedes exportar SVG.')), 'image/png');
       });
       diag.pngExport = {...bounds, fontPixels: 24 * bounds.scale};
-      downloadBlob(`fractalear-${derived.mode === '04' ? '03' : derived.mode}-4k-${bounds.width}x${bounds.height}.png`, blob);
+      downloadBlob(`fractalear-${scene.mode === '04' ? '03' : scene.mode}-4k-${bounds.width}x${bounds.height}.png`, blob);
       toast(`PNG 4K: ${bounds.width} × ${bounds.height} px · ${bounds.nodes} conceptos · ${bounds.edges} vínculos.`);
     } catch (error) {
       console.error('Error exportando PNG completo:', error);
