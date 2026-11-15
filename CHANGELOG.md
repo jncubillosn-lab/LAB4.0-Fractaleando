@@ -1,5 +1,16 @@
 # Registro de cambios
 
+## 1.2.1 — 15 de noviembre de 2026
+
+- Sustituye el SVG de manos por un GIF real de una persona tejiendo: diez
+  fotogramas, seis poses diferentes y un ciclo de 1,2 segundos, en dos tonos
+  sobre transparencia. El archivo pesa 6.107 bytes y se sirve desde Pages.
+- Conserva una imagen PNG fija para movimiento reducido y adapta ambos al tema
+  oscuro. Retira la animación CSS anterior del tejido.
+- Incluye las imágenes en la identidad de caché del sitio. La prueba de navegador
+  compara capturas del GIF durante carga y comprueba que la alternativa fija no
+  cambie de imagen, además de conservar la regresión del grafo.
+
 ## 1.2.0 — 15 de noviembre de 2026
 
 - Amplía Otras miradas a diecisiete fragmentos: cinco poetas latinoamericanas
