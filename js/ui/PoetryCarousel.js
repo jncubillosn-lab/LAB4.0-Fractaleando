@@ -1,13 +1,13 @@
 import {poetryQuotes} from '../data/PoetryQuotes.js';
 
-export function bindPoetryCarousel(root,{quotes=poetryQuotes,intervalMs=24000,
+export function bindPoetryCarousel(root,{quotes=poetryQuotes,intervalMs=24000,random=Math.random,
  setTimer=(fn,ms)=>setTimeout(fn,ms),clearTimer=id=>clearTimeout(id)}={}) {
  const doc=root.ownerDocument,motion=doc.defaultView.matchMedia('(prefers-reduced-motion: reduce)');
  const original=root.querySelector('[data-poem-original]'),translation=root.querySelector('[data-poem-translation]');
  const translated=root.querySelector('[data-poem-translated]'),author=root.querySelector('[data-poem-author]');
  const source=root.querySelector('[data-poem-source]'),count=root.querySelector('[data-poem-count]');
  const slide=root.querySelector('[data-poem-slide]'),pause=root.querySelector('[data-poem-pause]');
- let index=0,paused=motion.matches,hovered=false,focused=false,timer=null,disposed=false;
+ let index=Math.floor(random()*quotes.length),paused=motion.matches,hovered=false,focused=false,timer=null,disposed=false;
  const events=[];
  const listen=(target,name,fn)=>{target.addEventListener(name,fn);events.push([target,name,fn]);};
  function schedule(){

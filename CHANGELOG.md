@@ -1,5 +1,12 @@
 # Registro de cambios
 
+## 1.2.6 — 15 de noviembre de 2026
+
+- Retira las tres barras verticales de la imagen de carga.
+- Elige al azar la primera cita, conservando la navegación y las pausas.
+- Reúne la cámara en cuatro símbolos y retira el botón duplicado de encuadre.
+- Registra tiempos reales de validación y publicación para evaluar las esperas.
+
 ## 1.2.5 — 15 de noviembre de 2026
 
 - Corrige la elección de imagen de 1.2.4 usando la propuesta que el usuario
