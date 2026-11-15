@@ -19,10 +19,15 @@ import {edgeKey,nodeSerial,allocateNodeId} from './core/GraphIdentity.js';
 import {captureEditorState,restoreEditorState} from './core/EditorHistory.js';
 import {routeFacingLink} from './geometry/FacingPorts.js';
 import {computeInitialRoutes} from './workers/initial-route.worker.js';
+import {createLoadingIndicator} from './ui/LoadingIndicator.js';
+import {bindPoetryCarousel} from './ui/PoetryCarousel.js';
 // P1 application coordinator: preserves the approved HTML, controls and data model.
 const NS='http://www.w3.org/2000/svg';
 const $=id=>document.getElementById(id);
 const stage=$('stage'), camera=$('camera'), linesEl=$('lines'), nodesEl=$('nodes');
+const loading=createLoadingIndicator({panel:$('loadingIndicator'),stage:$('stageWrap')});
+const bootLoading=loading.begin('Preparando tu lienzo','Cargando la tipografía y los controles…');
+bindPoetryCarousel($('poetryCarousel'));
 const state={nodes:[],edges:[],selected:'p1',linkFrom:null,unlinkFrom:null,linkStyle:'solid',depth:2,zoom:1,tx:0,ty:0,undo:[],pointer:null,idSerial:0,toastTimer:null,renderQueued:false,focusRoot:"p1"};
 const isFirstLevel=n=>Boolean(n&&n.parent==='p1');
 const nextBranchIndex=()=>Math.max(-1,...state.nodes.map(n=>n.branch))+1;
@@ -78,7 +83,7 @@ const validator=new GeometryValidator({router,rectOverlap});
 const renderer=new SvgRenderer({linesEl,sEl,router,edgeKey:e=>edgeKey(e)});
 // Registro relacional paralelo al punto de control geométrico.
 const topology=new TopologyRegister({edgeKey});
-const derived=new DerivedViews({state,plane,camera,linesEl,nodesEl,sEl,router,validator,
+const derived=new DerivedViews({state,plane,camera,linesEl,nodesEl,sEl,router,validator,loading,
  edgeKey,readDepthMap,fit,geometry,toast,referenceTopology:()=>topology.reference,onSelect:selectNode});
 let stagedTopology=null;
 function observeTopology(){
@@ -239,13 +244,16 @@ function chooseRoute(edge,occupied){
 // The initial routing is expensive; keep the browser's UI responsive (phase VI).
 // The Worker receives measured rectangles, never the DOM or guessed font metrics.
 const initialTask=new WorkerTask(()=>new Worker(new URL('./workers/initial-route.worker.js',import.meta.url),{type:'module'}));
-let initialToken=0,initialBuilding=false,pendingAutoFit=false;
+let initialToken=0,initialBuilding=false,pendingAutoFit=false,initialLoading=null;
 function cancelInitialBuild(){
  ++initialToken;initialBuilding=false;initialTask.cancel();
+ initialLoading?.finish();initialLoading=null;
 }
 function graphFingerprint(){return JSON.stringify({nodes:state.nodes.map(n=>[n.id,n.text,n.parent,n.branch,n.width,n.x,n.y]),edges:state.edges});}
 function makeInitialCheckpoint(){
  if(initialBuilding)return false;
+ initialLoading=loading.begin('Preparando el diagrama','Distribuyendo conceptos y calculando conexiones…');
+ try{
  const started=performance.now(),layout=layoutPlane(state.nodes,geometry);
  plane.positions=layout.positions;plane.metrics=layout.metrics;plane.rects=layout.rects;
  plane.routes=new Map();plane.retired.clear();
@@ -256,6 +264,7 @@ function makeInitialCheckpoint(){
  function complete(result){
   if(token!==initialToken)return;
   initialBuilding=false;
+  initialLoading?.finish();initialLoading=null;
   if(graphFingerprint()!==initialFingerprint){schedule();return;}
   plane.routes=new Map(result.routes);
   plane.ready=true;plane.revision++;diag.initialBuilds++;
@@ -264,9 +273,16 @@ function makeInitialCheckpoint(){
   diag.checkpoint=plane.revision;
   observeTopology();schedule();
  }
- const fallback=()=>{if(token!==initialToken)return;complete(computeInitialRoutes(payload));};
- if(typeof Worker==='undefined'){fallback();return true;}
+ const fallback=async()=>{
+  if(token!==initialToken)return;
+  initialLoading?.update('Calculando conexiones en este navegador…');
+  await initialLoading?.paint();
+  if(token!==initialToken)return;
+  try{complete(computeInitialRoutes(payload));}
+  catch(error){initialBuilding=false;initialLoading?.finish();initialLoading=null;console.error(error);toast('No se pudo calcular el diagrama: '+error.message);}
+ };
  initialBuilding=true;
+ if(typeof Worker==='undefined'){void fallback();return false;}
  initialTask.run({...payload,token},{timeoutMs:35000,timeoutMessage:'El cálculo inicial no respondió en 35 s.'})
   .then(complete,error=>{
    if(token!==initialToken)return;
@@ -274,6 +290,11 @@ function makeInitialCheckpoint(){
    fallback();
   });
  return false;
+}
+ catch(error){
+  initialBuilding=false;initialLoading?.finish();initialLoading=null;
+  console.error(error);toast('No se pudo preparar el diagrama: '+error.message);return false;
+ }
 }
 function validateSavedCheckpoint(payload,measure=geometry){
  if(!checkpointHasRecords(payload))return false;
@@ -583,7 +604,7 @@ stage.addEventListener('pointermove',e=>{if(!panStart)return;state.tx=panStart.t
 for(const kind of ['pointerup','pointercancel'])stage.addEventListener(kind,e=>{panStart=null;if(stage.hasPointerCapture(e.pointerId))stage.releasePointerCapture(e.pointerId);});
 stage.addEventListener('wheel',e=>{e.preventDefault();const p=inFrame(e.clientX,e.clientY);zoomBy(Math.exp(-e.deltaY*.0011),p.x,p.y);},{passive:false});
 $('coreBtn').onclick=()=>centerOn('p1',1);$('fitBtn').onclick=()=>fit();$('zoomFit').onclick=()=>fit();$('zoomIn').onclick=()=>zoomBy(1.2);$('zoomOut').onclick=()=>zoomBy(1/1.2);$('undoBtn').onclick=undo;
-$('resetBtn').onclick=()=>{if(!confirm('¿Cargar el ejemplo PPR? Los cambios no guardados se perderán.'))return;init(true);toast('Ejemplo PPR cargado.');};
+$('resetBtn').onclick=()=>{if(!confirm('¿Cargar el ejemplo? Los cambios no guardados se perderán.'))return;init(true);toast('Ejemplo cargado.');};
 $('newBtn').onclick=()=>{if(!confirm('¿Crear un diagrama nuevo con un solo núcleo? Guarda antes el JSON actual si deseas conservarlo.'))return;init(false);toast('Nuevo diagrama: solo el núcleo, listo para editar.');};
 $('addBtn').onclick=()=>addConcept();$('deleteBtn').onclick=deleteSelected;
 function setLinkStyle(style){
@@ -673,7 +694,7 @@ try{selectedTheme=localStorage.getItem('p1-color-theme')==='dark'?'dark':'light'
 setTheme(selectedTheme);
 themeButton.onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
 bindDiagramExports({
- svgButton:$('svgBtn'),pngButton:$('pngBtn'),stage,camera,linesEl,nodesEl,plane,derived,state,diag,toast,sEl,beforeExport:flushPendingEdits
+ svgButton:$('svgBtn'),pngButton:$('pngBtn'),stage,camera,linesEl,nodesEl,plane,derived,state,diag,toast,sEl,loading,beforeExport:flushPendingEdits
 });
 function init(useDemo=false){
  graphFiles.cancel();
@@ -706,5 +727,5 @@ const ro=new ResizeObserver(()=>{updateCamera();});ro.observe(stage);
 const bootButtons=[...document.querySelectorAll('button')];
 bootButtons.forEach(button=>button.disabled=true);
 loadNodeTypography().catch(error=>console.warn('Tipografía de respaldo:',error.message)).then(()=>{
- bootButtons.forEach(button=>button.disabled=false);init();
+ try{bootButtons.forEach(button=>button.disabled=false);init();}finally{bootLoading.finish();}
 });

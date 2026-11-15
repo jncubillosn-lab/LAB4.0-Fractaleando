@@ -17,24 +17,40 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   page.on('pageerror',lambda e:errors.append(str(e)));page.on('dialog',lambda d:d.accept())
   page.on('download',lambda d:downloads.append(d))
   page.add_init_script('''(()=>{
-   const NativeWorker=window.Worker;let delay=true;
+   const NativeWorker=window.Worker;let delay=true,delayDerived=true;
    window.Worker=class extends NativeWorker{
     constructor(url,options){super(url,options);
      if(delay&&String(url).includes('initial-route.worker.js')){
       delay=false;const send=this.postMessage.bind(this);
       this.postMessage=(...args)=>{window.__resumeRouting=()=>send(...args)};
      }
+     if(delayDerived&&String(url).includes('derived-scene.worker.js')){
+      delayDerived=false;const send=this.postMessage.bind(this);
+      this.postMessage=(...args)=>{window.__resumeDerived=()=>send(...args)};
+     }
     }
    };
   })()''')
   page.goto('http://127.0.0.1:'+str(srv.server_address[1])+'/index.html',wait_until='domcontentloaded')
   page.wait_for_function('typeof window.__resumeRouting==="function"')
+  assert page.locator('#loadingIndicator').is_visible()
+  assert page.locator('#stageWrap').get_attribute('aria-busy')=='true'
+  assert page.locator('#loadingIndicator [role="progressbar"]').get_attribute('aria-valuenow') is None
+  bounds=page.locator('.loading-card').bounding_box();stage=page.locator('#stageWrap').bounding_box()
+  assert abs((bounds['x']+bounds['width']/2)-(stage['x']+stage['width']/2))<1
+  assert abs((bounds['y']+bounds['height']/2)-(stage['y']+stage['height']/2))<1
+  output=os.environ.get('P1_SCREENSHOTS')
+  if output:
+   Path(output).mkdir(parents=True,exist_ok=True)
+   page.screenshot(path=str(Path(output)/'Fractaleando_1_1_0_carga.png'))
   for button in ['pngBtn','svgBtn']:
    page.locator('#'+button).click()
-   page.wait_for_function('document.querySelector("#toast").textContent.includes("Espera a que termine")')
+   prefix='No se pudo exportar '+('PNG' if button=='pngBtn' else 'SVG')
+   page.wait_for_function('(prefix)=>{const text=document.querySelector("#toast").textContent;return text.startsWith(prefix)&&text.includes("Espera a que termine")}',arg=prefix)
    assert not downloads,'An incomplete scene was downloaded'
   page.evaluate('()=>{window.__resumeRouting();delete window.__resumeRouting}')
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.initialBuilds===1&&document.querySelectorAll("#nodes .node").length===1',timeout=30000)
+  assert page.locator('#loadingIndicator').is_hidden()
   page.locator('#resetBtn').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===217',timeout=60000)
   def graph():
@@ -79,10 +95,18 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   assert set(page.locator('#nodes .node').evaluate_all('(els)=>els.map(el=>el.dataset.nodeId)'))==set(['p1']+names)
   for mode in ['02','04']:
    page.locator('[data-view="'+mode+'"]').click()
+   if mode=='02':
+    page.wait_for_function('typeof window.__resumeDerived==="function"')
+    assert page.locator('#loadingIndicator').is_visible()
+    page.locator('[data-view="01"]').click()
+    assert page.locator('#loadingIndicator').is_hidden()
+    assert page.locator('#stageWrap').get_attribute('aria-busy')=='false'
+    page.locator('[data-view="02"]').click()
    page.wait_for_function('(m)=>window.P1_PLANO_DIAGNOSTICO.views().current?.mode===m||document.querySelector("#derivedStatus").textContent.startsWith("No se completó")',arg=mode,timeout=30000)
    assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current?.mode')==mode,page.locator('#derivedStatus').inner_text()
    assert page.locator('#derivedNodes .node').count()==4
    assert page.locator('#derivedLines .svgline').count()==3
+   assert page.locator('#loadingIndicator').is_hidden()
   assert not errors,errors
   print('Integridad: exportación en carga, importar/deshacer/crear, geometría guardada, duplicados e IDs especiales en las tres vistas',flush=True)
   browser.close()

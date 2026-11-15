@@ -17,8 +17,8 @@ const spiralCaption=s=>'Giro = '+s.W+' · Apertura = '+s.armWidthFactor+' · T =
 // Vistas derivadas read-only: conservan el grafo y el plano 01.
 // Cada vista tiene su punto de control y comparte la referencia topológica 01.
 export class DerivedViews {
- constructor({state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast,referenceTopology,onSelect}){
-  Object.assign(this,{state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast,referenceTopology,onSelect});
+ constructor({state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast,referenceTopology,onSelect,loading}){
+  Object.assign(this,{state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast,referenceTopology,onSelect,loading});
   this.layoutEngine=new ViewLayouts();
   this.textContext=document.createElement('canvas').getContext('2d');
   this.router=new PcbRouter({state,nodeById:id=>state.nodes.find(n=>n.id===id),mode:'02',clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});
@@ -45,6 +45,7 @@ export class DerivedViews {
  reset(){
   this.version++;
   this.workerTask.cancel();this.mode='01';
+  this.loadingTask?.finish();this.loadingTask=null;
   this.cache.clear();this.current=null;this.staged={};this.graphIdentity=null;this.rejected=null;
   this.derivedLines.replaceChildren();this.derivedNodes.replaceChildren();
   this.switchVisibility('01');this.updateLabels('01');
@@ -81,10 +82,15 @@ export class DerivedViews {
  }
  async computeScene(input){
   if(typeof Worker==='undefined')return computeDerivedScene(input);
+  const progressJob=this.loadingTask;
   return this.workerTask.run(input,{
    timeoutMs:75000,
    timeoutMessage:'Límite de cálculo (75 s)',
-   onProgress:progress=>this.status('Compactando '+viewNumber(progress.mode)+' · comprobando conexiones · paso '+progress.pass)
+   onProgress:progress=>{
+    this.status('Compactando '+viewNumber(progress.mode)+' · comprobando conexiones · paso '+progress.pass);
+    const phase={placed:'Conceptos distribuidos', 'native-start':'Trazando conexiones', 'native-done':'Comprobando recorridos',routed:'Revisando conexiones'}[progress.phase]||'Distribuyendo conceptos';
+    progressJob?.update((progress.mode==='02'?'Compacto':'Espiral')+' · '+phase+' · paso '+progress.pass);
+   }
   });
  }
  snapshot(scene,identity){
@@ -112,6 +118,7 @@ export class DerivedViews {
   this.mode=mode;this.rejected=null;
   ++this.version;
   this.workerTask.cancel();
+  this.loadingTask?.finish();this.loadingTask=null;
   this.switchVisibility(mode);this.updateLabels(mode);
   if(mode==='01'){
    this.current=null;this.status('');
@@ -138,12 +145,17 @@ export class DerivedViews {
   if(cached){this.cache.set(mode,cached);this.current=cached;this.draw(cached);this.fit();return;}
   this.status('Calculando la vista '+viewNumber(mode)+' y sus conexiones…');
   const token=this.version,metrics=this.metrics();
+  const job=this.loading?.begin('Preparando '+(mode==='02'?'Compacto':'Espiral'),'Distribuyendo conceptos y calculando conexiones…');
+  this.loadingTask=job;
   try{
+   await job?.paint();
+   if(token!==this.version)return;
    const base=this.cache.get('02');
    const scene=await this.computeScene({mode,nodes:this.state.nodes,edges:this.state.edges,metrics,
     sourcePositions:this.plane.positions,topologyReference:this.referenceTopology?.(),
     baseScene:mode==='04'&&base?{layout:base.layout,result:{routes:[...base.routes]}}:undefined});
    if(token!==this.version)return;
+   job?.update('Comprobando geometría y relaciones…');
    if(scene.layout.stats.graphSignature!==RadialLayout.signature(this.state.nodes,this.state.edges))throw Error('El grafo cambió durante el cálculo.');
    if(scene.baseScene)this.cache.set('02',this.snapshot(scene.baseScene,identity));
    const snapshot=this.snapshot(scene,identity);
@@ -154,6 +166,8 @@ export class DerivedViews {
    this.derivedLines.replaceChildren();this.derivedNodes.replaceChildren();
    this.linesEl.style.display='';this.nodesEl.style.display='';
    this.status('No se completó la vista '+viewNumber(mode)+'. Se muestra 01 Editor. '+error.message,true);this.fit();
+  }finally{
+   job?.finish();if(this.loadingTask===job)this.loadingTask=null;
   }
  }
  drawNodes(layout){
