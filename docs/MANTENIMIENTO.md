@@ -1,4 +1,4 @@
-# Mantenimiento de Fractalear 1.1
+# Mantenimiento de Fractalear 1.2
 
 [Estado vigente](VERSION_1_0_0.md) · [Guía de uso](GUIA_USO.md) ·
 [Registro de cambios](../CHANGELOG.md).
@@ -45,7 +45,7 @@ Para ejecutarlas localmente se necesita Chrome y Playwright 1.56.0. Establecer
 `P1_SITE_ROOT` en `_site` y ejecutar cada archivo con Python, como en el flujo.
 Los resultados del navegador se conservan como artefactos de Actions.
 
-Para revisar las diez fuentes del carrusel, ejecutar manualmente con acceso a red:
+Para revisar las diecisiete fuentes del carrusel, ejecutar manualmente con acceso a red:
 
 ```sh
 npm run check:poetry-links

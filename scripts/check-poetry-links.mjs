@@ -3,7 +3,7 @@ import {poetryQuotes} from '../js/data/PoetryQuotes.js';
 // Maintenance check, never part of application startup or the offline test suite.
 // A successful HTTP response alone is insufficient: it must contain the excerpt.
 const entities={nbsp:' ',amp:'&',quot:'"',apos:"'",rsquo:"'",lsquo:"'",mdash:'—',ndash:'–',hellip:'…',
- aacute:'á',eacute:'é',iacute:'í',oacute:'ó',uacute:'ú',atilde:'ã',otilde:'õ',ccedil:'ç'};
+ aacute:'á',eacute:'é',iacute:'í',oacute:'ó',uacute:'ú',atilde:'ã',otilde:'õ',ccedil:'ç',ntilde:'ñ',iexcl:'¡',iquest:'¿'};
 const plain=html=>html.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi,' ')
  .replace(/<[^>]+>/g,' ').replace(/&(#x[\da-f]+|#\d+|[a-z]+);/gi,(all,name)=>{
   if(name.startsWith('#')){const n=name[1].toLowerCase()==='x'?parseInt(name.slice(2),16):Number(name.slice(1));return n<=0x10ffff?String.fromCodePoint(n):all;}

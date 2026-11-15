@@ -2,12 +2,14 @@
 
 **[▶ Abrir la aplicación en GitHub Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/)**
 
-**Versión vigente · 1.1.0 · 15 de noviembre de 2026:**
-[interfaz, carga y citas poéticas](INTERFAZ_1_1_0.md), sobre la
+**Versión vigente · 1.2.0 · 15 de noviembre de 2026:**
+[tejido y diecisiete citas poéticas](INTERFAZ_1_2_0.md), sobre la
 [base funcional y límites de 1.0.0](VERSION_1_0_0.md).
 Consultar la [guía de uso](GUIA_USO.md), el
 [mantenimiento y la publicación](MANTENIMIENTO.md) y el
 [registro de cambios](../CHANGELOG.md).
+La [propuesta de Drive](PROPUESTA_DRIVE.md) describe una ampliación pendiente;
+no forma parte de las funciones publicadas.
 
 Los apartados que siguen conservan el historial y el documento inicial de
 referencia. Sus nombres de vistas, experimentos, bloqueos del Editor y estados

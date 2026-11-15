@@ -21,7 +21,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   print('E2E: abriendo sitio construido',flush=True)
   page.goto('http://127.0.0.1:'+str(srv.server_address[1])+'/index.html',wait_until='domcontentloaded')
   build=page.locator('meta[name="application-build"]').get_attribute('content')
-  assert '1.1.1' in page.locator('meta[name="application-version"]').get_attribute('content')
+  assert '1.2.0' in page.locator('meta[name="application-version"]').get_attribute('content')
   page.wait_for_function('[...document.fonts].filter(f=>f.family==="Rajdhani"&&f.status==="loaded").length===2')
   def check_labels(selector):
    labels=page.locator(selector).evaluate_all("""els=>els.map(el=>{
