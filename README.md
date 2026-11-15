@@ -3,7 +3,7 @@
 Una herramienta desarrollada por el LAB 4.0 de la Universidad Nacional para
 construir conceptos, desarrollar sus jerarquías y representar sus relaciones.
 
-**[Abrir Fractalear](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/?v=1.2.3)**
+**[Abrir Fractalear](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/?v=1.2.4)**
 
 ## Comenzar
 
@@ -24,7 +24,7 @@ los cálculos en curso; el espacio
 ## Documentación vigente
 
 - [Guía de uso](docs/GUIA_USO.md).
-- [Interfaz 1.2.3: viñetas fijas del castor](docs/INTERFAZ_1_2_3.md).
+- [Interfaz 1.2.4: viñetas fijas del castor](docs/INTERFAZ_1_2_4.md).
 - [Propuesta de almacenamiento compartido en Drive](docs/PROPUESTA_DRIVE.md).
 - [Base funcional, decisiones y límites de 1.0.0](docs/VERSION_1_0_0.md).
 - [Mantenimiento, pruebas y publicación](docs/MANTENIMIENTO.md).

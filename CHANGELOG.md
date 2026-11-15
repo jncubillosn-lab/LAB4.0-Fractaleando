@@ -1,5 +1,14 @@
 # Registro de cambios
 
+## 1.2.4 — 15 de noviembre de 2026
+
+- Aplica la ilustración minimalista elegida: castor enredado en cables,
+  consultando el manual, tomando café y organizando conexiones.
+- Conserva una tira fija en blanco y negro de 768 × 224 píxeles, ahora de
+  6.329 bytes, con texto alternativo actualizado y contornos suaves.
+- Mantiene el motor y las funciones; documenta la procedencia de la imagen
+  y conserva las comprobaciones de carga, temas y vistas.
+
 ## 1.2.3 — 15 de noviembre de 2026
 
 - Sustituye el GIF por una tira fija de cuatro viñetas del mismo castor:
