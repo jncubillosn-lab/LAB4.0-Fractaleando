@@ -92,7 +92,7 @@ o vínculos hayan desaparecido. Los límites de este corte se describen en
 
 ## Otras miradas
 
-Al final de la barra lateral hay un carrusel de diez fragmentos poéticos.
+Al final de la barra lateral hay un carrusel de diecisiete fragmentos poéticos.
 Cada uno incluye autor, poema y enlace a su fuente. Los textos en otros idiomas
 se muestran primero en su versión original y debajo en español.
 Las traducciones de los fragmentos se prepararon para Fractalear.

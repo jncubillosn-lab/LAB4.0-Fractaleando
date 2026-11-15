@@ -29,17 +29,17 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   poem=page.locator('#poetryCarousel');poem.locator('[data-poem-pause]').click()
   assert poem.locator('[data-poem-pause]').get_attribute('aria-pressed')=='true'
   authors=set()
-  for i in range(10):
-   assert poem.locator('[data-poem-count]').inner_text()==str(i+1)+' / 10'
+  for i in range(17):
+   assert poem.locator('[data-poem-count]').inner_text()==str(i+1)+' / 17'
    authors.add(poem.locator('[data-poem-author]').inner_text())
    assert poem.locator('[data-poem-source]').get_attribute('href').startswith('https://')
    if poem.locator('[data-poem-original]').get_attribute('lang')!='es':assert poem.locator('[data-poem-translation]').inner_text()
    poem.locator('[data-poem-next]').click()
-  assert len(authors)==10 and poem.locator('[data-poem-count]').inner_text()=='1 / 10'
+  assert len(authors)==17 and poem.locator('[data-poem-count]').inner_text()=='1 / 17'
   output=os.environ.get('P1_SCREENSHOTS')
   if output:
    Path(output).mkdir(parents=True,exist_ok=True)
-   page.screenshot(path=str(Path(output)/'Fractaleando_1_1_0_poemas.png'))
+   page.screenshot(path=str(Path(output)/'Fractaleando_1_2_0_poemas.png'))
   page.locator('.sidebar').evaluate('(el)=>el.scrollTop=0')
   core=page.locator('#nodes [data-node-id="p1"]')
   assert core.get_attribute('aria-label')=='¿Qué quieres fractalear hoy?'
@@ -248,6 +248,6 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   assert compact.locator('.top').evaluate('(el)=>el.scrollWidth<=el.clientWidth')
   if output:compact.screenshot(path=str(Path(output)/'Fractaleando_1_1_0_900px.png'))
   compact.close()
-  print('Interfaz: archivos arriba, encuadre bajo zoom, diez citas con fuente y traducción, pausa y ancho 900 px',flush=True)
+  print('Interfaz: archivos arriba, encuadre bajo zoom, diecisiete citas con fuente y traducción, pausa y ancho 900 px',flush=True)
   b.close()
  srv.shutdown()

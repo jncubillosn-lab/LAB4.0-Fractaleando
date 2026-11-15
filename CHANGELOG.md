@@ -1,5 +1,18 @@
 # Registro de cambios
 
+## 1.2.0 — 15 de noviembre de 2026
+
+- Amplía Otras miradas a diecisiete fragmentos: cinco poetas latinoamericanas
+  y dos francesas. Conserva el criterio literario y las fuentes, con original
+  francés y versión en español identificada como traducción de Fractalear.
+- Añade manos tejiendo en pixel art a la barra de carga. La secuencia usa SVG
+  integrado y dos animaciones CSS de cuatro posiciones, sin nuevas peticiones,
+  bibliotecas o temporizadores JavaScript. Respeta movimiento reducido y tema.
+- Comprueba las diecisiete fuentes en vivo y la navegación completa del carrusel;
+  verifica movimiento y pausa de la ilustración en navegador.
+- Documenta como propuesta la integración de Drive, separando el acceso sin
+  cuentas de visitantes de los límites reales de almacenamiento y concurrencia.
+
 ## 1.1.1 — 15 de noviembre de 2026
 
 - Sustituye las fuentes de Roberto Juarroz y Georgia Douglas Johnson, que
