@@ -45,7 +45,8 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    page.screenshot(path=str(Path(output)/'Fractaleando_1_1_0_carga.png'))
   for button in ['pngBtn','svgBtn']:
    page.locator('#'+button).click()
-   page.wait_for_function('document.querySelector("#toast").textContent.includes("Espera a que termine")')
+   prefix='No se pudo exportar '+('PNG' if button=='pngBtn' else 'SVG')
+   page.wait_for_function('(prefix)=>{const text=document.querySelector("#toast").textContent;return text.startsWith(prefix)&&text.includes("Espera a que termine")}',arg=prefix)
    assert not downloads,'An incomplete scene was downloaded'
   page.evaluate('()=>{window.__resumeRouting();delete window.__resumeRouting}')
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.initialBuilds===1&&document.querySelectorAll("#nodes .node").length===1',timeout=30000)

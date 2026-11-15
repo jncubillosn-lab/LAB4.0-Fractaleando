@@ -45,7 +45,7 @@ originales ni como traducciones publicadas de terceros.
 | Amy Lowell | A Decade | Inglés | [Academy of American Poets](https://poets.org/poem/decade/print). |
 | Georgia Douglas Johnson | Your World | Inglés | [Poetry Foundation](https://www.poetryfoundation.org/poems/56591/your-world). |
 | Angelina Weld Grimké | The Black Finger | Inglés | [Academy of American Poets](https://poets.org/poem/black-finger/print). |
-| Jessie B. Rittenhouse | Debt[s] | Inglés | [Poetry Explorer](https://www.poetryexplorer.net/poem26.php?pid=10120470). |
+| Jessie B. Rittenhouse | Debt | Inglés | [Poetry Explorer](https://www.poetryexplorer.net/poem26.php?pid=10120470). |
 
 ## Comprobación
 

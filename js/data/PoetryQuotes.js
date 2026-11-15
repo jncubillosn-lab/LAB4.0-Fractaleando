@@ -36,7 +36,7 @@ export const poetryQuotes = [
   original:'I have just seen a most beautiful thing,\nSlim and still,',
   translation:'Acabo de ver algo bellísimo,\nesbelto e inmóvil.',
   source:'https://poets.org/poem/black-finger/print'},
- {author:'Jessie B. Rittenhouse',title:'Debt[s]',lang:'en',
+ {author:'Jessie B. Rittenhouse',title:'Debt',lang:'en',
   original:'To one who makes you dream again\nWhen all the dreams were dead?',
   translation:'A quien te hace soñar de nuevo\ncuando todos los sueños habían muerto.',
   source:'https://www.poetryexplorer.net/poem26.php?pid=10120470'}
