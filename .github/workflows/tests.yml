@@ -45,13 +45,14 @@ jobs:
           python tests/pages_e2e.py || result=$?
           python tests/views_e2e.py || result=$?
           python tests/topology_guard_e2e.py || result=$?
+          python tests/integrity_e2e.py || result=$?
           exit "$result"
 
       - name: Conservar evidencia de las vistas
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: p1-vistas-0.2.13
+          name: p1-vistas-0.2.14
           path: artifacts/views/
           if-no-files-found: ignore
 

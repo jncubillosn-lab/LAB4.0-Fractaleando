@@ -1,5 +1,6 @@
 import {segmentEntersRect} from './SegmentGeometry.js';
 import {portInset,portClearOfCorners} from './PortPolicy.js';
+import {ownValue} from '../core/GraphIdentity.js';
 const edgeKey=e=>[e.from,e.to].sort().map(encodeURIComponent).join('|');
 const normal={top:[0,-1],right:[1,0],bottom:[0,1],left:[-1,0]};
 
@@ -23,7 +24,7 @@ export function assignOrderedPorts({nodes,edges,positions,rects,reference,spacin
  const result=new Map();
  for(const n of nodes){
   const r=rects.get(n.id),all=requests.get(n.id);
-  const prior=new Map((reference?.ports?.[n.id]||[]).map((p,i)=>[p.edge,i]));
+  const prior=new Map(ownValue(reference?.ports,n.id,[]).map((p,i)=>[p.edge,i]));
   const ordered=[...all].sort((a,b)=>(prior.get(a.edge)??Infinity)-(prior.get(b.edge)??Infinity)||
    Math.atan2(positions.get(a.other).y-r.y,positions.get(a.other).x-r.x)-Math.atan2(positions.get(b.other).y-r.y,positions.get(b.other).x-r.x)||a.index-b.index);
   const slots=[];
