@@ -9,8 +9,9 @@ function cancelledError() {
 export class WorkerTask {
   constructor(createWorker, {setTimer = setTimeout, clearTimer = clearTimeout} = {}) {
     this.createWorker = createWorker;
-    this.setTimer = setTimer;
-    this.clearTimer = clearTimer;
+    // Native Window timers must not receive WorkerTask as their receiver.
+    this.setTimer = (callback, ms) => setTimer(callback, ms);
+    this.clearTimer = id => clearTimer(id);
     this.current = null;
   }
 

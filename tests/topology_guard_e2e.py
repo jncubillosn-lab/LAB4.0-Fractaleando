@@ -45,7 +45,8 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   page.locator('#undoBtn').click();page.wait_for_function('(t)=>document.querySelector("#nodes [data-node-id=p1]").getAttribute("transform")===t',arg=original)
   for mode in ('02','04'):
    page.locator('[data-view="'+mode+'"]').click()
-   page.wait_for_function('(m)=>window.P1_PLANO_DIAGNOSTICO.views().current?.mode===m',arg=mode,timeout=120000)
+   page.wait_for_function('(m)=>window.P1_PLANO_DIAGNOSTICO.views().current?.mode===m||document.querySelector("#derivedStatus").textContent.startsWith("No se completó")',arg=mode,timeout=120000)
+   assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current?.mode')==mode,page.locator('#derivedStatus').inner_text()
    child=page.locator('#derivedNodes [data-node-id="f0"]');position=child.get_attribute('transform');b=child.bounding_box()
    page.mouse.move(b['x']+b['width']/2,b['y']+b['height']/2);page.mouse.down();page.mouse.move(b['x']+b['width']/2+70,b['y']+b['height']/2+70,steps=8);page.mouse.up()
    assert child.get_attribute('transform')==position

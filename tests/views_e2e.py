@@ -52,7 +52,8 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   for mode in ('02','04'):
    print('E2E: calculando',mode,flush=True)
    page.locator('[data-view="'+mode+'"]').click()
-   page.wait_for_function('(mode)=>window.P1_PLANO_DIAGNOSTICO.views().current?.mode===mode',arg=mode,timeout=120000)
+   page.wait_for_function('(mode)=>window.P1_PLANO_DIAGNOSTICO.views().current?.mode===mode||document.querySelector("#derivedStatus").textContent.startsWith("No se completó")',arg=mode,timeout=120000)
+   assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current?.mode')==mode,page.locator('#derivedStatus').inner_text()
    result=page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current');results[mode]=result
    print('VISTA',mode,json.dumps({k:result[k] for k in ['nodes','engine','meanGap','capacityPasses','pending','audit','topology']},ensure_ascii=False)[:2500],flush=True)
    assert result['nodes']==210 and result['overlaps']==0 and result['radialOrder'],result

@@ -67,3 +67,13 @@ test('fallos al crear o enviar al worker también cierran el trabajo', async () 
   await assert.rejects(task.run({}, {timeoutMs: 75}), /No serializable/);
   assert.equal(workers[0].stops, 1); assert.equal(timers.size, 0);
 });
+test('el gestor no cambia el receptor de las funciones de temporización del navegador', async () => {
+  let worker, cleared = false;
+  const task = new WorkerTask(() => (worker = {postMessage() {}, terminate() {}}), {
+    setTimer() { assert.equal(this, undefined); return 7; },
+    clearTimer(id) { assert.equal(this, undefined); assert.equal(id, 7); cleared = true; }
+  });
+  const result = task.run({}, {timeoutMs: 75});
+  worker.onmessage({data: {result: 'ready'}});
+  assert.equal(await result, 'ready'); assert.equal(cleared, true);
+});
