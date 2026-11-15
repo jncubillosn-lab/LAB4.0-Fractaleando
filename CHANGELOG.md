@@ -1,5 +1,18 @@
 # Registro de cambios
 
+## 1.1.0 — 15 de noviembre de 2026
+
+- Barra de carga centrada, con etapa real e indicador indeterminado durante el
+  arranque, cálculo de vistas y exportaciones. Cierre independiente por operación,
+  incluida cancelación o fallo, sin modificar el motor geométrico.
+- Acciones de archivo en la barra superior; Núcleo y Centrar lectura bajo los
+  controles de zoom. Ejemplo PPR se presenta como **Ejemplo**.
+- Carrusel local de diez fragmentos poéticos verificados, con autor, fuente,
+  original y versión en español cuando corresponde; navegación y pausa.
+- Comprobaciones de concurrencia de carga, error, temporizadores del carrusel,
+  distribución de controles y presentación a 900 px. Fuentes y decisiones en
+  [interfaz 1.1.0](docs/INTERFAZ_1_1_0.md).
+
 ## 1.0.0 — 15 de noviembre de 2026
 
 Cierre funcional de Fractalear sobre la base aceptada 0.2.15. El cambio de

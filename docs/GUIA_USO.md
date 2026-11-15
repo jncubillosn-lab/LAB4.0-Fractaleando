@@ -1,6 +1,6 @@
 # Guía de uso de Fractalear
 
-Referencia: **1.0.0 · 15 de noviembre de 2026**.
+Referencia: **1.1.0 · 15 de noviembre de 2026**.
 
 [Abrir la aplicación](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/) ·
 [Estado y decisiones de la versión](VERSION_1_0_0.md).
@@ -9,7 +9,7 @@ Referencia: **1.0.0 · 15 de noviembre de 2026**.
 
 1. Al abrir la herramienta aparece un solo núcleo con el texto **¿Qué quieres
    fractalear hoy?**. **Nuevo** vuelve a ese punto de partida, sin ramas ni
-   vínculos predefinidos. Usa **Ejemplo PPR** para consultar el ejemplo completo.
+   vínculos predefinidos. Usa **Ejemplo** para consultar el ejemplo completo.
 2. Haz clic en un cuadro para seleccionarlo. Cambia su texto en **Contenido**;
    un doble clic en el cuadro lleva a ese campo.
 3. Pulsa **+ Concepto** para crear un hijo del seleccionado. La selección se
@@ -65,20 +65,38 @@ pendientes deben leerse como el estado del resultado mostrado.
 
 ## Guardar y compartir
 
+Las acciones de archivo se encuentran en la barra superior. **Núcleo** y
+**Centrar lectura** están debajo de los tres controles de zoom del lienzo.
+
 | Acción | Uso |
 | --- | --- |
 | **Guardar JSON** | Conservar el trabajo editable, incluidos sus conceptos, vínculos y estados geométricos disponibles. |
 | **Abrir JSON** | Continuar un archivo guardado; sustituye el grafo mostrado tras validar la entrada. |
-| **Exportar vista SVG** | Obtener la representación vectorial actual, con fuente y estilos incorporados. |
-| **Exportar grafo completo · PNG 4K** | Obtener una imagen de toda la representación activa, aunque una parte esté fuera de pantalla u oculta por el filtro. El lado mayor mide 4096 píxeles y se conserva la proporción. |
+| **SVG** | Obtener la representación vectorial actual, con fuente y estilos incorporados. |
+| **PNG 4K** | Obtener una imagen de toda la representación activa, aunque una parte esté fuera de pantalla u oculta por el filtro. El lado mayor mide 4096 píxeles y se conserva la proporción. |
 
 Usa JSON para seguir editando. Guarda el trabajo antes de iniciar otro diagrama
 o cargar un ejemplo. SVG y PNG sirven como representaciones visuales.
 
 ## Si aparece un aviso
 
+La barra animada del centro indica que hay un cálculo o una exportación en
+curso. El texto describe la etapa; no representa un porcentaje exacto.
+Desaparece al terminar o cancelar. Las vistas ya calculadas reutilizan su caché.
+
 Una ruta pendiente significa que el motor no encontró un recorrido válido dentro
 de sus intentos. El PNG no se exporta con conexiones pendientes. **EN REVISIÓN**
 señala comprobaciones normativas aún incumplidas; no implica que los conceptos
 o vínculos hayan desaparecido. Los límites de este corte se describen en
 [la referencia de estado](VERSION_1_0_0.md).
+
+## Otras miradas
+
+Al final de la barra lateral hay un carrusel de diez fragmentos poéticos.
+Cada uno incluye autor, poema y enlace a su fuente. Los textos en otros idiomas
+se muestran primero en su versión original y debajo en español.
+Las traducciones de los fragmentos se prepararon para Fractalear.
+
+Usa las flechas para recorrerlos y **Pausar** para detener el cambio automático.
+También se detiene mientras lo señalas, lo recorres con teclado o la pestaña
+está oculta. Con movimiento reducido del sistema comienza pausado.

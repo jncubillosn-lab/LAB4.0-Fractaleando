@@ -1,4 +1,4 @@
-# Mantenimiento de Fractalear 1.0
+# Mantenimiento de Fractalear 1.1
 
 [Estado vigente](VERSION_1_0_0.md) · [Guía de uso](GUIA_USO.md) ·
 [Registro de cambios](../CHANGELOG.md).
@@ -27,7 +27,7 @@ son resultados locales excluidos del repositorio.
 
 ## Comprobar cambios
 
-`npm test` ejecuta las 96 pruebas Node en secuencia. También construye el sitio,
+`npm test` ejecuta las 100 pruebas Node en secuencia. También construye el sitio,
 verifica imports y versiones de caché y comprueba que no se publique un archivo
 residual de la construcción anterior.
 
@@ -52,6 +52,12 @@ validación de archivos en `io/` y presentación/descargas en `ui/`.
 `app.js` coordina los eventos; los Workers reciben datos, no elementos del DOM.
 El registro topológico describe y comprueba relaciones; no debe fijar las
 posiciones o caras del Editor como condición de edición.
+
+`ui/LoadingIndicator` asigna a cada operación su propio cierre de carga. La
+cancelación o respuesta tardía de una operación no puede ocultar otra.
+`ui/PoetryCarousel` controla exclusivamente el espacio de lectura de citas;
+sus datos y fuentes viven en `data/PoetryQuotes`. No consulta el grafo ni carga
+contenido remoto durante el uso.
 
 Los índices de documento se crean sobre los datos actuales. Si una operación
 muta nodos o padres, no debe dejar una caché de jerarquía obsoleta. Para registros

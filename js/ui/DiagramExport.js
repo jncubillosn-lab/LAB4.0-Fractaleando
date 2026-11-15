@@ -33,7 +33,7 @@ function exportStyles() {
 // creation and temporary resources, never edits the graph or its camera.
 export function bindDiagramExports({
   svgButton, pngButton, stage, camera, linesEl, nodesEl, plane, derived, state, diag, toast, sEl,
-  beforeExport = () => {}
+  beforeExport = () => {}, loading
 }) {
   function exportValidationNotice(notice = derived.exportNotice()) {
     return notice ? `<desc>${notice}</desc><g><rect x="0" y="0" width="100%" height="34" fill="${exportColor('paper')}"/><text x="16" y="23" fill="${exportColor('ink')}" font-family="Arial,sans-serif" font-size="14">${notice}</text></g>` : '';
@@ -67,7 +67,9 @@ export function bindDiagramExports({
   }
 
   svgButton.onclick = async () => {
+    const job=loading?.begin('Exportando SVG','Preparando la vista y su tipografía…');
     try {
+      await job?.paint();
       beforeExport();
       await loadNodeTypography();
       await new Promise(requestAnimationFrame);
@@ -77,14 +79,18 @@ export function bindDiagramExports({
         'image/svg+xml;charset=utf-8');
       toast('Vista actual exportada en SVG.');
     } catch (error) { toast('No se pudo exportar SVG: '+error.message); }
+    finally { job?.finish(); }
   };
 
   pngButton.onclick = async () => {
     if (pngButton.disabled) return;
+    const label=pngButton.textContent||'PNG 4K';
     pngButton.disabled = true;
-    pngButton.textContent = 'Preparando PNG completo…';
+    pngButton.textContent = 'PNG…';
+    const job=loading?.begin('Exportando PNG 4K','Preparando el grafo completo…');
     let temporaryURL = null;
     try {
+      await job?.paint();
       beforeExport();
       await loadNodeTypography();
       if (state.renderQueued) {
@@ -123,8 +129,9 @@ export function bindDiagramExports({
       toast('No se pudo exportar PNG: ' + error.message);
     } finally {
       if (temporaryURL) URL.revokeObjectURL(temporaryURL);
+      job?.finish();
       pngButton.disabled = false;
-      pngButton.textContent = 'Exportar grafo completo · PNG 4K';
+      pngButton.textContent = label;
     }
   };
 }

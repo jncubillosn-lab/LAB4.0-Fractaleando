@@ -28,3 +28,15 @@ test('una caché derivada ilegible se descarta y permite calcular la vista', asy
   assert.equal(computations, 1); assert.equal(draws, 1); assert.equal(view.current.valid, true);
   assert.equal(view.staged['02'], undefined);
 });
+
+test('una vista fallida cierra su indicador y recupera la representación del Editor',async()=>{
+ const view=Object.create(DerivedViews.prototype),events=[];
+ Object.assign(view,{version:0,state:{nodes:[],edges:[]},plane:{ready:true},workerTask:{cancel(){}},cache:new Map(),
+  graphKey:()=>'',sourceKey:()=>'',referenceKey:()=>'',switchVisibility(){},updateLabels(){},tryRestore:()=>null,
+  status:message=>events.push(message),metrics:()=>new Map(),computeScene:async()=>{throw Error('test failure');},
+  loading:{begin:()=>({paint:async()=>{},finish:()=>events.push('finished')})},
+  derivedLines:{replaceChildren(){}},derivedNodes:{replaceChildren(){}},linesEl:{style:{}},nodesEl:{style:{}},fit(){}});
+ await view.select('02');assert.equal(view.current,null);assert.equal(view.linesEl.style.display,'');
+ assert.equal(events.at(-1),'finished');assert.equal(view.loadingTask,null);
+ assert.ok(events.some(message=>message.startsWith('No se completó')));
+});

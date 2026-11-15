@@ -33,3 +33,36 @@
 .identity .brand span{font-size:10px;letter-spacing:.01em}
 @media(max-width:1150px){.identity .brand{max-width:180px;font-size:8px;letter-spacing:.02em}}
 @media(max-width:900px){.toplabel .mapcaption{display:block;font-size:10px}}
+
+/* Toolbar, view controls and the quiet reading space share the existing palette. */
+.app{grid-template-rows:auto minmax(0,1fr) 34px}
+.top{display:grid;grid-template-columns:minmax(200px,1fr) auto auto;min-height:72px;overflow:visible}
+.top .identity{min-width:0;margin:0}.top .top-actions{margin:0}
+.top-actions,.session-actions,.file-actions{display:flex;align-items:center;gap:3px}
+.top-actions{justify-content:flex-end;flex-wrap:wrap}.file-actions{border-left:1px solid var(--hair);padding-left:8px}
+.top .smallbtn{padding:9px 7px;font-size:11px}
+.floating{flex-direction:column;gap:4px;min-width:116px}
+.zoom-controls{display:flex;gap:3px}.zoom-controls button{flex:1}
+.view-tools{display:flex;flex-direction:column;border-top:1px solid var(--hair);padding-top:4px;gap:2px}
+.floating .view-tools button{font-size:11px;height:auto;padding:7px 8px}
+.poetry-carousel{gap:12px;padding-bottom:4px}
+[data-poem-slide]{min-height:205px}
+.poem-original{margin:0 0 12px;font-family:Georgia,serif;font-size:15px;line-height:1.55;white-space:pre-line}
+.poem-language{font-size:9px;letter-spacing:.04em;opacity:.55}
+.poem-translation{font-size:12px;line-height:1.6;white-space:pre-line;margin:5px 0 14px;opacity:.78}
+.poem-author{display:block;font-size:11px;font-style:normal;line-height:1.5}
+.poem-source{display:inline-block;color:inherit;font-size:10px;opacity:.65;text-underline-offset:3px;margin-top:7px}
+.poem-controls{display:flex;align-items:center;gap:7px;font-size:10px}
+.poem-controls button{border:1px solid var(--hair);border-radius:4px;min-width:28px;padding:6px}
+.poem-controls button:hover{background:var(--soft)}.poem-controls [data-poem-pause]{margin-left:auto;font-size:10px}
+.loading-overlay{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:4}
+.loading-overlay[hidden]{display:none}
+.loading-card{width:min(340px,calc(100% - 40px));padding:24px;background:var(--paper);border:1px solid var(--hair);border-radius:10px;box-shadow:0 12px 50px var(--soft)}
+.loading-title{font-family:Rajdhani,Arial,sans-serif;font-size:25px;font-weight:600;margin:10px 0 18px;line-height:1.15}
+.loading-detail{font-size:11px;line-height:1.6;margin:12px 0 0;min-height:35px;opacity:.7}
+.loading-track{height:4px;background:var(--soft);overflow:hidden;border-radius:2px}
+.loading-track span{display:block;width:38%;height:100%;background:var(--ink);transform:translateX(-110%);animation:loading-sweep 1.4s ease-in-out infinite;will-change:transform}
+@keyframes loading-sweep{to{transform:translateX(370%)}}
+@media(max-width:1450px){.top{grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;gap:5px 14px;padding:10px 18px}.top .identity{grid-column:1;grid-row:1}.view-nav{grid-column:2;grid-row:1}.top .top-actions{grid-column:1/-1;grid-row:2;justify-content:flex-end}.top .smallbtn{padding:7px 8px}}
+@media(max-width:900px){.top{padding:8px 12px}.top .smallbtn{font-size:10px;padding:7px 6px}.top .brand{display:none}.floating{right:12px;bottom:12px}.file-actions{padding-left:5px}}
+@media(prefers-reduced-motion:reduce){.loading-track span{animation:none;transform:translateX(80%)}}

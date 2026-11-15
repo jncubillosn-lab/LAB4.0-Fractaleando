@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="application-version" content="fractalear-1.0.0">
+<meta name="application-version" content="fractalear-1.1.0">
 <title>Fractalear · LAB 4.0 · Universidad Nacional</title>
 <link rel="stylesheet" href="./css/interfaz.css">
 </head>
@@ -11,7 +11,11 @@
 <div class="app">
  <header class="top">
   <div class="identity"><div class="monogram">Fractalear</div><div class="separator"></div><div class="brand">Una herramienta desarrollada por el LAB 4.0 <span>de la Universidad Nacional</span></div></div>
-  <nav class="view-nav" aria-label="Representaciones"><button type="button" data-view="01" class="view-tab selected" aria-pressed="true">01 · Editor</button><button type="button" data-view="02" class="view-tab" aria-pressed="false">02 · Compacto</button><button type="button" data-view="04" class="view-tab" aria-pressed="false">03 · Espiral</button></nav><div class="top-actions"><button class="smallbtn" id="themeBtn" title="Alternar modo oscuro" aria-pressed="false">Oscuro</button><button class="smallbtn" id="undoBtn" title="Deshacer (Ctrl+Z)">Deshacer</button><button class="smallbtn" id="newBtn" title="Nuevo diagrama con núcleo y tres ramas">Nuevo</button><button class="smallbtn" id="resetBtn" title="Cargar los datos ilustrativos PPR">Ejemplo PPR</button><button class="smallbtn" id="coreBtn" title="Centrar el núcleo P1">Núcleo</button><button class="smallbtn" id="fitBtn">Centrar lectura</button></div>
+  <nav class="view-nav" aria-label="Representaciones"><button type="button" data-view="01" class="view-tab selected" aria-pressed="true">01 · Editor</button><button type="button" data-view="02" class="view-tab" aria-pressed="false">02 · Compacto</button><button type="button" data-view="04" class="view-tab" aria-pressed="false">03 · Espiral</button></nav>
+  <div class="top-actions">
+   <div class="session-actions" role="group" aria-label="Diagrama y apariencia"><button class="smallbtn" id="themeBtn" title="Alternar modo oscuro" aria-pressed="false">Oscuro</button><button class="smallbtn" id="undoBtn" title="Deshacer (Ctrl+Z)">Deshacer</button><button class="smallbtn" id="newBtn" title="Nuevo diagrama con un solo núcleo">Nuevo</button><button class="smallbtn" id="resetBtn" title="Consultar el ejemplo completo">Ejemplo</button></div>
+   <div class="file-actions" role="group" aria-label="Archivo"><button id="jsonBtn" class="smallbtn">Guardar JSON</button><button id="loadBtn" class="smallbtn">Abrir JSON</button><button id="svgBtn" class="smallbtn" aria-label="Exportar vista SVG" title="Exportar la vista actual como SVG">SVG</button><button id="pngBtn" class="smallbtn" aria-label="Exportar grafo completo PNG 4K" title="Exportar todos los conceptos y vínculos de esta representación en PNG 4K">PNG 4K</button><input type="file" id="fileInput" accept="application/json,.json" hidden></div>
+  </div>
  </header>
  <div class="body">
   <aside class="sidebar">
@@ -21,16 +25,22 @@
    <div class="side-section"><div class="side-buttons"><button id="addBtn" class="action primary stretch">+ Concepto</button><button id="linkBtn" class="action stretch">Conectar</button></div><div class="line-styles" role="group" aria-label="Estilo de las nuevas conexiones"><button type="button" class="action" id="lineSolid" data-link-style="solid" aria-pressed="true" title="Nueva conexión continua">Continua</button><button type="button" class="action" id="lineDotted" data-link-style="dotted" aria-pressed="false" title="Nueva conexión punteada">Punteada</button><button type="button" class="action" id="lineDashed" data-link-style="dashed" aria-pressed="false" title="Nueva conexión segmentada">Segmentada</button></div><button id="unlinkBtn" class="action" disabled>Eliminar vínculo</button><button id="deleteBtn" class="action" disabled>Eliminar concepto</button><p id="editHint" class="tip">Selecciona un concepto y pulsa «+ Concepto» para desarrollarlo.</p></div>
    <div class="rule"></div>
    <div class="side-section"><div class="depthrow"><label class="eyebrow" for="depth">03 / Profundidad de lectura</label><output id="depthOut">1 / 2</output></div><input type="range" class="range" id="depth" min="0" max="2" value="1" step="1"><button id="showAllBtn" class="action" title="Mostrar todas las generaciones reales">Todas las capas</button><div id="scopeInfo" class="tip" aria-live="polite">Diagrama completo · exploración progresiva</div><p class="tip">Cada paso de profundidad incorpora una generación real del grafo. El diagrama completo se puede recorrer con zoom y desplazamiento.</p></div>
-   <div class="bottompanel"><div class="rule"></div><div class="eyebrow">04 / Archivo</div><div class="exportrow"><button id="jsonBtn" class="action">Guardar JSON</button><button id="loadBtn" class="action">Abrir JSON</button></div><button id="svgBtn" class="action">Exportar vista SVG</button><button id="pngBtn" class="action" title="Exportar todos los conceptos representados, incluso fuera de pantalla, en resolución 4K, con orientación según el grafo">Exportar grafo completo · PNG 4K</button><input type="file" id="fileInput" accept="application/json,.json" hidden><div class="stat" id="stats">—</div></div>
+   <section class="bottompanel poetry-carousel" id="poetryCarousel" role="region" aria-roledescription="carrusel" aria-label="Poemas sobre relaciones y nuevas miradas">
+    <div class="rule"></div><div class="eyebrow">04 / Otras miradas</div>
+    <div id="poemSlide" data-poem-slide role="group" aria-live="off"><blockquote class="poem-original" data-poem-original></blockquote><div class="poem-translated" data-poem-translated hidden><span class="poem-language">Versión en español · Fractalear</span><p class="poem-translation" data-poem-translation lang="es"></p></div><cite class="poem-author" data-poem-author></cite><a class="poem-source" data-poem-source target="_blank" rel="noopener noreferrer">Leer poema · fuente</a></div>
+    <div class="poem-controls"><button type="button" data-poem-prev aria-label="Cita anterior" aria-controls="poemSlide">←</button><span data-poem-count aria-label="Número de cita"></span><button type="button" data-poem-next aria-label="Cita siguiente" aria-controls="poemSlide">→</button><button type="button" data-poem-pause aria-pressed="false">Pausar</button></div><div class="stat" id="stats">—</div>
+   </section>
   </aside>
-  <main class="stagewrap" id="stageWrap">
+  <main class="stagewrap" id="stageWrap" aria-busy="true">
    <svg id="stage" class="stage" xmlns="http://www.w3.org/2000/svg" aria-label="Editor gráfico de relaciones"><g id="camera"><g id="lines"></g><g id="nodes"></g></g></svg>
    <div class="toplabel"><div class="eyebrow" >Editor / 01</div><div class="maptitle" >Mapa de relaciones</div><div class="mapcaption" >Núcleo · trayectorias editables</div></div>
-   <div id="readHint" class="readhint" hidden></div><div id="derivedStatus" class="readhint derived-status" role="status" aria-live="polite" hidden></div><div class="floating"><button id="zoomOut" aria-label="Alejar">−</button><button id="zoomIn" aria-label="Acercar">+</button><button id="zoomFit" aria-label="Centrar zona de lectura">⌖</button></div>
+   <div id="readHint" class="readhint" hidden></div><div id="derivedStatus" class="readhint derived-status" role="status" aria-live="polite" hidden></div>
+   <div class="loading-overlay" id="loadingIndicator" role="status" aria-live="polite"><div class="loading-card"><div class="eyebrow">Fractalear</div><p class="loading-title" data-loading-title>Preparando tu lienzo</p><div class="loading-track" role="progressbar" aria-label="Cálculo en curso"><span></span></div><p class="loading-detail" data-loading-detail>Cargando la herramienta…</p></div></div>
+   <div class="floating" aria-label="Controles de lectura"><div class="zoom-controls"><button id="zoomOut" aria-label="Alejar">−</button><button id="zoomIn" aria-label="Acercar">+</button><button id="zoomFit" aria-label="Centrar zona de lectura">⌖</button></div><div class="view-tools"><button id="coreBtn" title="Centrar el núcleo J0">Núcleo</button><button id="fitBtn">Centrar lectura</button></div></div>
    <div class="toast" id="toast" role="status"></div>
   </main>
  </div>
- <footer class="foot"><span id="footHint">Edición de conceptos · representación plana</span><span id="viewState">01 · EDITABLE</span><span>Fractalear &nbsp;·&nbsp; LAB 4.0 &nbsp;·&nbsp; v1.0.0</span></footer>
+ <footer class="foot"><span id="footHint">Edición de conceptos · representación plana</span><span id="viewState">01 · EDITABLE</span><span>Fractalear &nbsp;·&nbsp; LAB 4.0 &nbsp;·&nbsp; v1.1.0</span></footer>
 </div>
 <script type="module" src="./js/app.js"></script>
 </body>

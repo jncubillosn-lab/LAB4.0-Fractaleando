@@ -20,6 +20,27 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   page.goto(url,wait_until='domcontentloaded')
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.initialBuilds===1&&document.querySelectorAll("#nodes .node").length===1',timeout=30000)
   assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.routes')==0
+  assert page.locator('#resetBtn').inner_text()=='Ejemplo'
+  for button in ['jsonBtn','loadBtn','svgBtn','pngBtn']:
+   assert page.locator('header #'+button).count()==1
+  for button in ['coreBtn','fitBtn']:
+   assert page.locator('.floating .view-tools #'+button).count()==1
+   assert page.locator('#'+button).bounding_box()['y']>page.locator('#zoomFit').bounding_box()['y']
+  poem=page.locator('#poetryCarousel');poem.locator('[data-poem-pause]').click()
+  assert poem.locator('[data-poem-pause]').get_attribute('aria-pressed')=='true'
+  authors=set()
+  for i in range(10):
+   assert poem.locator('[data-poem-count]').inner_text()==str(i+1)+' / 10'
+   authors.add(poem.locator('[data-poem-author]').inner_text())
+   assert poem.locator('[data-poem-source]').get_attribute('href').startswith('https://')
+   if poem.locator('[data-poem-original]').get_attribute('lang')!='es':assert poem.locator('[data-poem-translation]').inner_text()
+   poem.locator('[data-poem-next]').click()
+  assert len(authors)==10 and poem.locator('[data-poem-count]').inner_text()=='1 / 10'
+  output=os.environ.get('P1_SCREENSHOTS')
+  if output:
+   Path(output).mkdir(parents=True,exist_ok=True)
+   page.screenshot(path=str(Path(output)/'Fractaleando_1_1_0_poemas.png'))
+  page.locator('.sidebar').evaluate('(el)=>el.scrollTop=0')
   core=page.locator('#nodes [data-node-id="p1"]')
   assert core.get_attribute('aria-label')=='¿Qué quieres fractalear hoy?'
   assert 'selected' in core.get_attribute('class')
@@ -218,5 +239,15 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.pending')==0
   print('Palabras completas: ancho automático, edición y posiciones de 0.2.10 conservadas',flush=True)
   assert not errors,errors
+  compact=b.new_page(viewport={'width':900,'height':820},reduced_motion='reduce')
+  compact.goto(url,wait_until='domcontentloaded')
+  compact.wait_for_function('document.querySelectorAll("#nodes .node").length===1&&document.querySelector("#loadingIndicator").hidden')
+  assert compact.locator('[data-poem-pause]').get_attribute('aria-pressed')=='true'
+  for button in ['jsonBtn','loadBtn','svgBtn','pngBtn','newBtn','resetBtn']:
+   box=compact.locator('#'+button).bounding_box();assert box['x']>=0 and box['x']+box['width']<=900,(button,box)
+  assert compact.locator('.top').evaluate('(el)=>el.scrollWidth<=el.clientWidth')
+  if output:compact.screenshot(path=str(Path(output)/'Fractaleando_1_1_0_900px.png'))
+  compact.close()
+  print('Interfaz: archivos arriba, encuadre bajo zoom, diez citas con fuente y traducción, pausa y ancho 900 px',flush=True)
   b.close()
  srv.shutdown()
