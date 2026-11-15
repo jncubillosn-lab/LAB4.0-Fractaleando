@@ -1,5 +1,16 @@
 # Registro de cambios
 
+## 1.2.3 — 15 de noviembre de 2026
+
+- Sustituye el GIF por una tira fija de cuatro viñetas del mismo castor:
+  conectando cables, tejiendo, leyendo un manual y comiendo una galleta.
+- PNG de 768 × 224 píxeles, un solo fotograma y dos valores de color, sin
+  grises ni tramado. Pesa 6.499 bytes y se sirve desde el sitio.
+- Amplía la tarjeta de carga para presentar la tira horizontal, adapta su
+  contraste al tema y retira el giro y los recursos del indicador anterior.
+- Conserva los mensajes de cálculo, la barra y el icono de nodos. Comprueba
+  imagen fija, caché, carga del ejemplo y regresión de las tres vistas.
+
 ## 1.2.2 — 15 de noviembre de 2026
 
 - Sustituye la ilustración por un GIF externo de dominio público de 32 × 32

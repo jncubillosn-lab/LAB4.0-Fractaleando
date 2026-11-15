@@ -1,12 +1,5 @@
 # Dependencias del sitio
 
-El indicador `css/images/loading.gif` es **Ajax-loader.gif**, de Ajaxload
-(2009), descargado sin modificar desde [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Ajax-loader.gif).
-La fuente lo declara de dominio público. Mide 32 × 32 píxeles y pesa 3.208 bytes.
-Su primer fotograma se convierte a PNG para movimiento reducido. La procedencia
-y declaración acompañan al recurso en `css/images/LICENSE-Ajaxload.txt`.
-Se sirve desde Pages, sin conexión a Wikimedia durante el uso.
-
 Los conceptos y los títulos de las vistas utilizan **Rajdhani**, pesos 600 y
 700, de Indian Type Foundry (copyright 2014), bajo SIL Open Font License 1.1.
 Se incluyen los TTF originales, sin modificar, de

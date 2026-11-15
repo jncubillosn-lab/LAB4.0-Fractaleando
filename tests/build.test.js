@@ -18,7 +18,9 @@ test('Pages publica imports, workers y WASM con una misma identidad de caché',(
  assert.ok(existsSync('_site/js/vendor/libavoid.wasm'));assert.ok(existsSync('_site/js/vendor/LICENSE-libavoid.txt'));
  assert.ok(existsSync('_site/js/core/WorkerTask.js'));assert.ok(existsSync('_site/js/geometry/PlaneLayout.js'));
  for(const name of ['Rajdhani-SemiBold.ttf','Rajdhani-Bold.ttf','OFL-Rajdhani.txt'])assert.deepEqual(readFileSync('_site/css/fonts/'+name),readFileSync('css/fonts/'+name));
- for(const name of ['loading.gif','loading-still.png','favicon.svg','LICENSE-Ajaxload.txt'])assert.deepEqual(readFileSync('_site/css/images/'+name),readFileSync('css/images/'+name));
- const gif=readFileSync('_site/css/images/loading.gif');
- assert.equal(gif.subarray(0,6).toString(),'GIF89a');assert.ok(gif.includes(Buffer.from('NETSCAPE2.0')));assert.ok(gif.length<=4096);
+ for(const name of ['beaver-strip.png','favicon.svg'])assert.deepEqual(readFileSync('_site/css/images/'+name),readFileSync('css/images/'+name));
+ const strip=readFileSync('_site/css/images/beaver-strip.png');
+ assert.equal(strip.toString('ascii',1,4),'PNG');assert.equal(strip.readUInt32BE(16),768);assert.equal(strip.readUInt32BE(20),224);
+ assert.equal(strip[24],1);assert.equal(strip[25],0);assert.ok(strip.length<=12000);
+ assert.equal(existsSync('_site/css/images/loading.gif'),false);
 });

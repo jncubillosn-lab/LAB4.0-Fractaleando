@@ -36,30 +36,25 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   assert page.locator('#loadingIndicator').is_visible()
   assert page.locator('#stageWrap').get_attribute('aria-busy')=='true'
   assert page.locator('#loadingIndicator [role="progressbar"]').get_attribute('aria-valuenow') is None
-  spinner=page.locator('#loadingIndicator .loading-spinner')
-  artwork=page.locator('#loadingIndicator .loading-art')
-  assert spinner.is_visible() and spinner.get_attribute('aria-hidden')=='true'
-  page.wait_for_function('(()=>{const img=document.querySelector(".loading-spinner");return img.complete&&img.naturalWidth===32})()')
-  assert spinner.evaluate('(img)=>new URL(img.currentSrc).pathname.endsWith(".gif")')
+  artwork=page.locator('#loadingIndicator .loading-illustration')
+  assert artwork.is_visible() and 'Castor' in artwork.get_attribute('alt')
+  artwork.evaluate('(img)=>img.decode()')
+  assert artwork.evaluate('(img)=>img.naturalWidth===768&&img.naturalHeight===224&&new URL(img.currentSrc).pathname.endsWith(".png")')
+  assert artwork.evaluate('(img)=>getComputedStyle(img).animationName')=='none'
   first_frame=artwork.screenshot()
   page.wait_for_timeout(350)
-  assert artwork.screenshot()!=first_frame,'The visible indicator did not change during loading'
+  assert artwork.screenshot()==first_frame,'The comic strip must stay static during loading'
   page.emulate_media(reduced_motion='reduce')
-  page.wait_for_function('document.querySelector(".loading-spinner").currentSrc.includes("loading-still.png")')
-  spinner.evaluate('(img)=>img.decode()')
-  still_frame=artwork.screenshot()
-  page.wait_for_timeout(350)
-  assert artwork.screenshot()==still_frame,'Reduced motion must show a genuinely static image'
+  assert artwork.screenshot()==first_frame
   assert page.locator('.loading-track span').evaluate('(el)=>getComputedStyle(el).animationName')=='none'
   page.emulate_media(reduced_motion='no-preference')
-  page.wait_for_function('document.querySelector(".loading-spinner").currentSrc.includes("loading.gif")')
   bounds=page.locator('.loading-card').bounding_box();stage=page.locator('#stageWrap').bounding_box()
   assert abs((bounds['x']+bounds['width']/2)-(stage['x']+stage['width']/2))<1
   assert abs((bounds['y']+bounds['height']/2)-(stage['y']+stage['height']/2))<1
   output=os.environ.get('P1_SCREENSHOTS')
   if output:
    Path(output).mkdir(parents=True,exist_ok=True)
-   page.screenshot(path=str(Path(output)/'Fractaleando_1_2_2_carga.png'))
+   page.screenshot(path=str(Path(output)/'Fractaleando_1_2_3_carga.png'))
   for button in ['pngBtn','svgBtn']:
    page.locator('#'+button).click()
    prefix='No se pudo exportar '+('PNG' if button=='pngBtn' else 'SVG')
