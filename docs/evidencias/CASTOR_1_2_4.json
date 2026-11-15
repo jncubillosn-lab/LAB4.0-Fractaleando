@@ -1,0 +1,16 @@
+{
+  "version": "1.2.4",
+  "selection": "Opción 2: minimalista, aprobada por el usuario",
+  "tool": "image_gen integrado",
+  "prompt": "Use case: illustration-story. Create a polished horizontal FOUR-PANEL wordless comic strip, approximately 3:1 aspect ratio, for a lightweight static loading illustration. Exactly black ink and white background, no gray, no color, no gradients. All four panels tell this same sequence left to right: (1) a small beaver tangled in a comically confusing pile of cables, with a cable draped over its head and a puzzled expression; (2) the beaver leaning over an open instruction manual, studying a simple network diagram; (3) a relaxed coffee break, gently holding a tiny steaming mug; (4) actively connecting the cables into a clean network of connected dots, with one last silly loose cable. The beaver must be clearly the SAME recognizable animal across all four scenes, but each pose, silhouette and action must be different. Rounded animal body, very short paws, small ears, rounded muzzle, tiny incisors and a broad flat paddle tail. Cute through appealing proportions and charming acting, not huge anime eyes or a human face. No human hands, no clothes, no human torso or long limbs. Strong visual storytelling, beautiful professional character design, readable when reduced to about 650px wide. Plenty of white breathing room and very simple props. No captions, lettering, logos or watermarks. ART DIRECTION B: Sophisticated minimalist mascot illustration with a gentle retro computing feel. Bold smooth black contours, very simple rounded geometric animal forms, small dot eyes, compact pear-shaped body and large paddle tail, ample negative space. Four open scenes without enclosing boxes, separated by generous white gutters. Charm comes from tiny expressive eyebrows, head tilts and tiny paws. Reduce clutter drastically: just enough cable loops to tell the joke, one book, one mug and a simple 5-node network. Refined editorial illustration quality, no anime, no realism, no texture, no shading. Animal-like and adorable, not a person in a beaver costume.",
+  "source_file": "exec-3625a1a9-f2d2-4249-97cc-7fd60b969360.png",
+  "source_sha256": "f7f327897ffb1535112cd78974e5eedbe97b9092b415d1385f42b4d62e06b383",
+  "output": "css/images/beaver-strip.png",
+  "output_sha256": "b8f727e4ba6277538f8a51c79821efe748d82b6c8b0f2575d1024df8de5ba167",
+  "width": 768,
+  "height": 224,
+  "mode": "1",
+  "frames": 1,
+  "bytes": 6329,
+  "preparation": "Recorte del margen exterior, ajuste proporcional con margen mínimo de 8 px y umbral 128 sin tramado. Sin redibujar la ilustración elegida."
+}

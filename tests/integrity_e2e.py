@@ -54,7 +54,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   output=os.environ.get('P1_SCREENSHOTS')
   if output:
    Path(output).mkdir(parents=True,exist_ok=True)
-   page.screenshot(path=str(Path(output)/'Fractaleando_1_2_3_carga.png'))
+   page.screenshot(path=str(Path(output)/'Fractaleando_1_2_4_carga.png'))
   for button in ['pngBtn','svgBtn']:
    page.locator('#'+button).click()
    prefix='No se pudo exportar '+('PNG' if button=='pngBtn' else 'SVG')
