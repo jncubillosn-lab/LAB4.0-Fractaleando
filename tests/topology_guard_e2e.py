@@ -13,8 +13,8 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   page=browser.new_page(viewport={'width':1440,'height':900},accept_downloads=True)
   errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.on('dialog',lambda d:d.accept())
   page.goto('http://127.0.0.1:'+str(srv.server_address[1])+'/index.html',wait_until='domcontentloaded')
-  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===217',timeout=60000)
-  page.locator('#newBtn').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.initialBuilds===1&&document.querySelectorAll("#nodes .node").length===1',timeout=30000)
+  page.locator('#fileInput').set_input_files(Path(__file__).parent/'fixtures'/'three-branches.json')
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===3&&document.querySelectorAll("#nodes .node").length===4',timeout=60000)
   page.locator('#nodes [data-node-id="b0"]').click();page.locator('#addBtn').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===4',timeout=30000)
@@ -65,20 +65,20 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   page.locator('[data-view="02"]').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().current?.mode==="02"',timeout=30000)
   page.locator('#newBtn').click()
-  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().mode==="01"&&window.P1_PLANO_DIAGNOSTICO.routes===3&&document.querySelectorAll("#nodes .node").length===4',timeout=30000)
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().mode==="01"&&window.P1_PLANO_DIAGNOSTICO.routes===0&&document.querySelectorAll("#nodes .node").length===1',timeout=30000)
   # Cancel a running calculation and immediately start another one.
   page.locator('[data-view="04"]').evaluate("""el=>{el.click();document.querySelector('[data-view="01"]').click()}""")
   page.locator('[data-view="02"]').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.views().current?.mode==="02"',timeout=30000)
-  assert page.locator('#derivedNodes .node').count()==4
+  assert page.locator('#derivedNodes .node').count()==1
   page.locator('[data-view="01"]').click()
   # A worker that cannot start must keep the existing main-thread fallback.
   page.evaluate('''()=>{window.__savedWorker=window.Worker;window.Worker=class {constructor(){throw new DOMException("test unavailable","AbortError")}}}''')
   page.locator('#newBtn').click()
-  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===3&&document.querySelectorAll("#nodes .node").length===4',timeout=30000)
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===0&&document.querySelectorAll("#nodes .node").length===1',timeout=30000)
   page.evaluate('()=>{window.Worker=window.__savedWorker;delete window.__savedWorker}')
-  page.locator('#nodes [data-node-id="b0"]').click();page.locator('#addBtn').click()
-  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===4',timeout=30000)
+  page.locator('#nodes [data-node-id="p1"]').click();page.locator('#addBtn').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===1',timeout=30000)
   assert not page.locator('#nodeText').is_disabled()
   print('Ciclo de vida: importar desde 03, Nueva desde 02, caché dañada, cancelación y fallback conservan la edición',flush=True)
   assert not errors,errors

@@ -1,13 +1,15 @@
 # Guía de uso de Fractalear
 
-Referencia: **0.2.11 · 14 de noviembre de 2026**.
+Referencia: **0.2.15 · 15 de noviembre de 2026**.
 
 [Abrir la aplicación](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/) ·
 [Estado y decisiones del proyecto](CORTE_0_2_11.md).
 
 ## Construir en 01 Editor
 
-1. Usa **Nuevo** para comenzar o **Ejemplo PPR** para explorar el ejemplo.
+1. Al abrir la herramienta aparece un solo núcleo con el texto **¿Qué quieres
+   fractalear hoy?**. **Nuevo** vuelve a ese punto de partida, sin ramas ni
+   vínculos predefinidos. Usa **Ejemplo PPR** para consultar el ejemplo completo.
 2. Haz clic en un cuadro para seleccionarlo. Cambia su texto en **Contenido**;
    un doble clic en el cuadro lleva a ese campo.
 3. Pulsa **+ Concepto** para crear un hijo del seleccionado. La selección se

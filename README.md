@@ -5,7 +5,11 @@ construir conceptos, desarrollar sus jerarquías y representar sus relaciones.
 
 **[Abrir Fractalear en GitHub Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/)**
 
-**Actualización 0.2.14:** [integridad de documentos, exportación y jerarquías](docs/INTEGRIDAD_0_2_14.md).
+**Actualización 0.2.15:** la herramienta abre en **01 Editor** con un solo núcleo,
+**¿Qué quieres fractalear hoy?**. **Nuevo** crea ese mismo lienzo; el ejemplo
+completo se consulta desde **Ejemplo PPR**.
+
+**Base 0.2.14:** [integridad de documentos, exportación y jerarquías](docs/INTEGRIDAD_0_2_14.md).
 
 **Base 0.2.13:** [estabilidad y separación de responsabilidades](docs/MANTENIMIENTO_0_2_13.md).
 

@@ -11,7 +11,9 @@ referencia. Sus nombres de vistas, experimentos, bloqueos del Editor y estados
 de publicación deben leerse con la fecha de cada corte. El estado funcional
 actual se describe en la referencia anterior.
 
-**Implementación actual 0.2.14:** [integridad de documentos, exportación y jerarquías](INTEGRIDAD_0_2_14.md).
+**Implementación actual 0.2.15:** [inicio con un solo núcleo y ejemplo a petición](INICIO_0_2_15.md).
+
+**Base 0.2.14:** [integridad de documentos, exportación y jerarquías](INTEGRIDAD_0_2_14.md).
 
 **Base 0.2.13:** [estabilidad, archivos y controladores separados](MANTENIMIENTO_0_2_13.md).
 

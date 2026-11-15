@@ -14,7 +14,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   browser=p.chromium.launch(**({'executable_path':os.environ['P1_BROWSER_PATH']} if os.environ.get('P1_BROWSER_PATH') else {'channel':'chrome'}),headless=True)
   page=browser.new_page(viewport={'width':1440,'height':900},accept_downloads=True)
   errors=[];downloads=[]
-  page.on('pageerror',lambda e:errors.append(str(e)))
+  page.on('pageerror',lambda e:errors.append(str(e)));page.on('dialog',lambda d:d.accept())
   page.on('download',lambda d:downloads.append(d))
   page.add_init_script('''(()=>{
    const NativeWorker=window.Worker;let delay=true;
@@ -34,6 +34,8 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    page.wait_for_function('document.querySelector("#toast").textContent.includes("Espera a que termine")')
    assert not downloads,'An incomplete scene was downloaded'
   page.evaluate('()=>{window.__resumeRouting();delete window.__resumeRouting}')
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.initialBuilds===1&&document.querySelectorAll("#nodes .node").length===1',timeout=30000)
+  page.locator('#resetBtn').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===217',timeout=60000)
   def graph():
    with page.expect_download() as d:page.locator('#jsonBtn').click()

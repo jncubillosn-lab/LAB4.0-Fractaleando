@@ -1,0 +1,13 @@
+{
+  "nodes": [
+    {"id":"p1","text":"P1","branch":-1,"parent":null,"width":108,"x":0,"y":0},
+    {"id":"b0","text":"Rama 01","branch":0,"parent":"p1","width":190,"x":0,"y":0},
+    {"id":"f0","text":"Rama 02","branch":1,"parent":"p1","width":190,"x":0,"y":0},
+    {"id":"t0","text":"Rama 03","branch":2,"parent":"p1","width":190,"x":0,"y":0}
+  ],
+  "edges": [
+    {"from":"p1","to":"b0"},
+    {"from":"p1","to":"f0"},
+    {"from":"p1","to":"t0"}
+  ]
+}

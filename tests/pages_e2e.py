@@ -15,9 +15,35 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   page=b.new_page(viewport={'width':1360,'height':820},accept_downloads=True)
   page.add_init_script('''window.__textMeasures=0;const measure=CanvasRenderingContext2D.prototype.measureText;
    CanvasRenderingContext2D.prototype.measureText=function(...args){window.__textMeasures++;return measure.apply(this,args)};''')
-  errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+  errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.on('dialog',lambda d:d.accept())
   page.on('console',lambda message:print('NAVEGADOR',message.type,message.text,flush=True) if message.type=='error' else None)
-  page.goto(url,wait_until='domcontentloaded');page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===217',timeout=30000)
+  page.goto(url,wait_until='domcontentloaded')
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.initialBuilds===1&&document.querySelectorAll("#nodes .node").length===1',timeout=30000)
+  assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.routes')==0
+  core=page.locator('#nodes [data-node-id="p1"]')
+  assert core.get_attribute('aria-label')=='¿Qué quieres fractalear hoy?'
+  assert 'selected' in core.get_attribute('class')
+  assert page.locator('#depth').input_value()=='0'
+  print('PERFORMANCE_STARTUP',json.dumps(page.evaluate('({startupMs:performance.now(),textMeasures:window.__textMeasures})')),flush=True)
+  core.dblclick()
+  assert page.locator('#nodeText').evaluate('(el)=>document.activeElement===el')
+  page.locator('#nodeText').fill('Mi primer fractal');page.locator('#nodeText').press('Tab')
+  page.wait_for_function('document.querySelector("#nodes [data-node-id=p1]").getAttribute("aria-label")==="Mi primer fractal"')
+  page.locator('#addBtn').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===1&&document.querySelectorAll("#nodes .node").length===2')
+  assert page.locator('#nodes .selected').get_attribute('data-node-id')=='p1'
+  with page.expect_download() as first:page.locator('#jsonBtn').click()
+  first_graph=json.loads(Path(first.value.path()).read_text(encoding='utf8'))
+  assert len(first_graph['edges'])==1 and first_graph['edges'][0]['from']=='p1'
+  assert [(n['parent'],n['branch']) for n in first_graph['nodes'] if n['id']!='p1']==[('p1',0)]
+  page.locator('#newBtn').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===0&&document.querySelectorAll("#nodes .node").length===1')
+  assert core.get_attribute('aria-label')=='¿Qué quieres fractalear hoy?'
+  assert page.locator('#undoBtn').is_disabled()
+  print('Inicio y Nuevo: un solo J0 editable, sin vínculos; primera rama creada desde el núcleo',flush=True)
+  page.evaluate('window.__exampleStarted=performance.now();window.__exampleMeasures=window.__textMeasures')
+  page.locator('#resetBtn').click()
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===217',timeout=30000)
   assert page.locator('#depth').input_value()==page.locator('#depth').get_attribute('max')
   assert page.locator('[data-view="01"]').inner_text()=='01 · Editor'
   assert page.locator('[data-view="02"]').inner_text()=='02 · Compacto'
@@ -26,8 +52,8 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.visible === 210',timeout=30000)
   d0=page.evaluate('({...window.P1_PLANO_DIAGNOSTICO,audit:window.P1_PLANO_DIAGNOSTICO.audit()})')
   initial_picture=page.locator('#nodes .node,#lines .svgline').evaluate_all('(els)=>els.map(el=>[el.getAttribute("transform"),el.getAttribute("d"),el.getAttribute("aria-label"),el.querySelector("rect")?.outerHTML,[...el.querySelectorAll("tspan")].map(t=>t.outerHTML)])')
-  print('PERFORMANCE_STARTUP',json.dumps({**page.evaluate('({startupMs:performance.now(),textMeasures:window.__textMeasures})'),
-   'attempts':d0['routeCalculations'],
+  print('PERFORMANCE_EXAMPLE',json.dumps({**page.evaluate('({exampleReadyMs:performance.now()-window.__exampleStarted,textMeasures:window.__textMeasures-window.__exampleMeasures})'),
+   'attempts':d0['lastRouteCalculations'],
    'pictureSHA256':hashlib.sha256(json.dumps(initial_picture,ensure_ascii=False,separators=(',',':')).encode()).hexdigest()}),flush=True)
   assert hashlib.sha256(json.dumps(initial_picture,ensure_ascii=False,separators=(',',':')).encode()).hexdigest()=='143ae8e33864b4d0af8b16a5f31bca685e370f3662f90775e05bfb57de4a83b6'
   print('DIAGNOSTICO_NAVEGADOR', {k:d0[k] for k in ['visible','routes','pending','lastOperation','lastDurationMs','initialBuilds','routeCalculations']},d0['audit'],errors,flush=True)
@@ -73,10 +99,12 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.topology().referenceEdges === 218',timeout=30000)
   restored=page.evaluate('window.P1_PLANO_DIAGNOSTICO.topology()')
   assert restored['valid'] and restored['crossings']==after['crossings'],restored
-  page.on('dialog',lambda dialog:dialog.accept())
   builds_before=page.evaluate('window.P1_PLANO_DIAGNOSTICO.initialBuilds')
   page.locator('#newBtn').click()
-  page.wait_for_function('(previous)=>window.P1_PLANO_DIAGNOSTICO.initialBuilds>previous&&window.P1_PLANO_DIAGNOSTICO.routes===3&&document.querySelectorAll("#nodes .node").length===4',arg=builds_before,timeout=30000)
+  page.wait_for_function('(previous)=>window.P1_PLANO_DIAGNOSTICO.initialBuilds>previous&&window.P1_PLANO_DIAGNOSTICO.routes===0&&document.querySelectorAll("#nodes .node").length===1',arg=builds_before,timeout=30000)
+  # Keep the established routing regression on its original three-branch input.
+  page.locator('#fileInput').set_input_files(Path(__file__).parent/'fixtures'/'three-branches.json')
+  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===3&&document.querySelectorAll("#nodes .node").length===4',timeout=30000)
   page.locator('#nodes [data-node-id="b0"]').click()
   original=page.locator('#nodes .node').evaluate_all('(els)=>Object.fromEntries(els.map(el=>[el.dataset.nodeId,el.getAttribute("transform")]))')
   parent_text=page.locator('#nodeText').input_value()
