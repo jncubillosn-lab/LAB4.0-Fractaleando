@@ -24,8 +24,6 @@ const NS='http://www.w3.org/2000/svg';
 const $=id=>document.getElementById(id);
 const stage=$('stage'), camera=$('camera'), linesEl=$('lines'), nodesEl=$('nodes');
 const state={nodes:[],edges:[],selected:'p1',linkFrom:null,unlinkFrom:null,linkStyle:'solid',depth:2,zoom:1,tx:0,ty:0,undo:[],pointer:null,idSerial:0,toastTimer:null,renderQueued:false,focusRoot:"p1",readableZoom:.82,edgeMode:'all'};
-// Los tres identificadores son SOLO los datos iniciales; no fijan el número de brazos.
-const anchors=['b0','f0','t0'];
 const isFirstLevel=n=>Boolean(n&&n.parent==='p1');
 const nextBranchIndex=()=>Math.max(-1,...state.nodes.map(n=>n.branch))+1;
 const textCanvas=document.createElement('canvas');const ctx=textCanvas.getContext('2d');
@@ -34,7 +32,7 @@ const graph=new GraphDocument(state);
 const nodeById=id=>graph.nodeById(id);
 const linksOf=id=>graph.linksOf(id);
 function makeNode(id,text,branch,parent=null,width=178){return{id,text,branch,parent,width,x:0,y:0};}
-const {blankSeed,seed}=createSeeds({makeNode,anchors});
+const {blankSeed,seed}=createSeeds({makeNode});
 function textLines(text,width,fontsize=14){
  const maxWidth=width-28;ctx.font=`${fontsize>=20?'650 ':fontsize>=15?'590 ':''}${fontsize}px Inter,Arial,sans-serif`;
  const out=[];const paragraphs=String(text||' ').split(/\n/);
@@ -588,7 +586,7 @@ for(const kind of ['pointerup','pointercancel'])stage.addEventListener(kind,e=>{
 stage.addEventListener('wheel',e=>{e.preventDefault();const p=inFrame(e.clientX,e.clientY);zoomBy(Math.exp(-e.deltaY*.0011),p.x,p.y);},{passive:false});
 $('coreBtn').onclick=()=>centerOn('p1',1);$('fitBtn').onclick=()=>fit();$('zoomFit').onclick=()=>fit();$('zoomIn').onclick=()=>zoomBy(1.2);$('zoomOut').onclick=()=>zoomBy(1/1.2);$('undoBtn').onclick=undo;
 $('resetBtn').onclick=()=>{if(!confirm('¿Cargar el ejemplo PPR? Los cambios no guardados se perderán.'))return;init(true);toast('Ejemplo PPR cargado.');};
-$('newBtn').onclick=()=>{if(!confirm('¿Crear un diagrama nuevo con tres ramas? Guarda antes el JSON actual si deseas conservarlo.'))return;init(false);toast('Nuevo diagrama vacío: núcleo y tres ramas editables.');};
+$('newBtn').onclick=()=>{if(!confirm('¿Crear un diagrama nuevo con un solo núcleo? Guarda antes el JSON actual si deseas conservarlo.'))return;init(false);toast('Nuevo diagrama: solo el núcleo, listo para editar.');};
 $('addBtn').onclick=()=>addConcept();$('deleteBtn').onclick=deleteSelected;
 function setLinkStyle(style){
  if(!validLinkStyle(style))return;
@@ -679,7 +677,7 @@ themeButton.onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'
 bindDiagramExports({
  svgButton:$('svgBtn'),pngButton:$('pngBtn'),stage,camera,linesEl,nodesEl,plane,derived,state,diag,toast,sEl,beforeExport:flushPendingEdits
 });
-function init(useDemo=true){
+function init(useDemo=false){
  graphFiles.cancel();
  cancelPendingTyping();
  cancelInitialBuild();

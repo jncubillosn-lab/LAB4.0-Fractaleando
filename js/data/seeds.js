@@ -1,6 +1,8 @@
 // Existing PPR demonstration data, independent from the editor and routing.
-export function createSeeds({makeNode,anchors}){
-function blankSeed(){const nodes=[makeNode('p1','P1',-1,null,108),...anchors.map((id,i)=>makeNode(id,'Rama '+String(i+1).padStart(2,'0'),i,'p1',190))];const edges=anchors.map(id=>({from:'p1',to:id}));return{nodes,edges};}
+export function createSeeds({makeNode}){
+ function blankSeed(){
+  return {nodes:[makeNode('p1','¿Qué quieres fractalear hoy?',-1,null,300)],edges:[]};
+ }
  function seed(){
  const nodes=[],edges=[];
  function add(id,text,branch,parent,width){nodes.push(makeNode(id,text,branch,parent,width));if(parent)edges.push({from:parent,to:id});}
