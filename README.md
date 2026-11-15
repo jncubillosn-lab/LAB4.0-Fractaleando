@@ -3,7 +3,7 @@
 Una herramienta desarrollada por el LAB 4.0 de la Universidad Nacional para
 construir conceptos, desarrollar sus jerarquías y representar sus relaciones.
 
-**[Abrir Fractalear](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/?v=1.2.1)**
+**[Abrir Fractalear](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/?v=1.2.2)**
 
 ## Comenzar
 
@@ -17,13 +17,14 @@ distribuciones. **Guardar JSON** conserva el trabajo editable; SVG y PNG 4K
 permiten compartir su representación.
 
 La barra superior reúne las acciones de archivo. Los controles de encuadre
-están bajo el zoom. Una barra centrada con un GIF de una persona tejiendo informa los cálculos en curso; el espacio
+están bajo el zoom. Una barra centrada con un indicador de 32 píxeles informa
+los cálculos en curso; el espacio
 **Otras miradas** ofrece diecisiete citas poéticas con fuente y versión en español.
 
 ## Documentación vigente
 
 - [Guía de uso](docs/GUIA_USO.md).
-- [Interfaz 1.2.1: GIF de tejido](docs/INTERFAZ_1_2_1.md).
+- [Interfaz 1.2.2: carga ligera e icono](docs/INTERFAZ_1_2_2.md).
 - [Propuesta de almacenamiento compartido en Drive](docs/PROPUESTA_DRIVE.md).
 - [Base funcional, decisiones y límites de 1.0.0](docs/VERSION_1_0_0.md).
 - [Mantenimiento, pruebas y publicación](docs/MANTENIMIENTO.md).

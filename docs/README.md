@@ -2,8 +2,8 @@
 
 **[▶ Abrir la aplicación en GitHub Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/)**
 
-**Versión vigente · 1.2.1 · 15 de noviembre de 2026:**
-[GIF de tejido](INTERFAZ_1_2_1.md) y [diecisiete citas poéticas](INTERFAZ_1_2_0.md), sobre la
+**Versión vigente · 1.2.2 · 15 de noviembre de 2026:**
+[carga ligera e icono](INTERFAZ_1_2_2.md) y [diecisiete citas poéticas](INTERFAZ_1_2_0.md), sobre la
 [base funcional y límites de 1.0.0](VERSION_1_0_0.md).
 Consultar la [guía de uso](GUIA_USO.md), el
 [mantenimiento y la publicación](MANTENIMIENTO.md) y el

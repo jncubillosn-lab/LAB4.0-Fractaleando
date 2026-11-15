@@ -1,0 +1,228 @@
+[
+  {
+    "withoutGif": false,
+    "ms": 5389.299999998882,
+    "longTasks": [
+      {
+        "start": 5747.300000000745,
+        "ms": 110
+      }
+    ],
+    "maxFrameGap": 116.69999999999982,
+    "loadingPoses": 312,
+    "diagnostic": {
+      "initialBuilds": 2,
+      "routeCalculations": 217,
+      "lastRouteCalculations": 0,
+      "lastOperation": "sin cambio geométrico",
+      "lastDurationMs": 0,
+      "checkpoint": 1,
+      "visible": 210,
+      "routes": 217,
+      "pending": 0,
+      "lastAffectedRoutes": 0
+    },
+    "composition": [
+      {
+        "compositingReasons": [
+          "Has an active accelerated transform animation or transition.",
+          "Has a will-change: transform compositing hint."
+        ],
+        "compositingReasonIds": [
+          "ActiveTransformAnimation",
+          "WillChangeTransform"
+        ]
+      }
+    ],
+    "messages": [],
+    "topSelfMs": [
+      {
+        "fn": "(idle) · ",
+        "ms": 4996
+      },
+      {
+        "fn": "(program) · ",
+        "ms": 199
+      },
+      {
+        "fn": "tick · ",
+        "ms": 48
+      },
+      {
+        "fn": "capture · TopologyRegister.js?build=5f7e8f1523ce1563",
+        "ms": 21
+      },
+      {
+        "fn": "getBBox · ",
+        "ms": 18
+      },
+      {
+        "fn": "segmentIntersection · SegmentGeometry.js?build=5f7e8f1523ce1563",
+        "ms": 15
+      },
+      {
+        "fn": "observeTopology · app.js?build=5f7e8f1523ce1563",
+        "ms": 10
+      },
+      {
+        "fn": " · app.js?build=5f7e8f1523ce1563",
+        "ms": 9
+      },
+      {
+        "fn": "measureText · ",
+        "ms": 8
+      },
+      {
+        "fn": " · TopologyRegister.js?build=5f7e8f1523ce1563",
+        "ms": 7
+      },
+      {
+        "fn": "confirm · ",
+        "ms": 6
+      },
+      {
+        "fn": "refreshNodeLabel · app.js?build=5f7e8f1523ce1563",
+        "ms": 5
+      },
+      {
+        "fn": "(garbage collector) · ",
+        "ms": 5
+      },
+      {
+        "fn": "querySelector · ",
+        "ms": 5
+      },
+      {
+        "fn": " · NodeTypography.js?build=5f7e8f1523ce1563",
+        "ms": 4
+      },
+      {
+        "fn": "routeCrossings · CircuitGeometry.js?build=5f7e8f1523ce1563",
+        "ms": 4
+      },
+      {
+        "fn": "getComputedStyle · ",
+        "ms": 3
+      },
+      {
+        "fn": "nodeElement · app.js?build=5f7e8f1523ce1563",
+        "ms": 3
+      }
+    ]
+  },
+  {
+    "withoutGif": true,
+    "ms": 5585.700000001118,
+    "longTasks": [
+      {
+        "start": 5727.200000001118,
+        "ms": 60
+      },
+      {
+        "start": 5787.9000000003725,
+        "ms": 133
+      }
+    ],
+    "maxFrameGap": 166.80000000000018,
+    "loadingPoses": 324,
+    "diagnostic": {
+      "initialBuilds": 2,
+      "routeCalculations": 217,
+      "lastRouteCalculations": 0,
+      "lastOperation": "sin cambio geométrico",
+      "lastDurationMs": 0,
+      "checkpoint": 1,
+      "visible": 210,
+      "routes": 217,
+      "pending": 0,
+      "lastAffectedRoutes": 0
+    },
+    "composition": [
+      {
+        "compositingReasons": [
+          "Has an active accelerated transform animation or transition.",
+          "Has a will-change: transform compositing hint."
+        ],
+        "compositingReasonIds": [
+          "ActiveTransformAnimation",
+          "WillChangeTransform"
+        ]
+      }
+    ],
+    "messages": [],
+    "topSelfMs": [
+      {
+        "fn": "(idle) · ",
+        "ms": 5087
+      },
+      {
+        "fn": "(program) · ",
+        "ms": 235
+      },
+      {
+        "fn": "tick · ",
+        "ms": 86
+      },
+      {
+        "fn": "capture · TopologyRegister.js?build=5f7e8f1523ce1563",
+        "ms": 26
+      },
+      {
+        "fn": "segmentIntersection · SegmentGeometry.js?build=5f7e8f1523ce1563",
+        "ms": 24
+      },
+      {
+        "fn": "getBBox · ",
+        "ms": 20
+      },
+      {
+        "fn": " · app.js?build=5f7e8f1523ce1563",
+        "ms": 14
+      },
+      {
+        "fn": "measureText · ",
+        "ms": 14
+      },
+      {
+        "fn": " · TopologyRegister.js?build=5f7e8f1523ce1563",
+        "ms": 8
+      },
+      {
+        "fn": "querySelector · ",
+        "ms": 8
+      },
+      {
+        "fn": "observeTopology · app.js?build=5f7e8f1523ce1563",
+        "ms": 7
+      },
+      {
+        "fn": "routeCrossings · CircuitGeometry.js?build=5f7e8f1523ce1563",
+        "ms": 7
+      },
+      {
+        "fn": "requestAnimationFrame · ",
+        "ms": 6
+      },
+      {
+        "fn": "drawCircuitSvg · CircuitSvg.js?build=5f7e8f1523ce1563",
+        "ms": 5
+      },
+      {
+        "fn": "confirm · ",
+        "ms": 5
+      },
+      {
+        "fn": " · NodeTypography.js?build=5f7e8f1523ce1563",
+        "ms": 5
+      },
+      {
+        "fn": "append · ",
+        "ms": 5
+      },
+      {
+        "fn": "draw · SvgRenderer.js?build=5f7e8f1523ce1563",
+        "ms": 3
+      }
+    ]
+  }
+]
