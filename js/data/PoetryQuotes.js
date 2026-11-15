@@ -3,7 +3,7 @@
 export const poetryQuotes = [
  {author:'Roberto Juarroz',title:'Poesía vertical · 1',lang:'es',
   original:'Una red de mirada\nmantiene unido al mundo,\nno lo deja caerse.',
-  source:'https://materialdelectura.unam.mx/poesia-moderna/16-poesia-moderna-cat/285-135-roberto-juarroz?showall=1'},
+  source:'https://roble.poesi.as/rj01001.htm'},
  {author:'Alice Dunbar-Nelson',title:'Sonnet',lang:'en',
   original:'And now—unwittingly, you’ve made me dream\nOf violets, and my soul’s forgotten gleam.',
   translation:'Y ahora, sin saberlo, me has hecho soñar\ncon violetas y con el fulgor olvidado de mi alma.',
@@ -31,7 +31,7 @@ export const poetryQuotes = [
  {author:'Georgia Douglas Johnson',title:'Your World',lang:'en',
   original:'Your world is as big as you make it.',
   translation:'Tu mundo es tan amplio como tú lo hagas.',
-  source:'https://www.poetryfoundation.org/poems/56591/your-world'},
+  source:'https://washingtonart.com/beltway/gdjohnson.html'},
  {author:'Angelina Weld Grimké',title:'The Black Finger',lang:'en',
   original:'I have just seen a most beautiful thing,\nSlim and still,',
   translation:'Acabo de ver algo bellísimo,\nesbelto e inmóvil.',
