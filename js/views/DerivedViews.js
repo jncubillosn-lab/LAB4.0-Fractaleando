@@ -8,6 +8,7 @@ import {PcbRouter} from '../geometry/PcbRouter.js';
 import {GeometryValidator} from '../geometry/GeometryValidator.js';
 import {hierarchySelection} from '../core/HierarchySelection.js';
 import {paintNodeLabel} from '../ui/NodeTypography.js';
+import {WorkerTask} from '../core/WorkerTask.js';
 import {emphasizeCrossings,visibleCrossings} from '../ui/CircuitSvg.js';
 
 const viewNumber=mode=>mode==='04'?'03':mode;
@@ -23,7 +24,8 @@ export class DerivedViews {
   this.router=new PcbRouter({state,nodeById:id=>state.nodes.find(n=>n.id===id),mode:'02',clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});
   this.validator=new GeometryValidator({router:this.router,rectOverlap:(a,b)=>ViewLayouts.overlap(a,b,0)});
   this.cache=new Map();this.mode='01';this.version=0;
-  this.pending=null;this.staged={};this.rejected=null;
+  this.workerTask=new WorkerTask(()=>new Worker(new URL('../workers/derived-scene.worker.js',import.meta.url),{type:'module'}));
+  this.staged={};this.rejected=null;
   this.names={'01':['Editor / 01','Construcción y fractaleo','Núcleo · trayectorias editables'],
    '02':['Compacto / 02','Agrupación radial','Ramas próximas · radios según el espacio disponible'],
    '04':['Espiral / 03','Crecimiento espiral','Giro = 0.25 · Apertura = 0.85 · T = 0']};
@@ -42,10 +44,11 @@ export class DerivedViews {
  }
  reset(){
   this.version++;
-  if(this.pending){this.pending.terminate?.();this.pending=null;}
+  this.workerTask.cancel();this.mode='01';
   this.cache.clear();this.current=null;this.staged={};this.graphIdentity=null;this.rejected=null;
   this.derivedLines.replaceChildren();this.derivedNodes.replaceChildren();
   this.switchVisibility('01');this.updateLabels('01');
+  this.status('');
  }
  switchVisibility(mode){
   const derived=mode!=='01';
@@ -78,21 +81,10 @@ export class DerivedViews {
  }
  async computeScene(input){
   if(typeof Worker==='undefined')return computeDerivedScene(input);
-  return new Promise((resolve,reject)=>{
-   const worker=new Worker(new URL('../workers/derived-scene.worker.js',import.meta.url),{type:'module'});
-   this.pending=worker;let settled=false;
-   const finish=(error,result)=>{
-    if(settled)return;settled=true;clearTimeout(timeout);worker.terminate();
-    if(this.pending===worker)this.pending=null;
-    if(error)reject(error);else resolve(result);
-   };
-   const timeout=setTimeout(()=>finish(new Error('Límite de cálculo (75 s)')),75000);
-   worker.onmessage=({data})=>{
-    if(data.progress){this.status('Compactando '+viewNumber(data.progress.mode)+' · comprobando conexiones · paso '+data.progress.pass);return;}
-    data.error?finish(new Error(data.error)):finish(null,data.result);
-   };
-   worker.onerror=event=>finish(new Error(event.message||'Error de distribución'));
-   worker.postMessage(input);
+  return this.workerTask.run(input,{
+   timeoutMs:75000,
+   timeoutMessage:'Límite de cálculo (75 s)',
+   onProgress:progress=>this.status('Compactando '+viewNumber(progress.mode)+' · comprobando conexiones · paso '+progress.pass)
   });
  }
  snapshot(scene,identity){
@@ -119,7 +111,7 @@ export class DerivedViews {
   if(!ViewLayouts.MODES.includes(mode))return;
   this.mode=mode;this.rejected=null;
   ++this.version;
-  if(this.pending){this.pending.terminate();this.pending=null;}
+  this.workerTask.cancel();
   this.switchVisibility(mode);this.updateLabels(mode);
   if(mode==='01'){
    this.current=null;this.status('');
@@ -138,7 +130,10 @@ export class DerivedViews {
    this.cache.clear();this.graphIdentity=identity;
   }
   let cached=this.cache.get(mode);
-  if(!cached)cached=this.tryRestore(mode,key);
+  if(!cached){
+   try{cached=this.tryRestore(mode,key);}
+   catch(error){delete this.staged[mode];console.warn('Caché geométrica no recuperable; se calcula de nuevo.',error.message);}
+  }
   if(!cached)this.current=null;
   if(cached){this.cache.set(mode,cached);this.current=cached;this.draw(cached);this.fit();return;}
   this.status('Calculando la vista '+viewNumber(mode)+' y sus conexiones…');
