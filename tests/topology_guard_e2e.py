@@ -73,10 +73,10 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   assert page.locator('#derivedNodes .node').count()==4
   page.locator('[data-view="01"]').click()
   # A worker that cannot start must keep the existing main-thread fallback.
-  page.evaluate('window.__savedWorker=window.Worker;window.Worker=class {constructor(){throw new DOMException("test unavailable","AbortError")}}')
+  page.evaluate('''()=>{window.__savedWorker=window.Worker;window.Worker=class {constructor(){throw new DOMException("test unavailable","AbortError")}}}''')
   page.locator('#newBtn').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===3&&document.querySelectorAll("#nodes .node").length===4',timeout=30000)
-  page.evaluate('window.Worker=window.__savedWorker;delete window.__savedWorker')
+  page.evaluate('()=>{window.Worker=window.__savedWorker;delete window.__savedWorker}')
   page.locator('#nodes [data-node-id="b0"]').click();page.locator('#addBtn').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===4',timeout=30000)
   assert not page.locator('#nodeText').is_disabled()
