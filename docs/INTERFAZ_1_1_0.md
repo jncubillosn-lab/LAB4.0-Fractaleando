@@ -36,18 +36,25 @@ originales ni como traducciones publicadas de terceros.
 
 | Autor | Poema | Idioma | Fuente consultada |
 | --- | --- | --- | --- |
-| Roberto Juarroz | Poesía vertical, poema 1 | Español | [Material de Lectura, UNAM](https://materialdelectura.unam.mx/poesia-moderna/16-poesia-moderna-cat/285-135-roberto-juarroz?showall=1). |
+| Roberto Juarroz | Poesía vertical, poema 1 | Español | [Poesi.as, texto del poema](https://roble.poesi.as/rj01001.htm). |
 | Alice Dunbar-Nelson | Sonnet | Inglés | [Academy of American Poets](https://poets.org/poem/sonnet-0). |
 | Helen Hoyt | Ellis Park | Inglés | [Infoplease, fuentes primarias](https://sudoku.infoplease.com/primary-sources/poetry/modern-verse/helen-hoyt-ellis-park). |
 | Eugénio de Andrade | Os amantes sem dinheiro | Portugués | [Escritas, texto](https://www.escritas.org/PT/t/2138/os-amantes-sem-dinheiro); [RTP, grabación del autor](https://arquivos.rtp.pt/conteudos/dia-mundial-da-poesia-parte-ii/). |
 | Charlotte Mew | I so liked Spring… | Inglés | [Scottish Poetry Library](https://www.scottishpoetrylibrary.org.uk/poem/i-so-liked-spring/). |
-| Clarissa Scott Delany | Joy | Inglés | [Academy of American Poets](https://poets.org/poem/joy-0/print). |
+| Clarissa Scott Delany | Joy | Inglés | [Academy of American Poets](https://poets.org/poem/joy-0). |
 | Amy Lowell | A Decade | Inglés | [Academy of American Poets](https://poets.org/poem/decade/print). |
-| Georgia Douglas Johnson | Your World | Inglés | [Poetry Foundation](https://www.poetryfoundation.org/poems/56591/your-world). |
+| Georgia Douglas Johnson | Your World | Inglés | [Beltway Poetry Quarterly, poema y contexto](https://washingtonart.com/beltway/gdjohnson.html). |
 | Angelina Weld Grimké | The Black Finger | Inglés | [Academy of American Poets](https://poets.org/poem/black-finger/print). |
 | Jessie B. Rittenhouse | Debt | Inglés | [Poetry Explorer](https://www.poetryexplorer.net/poem26.php?pid=10120470). |
 
 ## Comprobación
+
+En 1.1.1 se revisaron las diez fuentes mediante solicitudes en vivo, siguiendo
+redirecciones y comprobando que cada página contuviera su fragmento. Las fuentes
+anteriores de Juarroz (UNAM) y Johnson (Poetry Foundation) devolvían HTTP 403;
+se sustituyeron los enlaces conservando los textos. El resultado fechado queda
+en [la comprobación de fuentes](evidencias/FUENTES_POETICAS_1_1_1.json).
+Este control describe la disponibilidad en ese momento, no una garantía futura.
 
 La regresión mantiene las firmas existentes del dibujo y de las rutas del
 ejemplo. Se verifican estados de carga superpuestos, errores y cancelación,

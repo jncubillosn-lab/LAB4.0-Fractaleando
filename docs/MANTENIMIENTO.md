@@ -45,6 +45,19 @@ Para ejecutarlas localmente se necesita Chrome y Playwright 1.56.0. Establecer
 `P1_SITE_ROOT` en `_site` y ejecutar cada archivo con Python, como en el flujo.
 Los resultados del navegador se conservan como artefactos de Actions.
 
+Para revisar las diez fuentes del carrusel, ejecutar manualmente con acceso a red:
+
+```sh
+npm run check:poetry-links
+```
+
+El resultado incluye fecha, estado HTTP, URL final y presencia del fragmento en
+el texto de cada página. Termina con error si alguna fuente no abre o no contiene
+la cita. Una página con HTTP 200 pero vacía o con un bloqueo tampoco se acepta.
+El control no forma parte del arranque, de `npm test` ni del despliegue: los sitios
+externos pueden tener caídas temporales. Revisar las fuentes fallidas antes de
+sustituir un enlace y actualizar también la tabla documental del carrusel.
+
 ## Límites entre módulos
 
 Mantener modelo e identidad en `core/`, cálculos numéricos en `geometry/`,

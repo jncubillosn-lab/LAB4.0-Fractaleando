@@ -1,0 +1,87 @@
+{
+  "checkedAt": "2026-11-15T18:22:09.025Z",
+  "total": 10,
+  "passed": 10,
+  "results": [
+    {
+      "author": "Roberto Juarroz",
+      "url": "https://roble.poesi.as/rj01001.htm",
+      "finalURL": "https://roble.poesi.as/rj01001.htm",
+      "status": 200,
+      "containsExcerpt": true,
+      "ok": true
+    },
+    {
+      "author": "Alice Dunbar-Nelson",
+      "url": "https://poets.org/poem/sonnet-0",
+      "finalURL": "https://poets.org/poem/sonnet-0",
+      "status": 200,
+      "containsExcerpt": true,
+      "ok": true
+    },
+    {
+      "author": "Helen Hoyt",
+      "url": "https://sudoku.infoplease.com/primary-sources/poetry/modern-verse/helen-hoyt-ellis-park",
+      "finalURL": "https://sudoku.infoplease.com/primary-sources/poetry/modern-verse/helen-hoyt-ellis-park",
+      "status": 200,
+      "containsExcerpt": true,
+      "ok": true
+    },
+    {
+      "author": "Eugénio de Andrade",
+      "url": "https://www.escritas.org/PT/t/2138/os-amantes-sem-dinheiro",
+      "finalURL": "https://www.escritas.org/PT/t/2138/os-amantes-sem-dinheiro",
+      "status": 200,
+      "containsExcerpt": true,
+      "ok": true
+    },
+    {
+      "author": "Charlotte Mew",
+      "url": "https://www.scottishpoetrylibrary.org.uk/poem/i-so-liked-spring/",
+      "finalURL": "https://www.scottishpoetrylibrary.org.uk/poem/i-so-liked-spring/",
+      "status": 200,
+      "containsExcerpt": true,
+      "ok": true
+    },
+    {
+      "author": "Clarissa Scott Delany",
+      "url": "https://poets.org/poem/joy-0",
+      "finalURL": "https://poets.org/poem/joy-0",
+      "status": 200,
+      "containsExcerpt": true,
+      "ok": true
+    },
+    {
+      "author": "Amy Lowell",
+      "url": "https://poets.org/poem/decade/print",
+      "finalURL": "https://poets.org/poem/decade/print",
+      "status": 200,
+      "containsExcerpt": true,
+      "ok": true
+    },
+    {
+      "author": "Georgia Douglas Johnson",
+      "url": "https://washingtonart.com/beltway/gdjohnson.html",
+      "finalURL": "https://washingtonart.com/beltway/gdjohnson.html",
+      "status": 200,
+      "containsExcerpt": true,
+      "ok": true
+    },
+    {
+      "author": "Angelina Weld Grimké",
+      "url": "https://poets.org/poem/black-finger/print",
+      "finalURL": "https://poets.org/poem/black-finger/print",
+      "status": 200,
+      "containsExcerpt": true,
+      "ok": true
+    },
+    {
+      "author": "Jessie B. Rittenhouse",
+      "url": "https://www.poetryexplorer.net/poem26.php?pid=10120470",
+      "finalURL": "https://www.poetryexplorer.net/poem26.php?pid=10120470",
+      "status": 200,
+      "containsExcerpt": true,
+      "ok": true
+    }
+  ]
+}

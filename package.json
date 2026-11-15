@@ -1,13 +1,14 @@
 {
   "name": "p1-fractaleando",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "type": "module",
   "scripts": {
     "test": "node --test --test-concurrency=1 tests/*.test.js",
     "bench:performance": "node scripts/benchmark-performance.mjs",
     "bench:layouts": "node scripts/benchmark-layouts.mjs",
-    "build": "node scripts/build-site.mjs"
+    "build": "node scripts/build-site.mjs",
+    "check:poetry-links": "node scripts/check-poetry-links.mjs"
   },
   "devDependencies": {
     "elkjs": "0.12.1"

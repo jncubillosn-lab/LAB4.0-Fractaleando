@@ -1,5 +1,13 @@
 # Registro de cambios
 
+## 1.1.1 — 15 de noviembre de 2026
+
+- Sustituye las fuentes de Roberto Juarroz y Georgia Douglas Johnson, que
+  devolvían HTTP 403, por páginas accesibles con el poema y la cita correspondiente.
+- Comprueba en vivo los diez enlaces y documenta el resultado. Se añade una
+  revisión manual que exige una respuesta correcta y la presencia del fragmento;
+  no se ejecuta durante la carga de la herramienta ni en las pruebas sin red.
+
 ## 1.1.0 — 15 de noviembre de 2026
 
 - Barra de carga centrada, con etapa real e indicador indeterminado durante el
