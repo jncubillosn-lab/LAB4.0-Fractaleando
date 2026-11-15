@@ -23,7 +23,7 @@ import {computeInitialRoutes} from './workers/initial-route.worker.js';
 const NS='http://www.w3.org/2000/svg';
 const $=id=>document.getElementById(id);
 const stage=$('stage'), camera=$('camera'), linesEl=$('lines'), nodesEl=$('nodes');
-const state={nodes:[],edges:[],selected:'p1',linkFrom:null,unlinkFrom:null,linkStyle:'solid',depth:2,zoom:1,tx:0,ty:0,undo:[],pointer:null,idSerial:0,toastTimer:null,renderQueued:false,focusRoot:"p1",readableZoom:.82,edgeMode:'all'};
+const state={nodes:[],edges:[],selected:'p1',linkFrom:null,unlinkFrom:null,linkStyle:'solid',depth:2,zoom:1,tx:0,ty:0,undo:[],pointer:null,idSerial:0,toastTimer:null,renderQueued:false,focusRoot:"p1"};
 const isFirstLevel=n=>Boolean(n&&n.parent==='p1');
 const nextBranchIndex=()=>Math.max(-1,...state.nodes.map(n=>n.branch))+1;
 const textCanvas=document.createElement('canvas');const ctx=textCanvas.getContext('2d');
@@ -566,10 +566,8 @@ function fit(){
  state.ty=topPad+sh/2-(b.y+b.height/2)*state.zoom;
  updateCamera();
 }
-function focusCore(){centerOn();}
 function zoomBy(factor,cx=stage.clientWidth/2,cy=stage.clientHeight/2){const z=clamp(state.zoom*factor,.22,3.2);const x=(cx-state.tx)/state.zoom,y=(cy-state.ty)/state.zoom;state.zoom=z;state.tx=cx-x*z;state.ty=cy-y*z;updateCamera();}
 function inFrame(clientX,clientY){const b=stage.getBoundingClientRect();return{x:clientX-b.left,y:clientY-b.top};}
-// Las interacciones dependientes de coordenadas y líneas se retiraron con el motor.
 // La vista activa no cambia el grafo; las representaciones derivadas son de lectura.
 for(const button of document.querySelectorAll('[data-view]')){
  button.addEventListener('click',async()=>{

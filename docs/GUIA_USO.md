@@ -1,9 +1,9 @@
 # Guía de uso de Fractalear
 
-Referencia: **0.2.15 · 15 de noviembre de 2026**.
+Referencia: **1.0.0 · 15 de noviembre de 2026**.
 
 [Abrir la aplicación](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/) ·
-[Estado y decisiones del proyecto](CORTE_0_2_11.md).
+[Estado y decisiones de la versión](VERSION_1_0_0.md).
 
 ## Construir en 01 Editor
 
@@ -81,4 +81,4 @@ Una ruta pendiente significa que el motor no encontró un recorrido válido dent
 de sus intentos. El PNG no se exporta con conexiones pendientes. **EN REVISIÓN**
 señala comprobaciones normativas aún incumplidas; no implica que los conceptos
 o vínculos hayan desaparecido. Los límites de este corte se describen en
-[la referencia de estado](CORTE_0_2_11.md).
+[la referencia de estado](VERSION_1_0_0.md).

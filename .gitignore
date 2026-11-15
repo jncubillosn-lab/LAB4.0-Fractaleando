@@ -1,3 +1,5 @@
 node_modules/
 artifacts/
 _site/
+__pycache__/
+*.pyc

@@ -41,7 +41,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   assert core.get_attribute('aria-label')=='¿Qué quieres fractalear hoy?'
   assert page.locator('#undoBtn').is_disabled()
   print('Inicio y Nuevo: un solo J0 editable, sin vínculos; primera rama creada desde el núcleo',flush=True)
-  page.evaluate('window.__exampleStarted=performance.now();window.__exampleMeasures=window.__textMeasures')
+  page.evaluate('window.__exampleStarted=performance.now();window.__exampleMeasures=window.__textMeasures;window.__exampleAttempts=window.P1_PLANO_DIAGNOSTICO.routeCalculations')
   page.locator('#resetBtn').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===217',timeout=30000)
   assert page.locator('#depth').input_value()==page.locator('#depth').get_attribute('max')
@@ -53,7 +53,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   d0=page.evaluate('({...window.P1_PLANO_DIAGNOSTICO,audit:window.P1_PLANO_DIAGNOSTICO.audit()})')
   initial_picture=page.locator('#nodes .node,#lines .svgline').evaluate_all('(els)=>els.map(el=>[el.getAttribute("transform"),el.getAttribute("d"),el.getAttribute("aria-label"),el.querySelector("rect")?.outerHTML,[...el.querySelectorAll("tspan")].map(t=>t.outerHTML)])')
   print('PERFORMANCE_EXAMPLE',json.dumps({**page.evaluate('({exampleReadyMs:performance.now()-window.__exampleStarted,textMeasures:window.__textMeasures-window.__exampleMeasures})'),
-   'attempts':d0['lastRouteCalculations'],
+   'attempts':d0['routeCalculations']-page.evaluate('window.__exampleAttempts'),
    'pictureSHA256':hashlib.sha256(json.dumps(initial_picture,ensure_ascii=False,separators=(',',':')).encode()).hexdigest()}),flush=True)
   assert hashlib.sha256(json.dumps(initial_picture,ensure_ascii=False,separators=(',',':')).encode()).hexdigest()=='143ae8e33864b4d0af8b16a5f31bca685e370f3662f90775e05bfb57de4a83b6'
   print('DIAGNOSTICO_NAVEGADOR', {k:d0[k] for k in ['visible','routes','pending','lastOperation','lastDurationMs','initialBuilds','routeCalculations']},d0['audit'],errors,flush=True)

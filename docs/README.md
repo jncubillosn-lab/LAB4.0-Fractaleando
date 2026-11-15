@@ -2,16 +2,20 @@
 
 **[▶ Abrir la aplicación en GitHub Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/)**
 
-**Punto de referencia vigente · 14 de noviembre de 2026:**
-[estado, decisiones, arquitectura y evidencia del corte 0.2.11](CORTE_0_2_11.md).
-Para trabajar con la aplicación, consultar la [guía de uso](GUIA_USO.md).
+**Versión vigente · 1.0.0 · 15 de noviembre de 2026:**
+[estado, decisiones, arquitectura y límites](VERSION_1_0_0.md).
+Consultar la [guía de uso](GUIA_USO.md), el
+[mantenimiento y la publicación](MANTENIMIENTO.md) y el
+[registro de cambios](../CHANGELOG.md).
 
 Los apartados que siguen conservan el historial y el documento inicial de
 referencia. Sus nombres de vistas, experimentos, bloqueos del Editor y estados
 de publicación deben leerse con la fecha de cada corte. El estado funcional
 actual se describe en la referencia anterior.
 
-**Implementación actual 0.2.15:** [inicio con un solo núcleo y ejemplo a petición](INICIO_0_2_15.md).
+## Antecedentes previos a 1.0
+
+**Base 0.2.15:** [inicio con un solo núcleo y ejemplo a petición](INICIO_0_2_15.md).
 
 **Base 0.2.14:** [integridad de documentos, exportación y jerarquías](INTEGRIDAD_0_2_14.md).
 
@@ -19,7 +23,8 @@ actual se describe en la referencia anterior.
 
 **Base 0.2.12:** [carga, medidas reutilizadas y equivalencia del dibujo](RENDIMIENTO_0_2_12.md).
 
-**Base funcional 0.2.11:** [palabras completas y ancho automático](PALABRAS_COMPLETAS_0_2_11.md).
+**Base funcional 0.2.11:** [corte de referencia](CORTE_0_2_11.md) y
+[palabras completas y ancho automático](PALABRAS_COMPLETAS_0_2_11.md).
 Los cuadros se ensanchan para contener la palabra más larga, con letra fija de
 24 px y márgenes. Las frases siguen repartiendo renglones entre palabras.
 

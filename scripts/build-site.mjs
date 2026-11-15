@@ -1,4 +1,4 @@
-import {readFile,writeFile,mkdir,readdir,copyFile} from 'node:fs/promises';
+import {readFile,writeFile,mkdir,readdir,copyFile,rm} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {join,relative,resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -14,6 +14,9 @@ const vendor=join(root,'node_modules/libavoid-js');
 const wasm=await readFile(join(vendor,'dist/libavoid.wasm')),wrapper=await readFile(join(vendor,'dist/index.js'));
 const hash=createHash('sha256');for(const [path,data] of files)hash.update(path).update(data);
 const build=hash.update(wasm).update(wrapper).digest('hex').slice(0,16);
+// Only remove the generated site inside this checkout, after loading inputs.
+if(dirname(out)!==root||relative(root,out)!=='_site')throw Error('Directorio de publicación inesperado.');
+await rm(out,{recursive:true,force:true});
 for(const [path,data] of files){
  let content=data;
  if(/\.(?:js|html|css)$/.test(path)){
