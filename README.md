@@ -1,38 +1,36 @@
-# Fractalear
+# Fractalear 1.0
 
 Una herramienta desarrollada por el LAB 4.0 de la Universidad Nacional para
 construir conceptos, desarrollar sus jerarquías y representar sus relaciones.
 
-**[Abrir Fractalear en GitHub Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/)**
+**[Abrir Fractalear](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/?v=1.0.0)**
 
-**Actualización 0.2.15:** la herramienta abre en **01 Editor** con un solo núcleo,
-**¿Qué quieres fractalear hoy?**. **Nuevo** crea ese mismo lienzo; el ejemplo
-completo se consulta desde **Ejemplo PPR**.
+## Comenzar
 
-**Base 0.2.14:** [integridad de documentos, exportación y jerarquías](docs/INTEGRIDAD_0_2_14.md).
+La herramienta abre en **01 Editor** con un único núcleo seleccionado:
+**¿Qué quieres fractalear hoy?**. Haz doble clic para editarlo y pulsa
+**+ Concepto** para desarrollar sus hijos. **Nuevo** vuelve a ese lienzo;
+**Ejemplo PPR** permite consultar el ejemplo completo.
 
-**Base 0.2.13:** [estabilidad y separación de responsabilidades](docs/MANTENIMIENTO_0_2_13.md).
+Usa **02 Compacto** y **03 Espiral** para leer el mismo grafo en otras
+distribuciones. **Guardar JSON** conserva el trabajo editable; SVG y PNG 4K
+permiten compartir su representación.
 
-**Base 0.2.12:** [optimización de carga, mediciones y comprobaciones de
-equivalencia](docs/RENDIMIENTO_0_2_12.md), conservando el funcionamiento de 0.2.11.
+## Documentación de 1.0.0
 
-## Documentación vigente
-
-El punto de referencia funcional es **0.2.11**, documentado el **14 de noviembre
-de 2026**, después de los ajustes de edición libre, estabilidad de la espiral y
-palabras completas.
-
-- [Estado, decisiones, arquitectura y validaciones del corte 0.2.11](docs/CORTE_0_2_11.md).
 - [Guía de uso](docs/GUIA_USO.md).
-- [Índice de antecedentes y normas](docs/README.md).
+- [Estado de la versión, decisiones y límites](docs/VERSION_1_0_0.md).
+- [Mantenimiento, pruebas y publicación](docs/MANTENIMIENTO.md).
+- [Registro de cambios](CHANGELOG.md).
+- [Antecedentes y normas](docs/README.md).
 
-Las vistas disponibles son **01 Editor**, **02 Compacto** y **03 Espiral**.
-Las dos últimas mantienen diagnósticos normativos pendientes: la aceptación
-visual y las pruebas funcionales no equivalen a aprobar todas las normas.
+El cierre funcional conserva los avisos normativos de Compacto y Espiral:
+siguen existiendo casos con diferencias topológicas o separación superior a la
+cota ensayada. Se documentan en el estado de la versión; 1.0.0 no los oculta.
 
 ## Desarrollo y comprobación
 
-Con Node.js y npm disponibles:
+Con Node.js 22 y npm disponibles, como en GitHub Actions:
 
 ```sh
 npm ci
@@ -40,6 +38,8 @@ npm test
 npm run build
 ```
 
-La construcción genera el sitio estático en `_site/`. GitHub Actions comprueba
-además las cuatro suites de navegador antes de publicar desde `main`.
-Los archivos JSON guardados por la aplicación conservan el trabajo editable.
+La construcción limpia y regenera únicamente `_site/`. GitHub Actions exige
+las 96 pruebas Node y las cuatro suites de Chrome antes de publicar desde
+`main`. Los documentos históricos, las pruebas y los respaldos no se incluyen
+en el sitio generado. Las dependencias y sus licencias se describen en
+[THIRD_PARTY.md](THIRD_PARTY.md).
