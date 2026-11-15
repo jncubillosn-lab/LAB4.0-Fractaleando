@@ -12,10 +12,13 @@ test('Pages publica imports, workers y WASM con una misma identidad de caché',(
  for(const file of ['index.html','js/app.js','js/views/DerivedViews.js','js/workers/derived-scene.worker.js','js/geometry/AvoidRouter.js','js/ui/NodeTypography.js',
   'js/io/GraphFile.js','js/ui/GraphFiles.js','js/ui/DiagramExport.js']){
   const text=readFileSync('_site/'+file,'utf8');
-  const refs=[...text.matchAll(/(['"])(\.{1,2}\/[^'"\s]+\.(?:js|css|wasm|ttf|txt)(?:\?[^'"]*)?)\1/g)].map(m=>m[2]);
+  const refs=[...text.matchAll(/(['"])(\.{1,2}\/[^'"\s]+\.(?:js|css|wasm|ttf|txt|gif|png)(?:\?[^'"]*)?)\1/g)].map(m=>m[2]);
   assert.ok(refs.length,file);for(const ref of refs)assert.ok(ref.endsWith('?build='+build),ref);
  }
  assert.ok(existsSync('_site/js/vendor/libavoid.wasm'));assert.ok(existsSync('_site/js/vendor/LICENSE-libavoid.txt'));
  assert.ok(existsSync('_site/js/core/WorkerTask.js'));assert.ok(existsSync('_site/js/geometry/PlaneLayout.js'));
  for(const name of ['Rajdhani-SemiBold.ttf','Rajdhani-Bold.ttf','OFL-Rajdhani.txt'])assert.deepEqual(readFileSync('_site/css/fonts/'+name),readFileSync('css/fonts/'+name));
+ for(const name of ['knitting.gif','knitting-still.png'])assert.deepEqual(readFileSync('_site/css/images/'+name),readFileSync('css/images/'+name));
+ const gif=readFileSync('_site/css/images/knitting.gif');
+ assert.equal(gif.subarray(0,6).toString(),'GIF89a');assert.ok(gif.includes(Buffer.from('NETSCAPE2.0')));assert.ok(gif.length<=16000);
 });

@@ -38,19 +38,27 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   assert page.locator('#loadingIndicator [role="progressbar"]').get_attribute('aria-valuenow') is None
   knitting=page.locator('#loadingIndicator .knitting')
   assert knitting.is_visible() and knitting.get_attribute('aria-hidden')=='true'
-  initial_pose=page.locator('.knit-left').evaluate('(el)=>getComputedStyle(el).transform')
-  page.wait_for_function('(pose)=>getComputedStyle(document.querySelector(".knit-left")).transform!==pose',arg=initial_pose,timeout=3000)
+  page.wait_for_function('(()=>{const img=document.querySelector(".knitting");return img.complete&&img.naturalWidth===64})()')
+  assert knitting.evaluate('(img)=>new URL(img.currentSrc).pathname.endsWith(".gif")')
+  first_frame=knitting.screenshot()
+  page.wait_for_timeout(350)
+  assert knitting.screenshot()!=first_frame,'The visible GIF did not change frames during loading'
   page.emulate_media(reduced_motion='reduce')
-  for part in ['.knit-left','.knit-right','.loading-track span']:
-   assert page.locator(part).evaluate('(el)=>getComputedStyle(el).animationName')=='none'
+  page.wait_for_function('document.querySelector(".knitting").currentSrc.includes("knitting-still.png")')
+  knitting.evaluate('(img)=>img.decode()')
+  still_frame=knitting.screenshot()
+  page.wait_for_timeout(350)
+  assert knitting.screenshot()==still_frame,'Reduced motion must show a genuinely static image'
+  assert page.locator('.loading-track span').evaluate('(el)=>getComputedStyle(el).animationName')=='none'
   page.emulate_media(reduced_motion='no-preference')
+  page.wait_for_function('document.querySelector(".knitting").currentSrc.includes("knitting.gif")')
   bounds=page.locator('.loading-card').bounding_box();stage=page.locator('#stageWrap').bounding_box()
   assert abs((bounds['x']+bounds['width']/2)-(stage['x']+stage['width']/2))<1
   assert abs((bounds['y']+bounds['height']/2)-(stage['y']+stage['height']/2))<1
   output=os.environ.get('P1_SCREENSHOTS')
   if output:
    Path(output).mkdir(parents=True,exist_ok=True)
-   page.screenshot(path=str(Path(output)/'Fractaleando_1_2_0_carga.png'))
+   page.screenshot(path=str(Path(output)/'Fractaleando_1_2_1_carga.png'))
   for button in ['pngBtn','svgBtn']:
    page.locator('#'+button).click()
    prefix='No se pudo exportar '+('PNG' if button=='pngBtn' else 'SVG')
