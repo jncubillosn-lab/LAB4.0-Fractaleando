@@ -17,22 +17,22 @@ const spiralCaption=s=>'Giro = '+s.W+' · Apertura = '+s.armWidthFactor+' · T =
 // Vistas derivadas read-only: conservan el grafo y el plano 01.
 // Cada vista tiene su punto de control y comparte la referencia topológica 01.
 export class DerivedViews {
- constructor({state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast,referenceTopology,onSelect,loading}){
-  Object.assign(this,{state,plane,camera,linesEl,nodesEl,sEl,router,validator,edgeKey,readDepthMap,fit,geometry,toast,referenceTopology,onSelect,loading});
+ constructor({state,plane,camera,linesEl,nodesEl,sEl,edgeKey,readDepthMap,fit,geometry,toast,referenceTopology,onSelect,loading}){
+  Object.assign(this,{state,plane,camera,linesEl,nodesEl,sEl,edgeKey,readDepthMap,fit,geometry,toast,referenceTopology,onSelect,loading});
   this.layoutEngine=new ViewLayouts();
   this.textContext=document.createElement('canvas').getContext('2d');
   this.router=new PcbRouter({state,nodeById:id=>state.nodes.find(n=>n.id===id),mode:'02',clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});
   this.validator=new GeometryValidator({router:this.router,rectOverlap:(a,b)=>ViewLayouts.overlap(a,b,0)});
   this.cache=new Map();this.mode='01';this.version=0;
   this.workerTask=new WorkerTask(()=>new Worker(new URL('../workers/derived-scene.worker.js',import.meta.url),{type:'module'}));
-  this.staged={};this.rejected=null;
+  this.staged={};this.failure=null;
   this.names={'01':['Editor / 01','Construcción y fractaleo','Núcleo · trayectorias editables'],
    '02':['Compacto / 02','Agrupación radial','Ramas próximas · radios según el espacio disponible'],
    '04':['Espiral / 03','Crecimiento espiral','Giro = 0.25 · Apertura = 0.85 · T = 0']};
   this.derivedLines=sEl('g',{id:'derivedLines'});
   this.derivedNodes=sEl('g',{id:'derivedNodes'});
   camera.append(this.derivedLines,this.derivedNodes);
-  this.renderer=new SvgRenderer({linesEl:this.derivedLines,sEl,router:this.router,edgeKey});
+  this.renderer=new SvgRenderer({linesEl:this.derivedLines,sEl,edgeKey});
   this.current=null;
   this.graphIdentity=null;
  }
@@ -46,7 +46,7 @@ export class DerivedViews {
   this.version++;
   this.workerTask.cancel();this.mode='01';
   this.loadingTask?.finish();this.loadingTask=null;
-  this.cache.clear();this.current=null;this.staged={};this.graphIdentity=null;this.rejected=null;
+  this.cache.clear();this.current=null;this.staged={};this.graphIdentity=null;this.failure=null;
   this.derivedLines.replaceChildren();this.derivedNodes.replaceChildren();
   this.switchVisibility('01');this.updateLabels('01');
   this.status('');
@@ -115,7 +115,7 @@ export class DerivedViews {
  }
  async select(mode){
   if(!ViewLayouts.MODES.includes(mode))return;
-  this.mode=mode;this.rejected=null;
+  this.mode=mode;this.failure=null;
   ++this.version;
   this.workerTask.cancel();
   this.loadingTask?.finish();this.loadingTask=null;
@@ -165,7 +165,8 @@ export class DerivedViews {
    if(token!==this.version)return;
    this.derivedLines.replaceChildren();this.derivedNodes.replaceChildren();
    this.linesEl.style.display='';this.nodesEl.style.display='';
-   this.status('No se completó la vista '+viewNumber(mode)+'. Se muestra 01 Editor. '+error.message,true);this.fit();
+   this.failure='No se completó la vista '+viewNumber(mode)+'. Se muestra 01 Editor. '+error.message;
+   this.status(this.failure,true);this.fit();
   }finally{
    job?.finish();if(this.loadingTask===job)this.loadingTask=null;
   }
@@ -205,14 +206,7 @@ export class DerivedViews {
   if(this.mode==='01')return;
   const current=this.current;
   if(!current){
-   if(this.rejected){
-    const s=this.rejected,violations=s.distanceViolations||[],worst=[...violations].sort((a,b)=>b.gap-a.gap)[0];
-    this.status('02 no resuelto · Se muestra 01 Editor. '+s.overlaps+' solapes; '+violations.length+
-     ' enlaces superan 2H ('+s.maxAllowedGap.toFixed(1)+' px). '+
-     (worst?'Mayor separación: '+worst.from+' → '+worst.to+' = '+worst.gap.toFixed(1)+' px. ':'')+
-     (s.orderViolations?.length||0)+' inversiones de orden; '+(s.sectorViolations?.length||0)+' cuadros fuera de sector; '+
-     (s.disconnected?.length||0)+' conceptos desconectados. No se aumentó la cota.',true);
-   }else this.status('Calculando las rutas de esta representación…');
+   this.status(this.failure||'Calculando las rutas de esta representación…',Boolean(this.failure));
    return;
   }
   const shown=new Set(this.state.nodes.filter(n=>
@@ -328,7 +322,7 @@ export class DerivedViews {
  }
  diagnostic(){
   const value=this.current;
-  return {mode:this.mode,cached:[...this.cache.keys()],rejected:this.rejected,
+  return {mode:this.mode,cached:[...this.cache.keys()],error:this.failure,
    current:value?{...value.layout.stats,valid:value.valid,normative:'pending-definition',budgetExceeded:Boolean(value.budgetExceeded),audit:value.audit,
     topology:value.topology.status(),pending:value.unfinished,restored:Boolean(value.restored),pendingKeys:[...value.routes].filter(([,r])=>!r?.points).map(([key])=>key),calculations:value.calculations}:null};
  }

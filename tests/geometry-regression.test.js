@@ -6,7 +6,7 @@ import {computeInitialRoutes} from '../js/workers/initial-route.worker.js';
 import {readFileSync} from 'node:fs';
 const router=new PcbRouter({state:{nodes:[],edges:[]},nodeById:()=>null,clamp:(v,a,b)=>Math.max(a,Math.min(b,v))});
 const validator=new GeometryValidator({router,rectOverlap:(a,b)=>a.l<b.r&&a.r>b.l&&a.t<b.b&&a.b>b.t});
-test('a nearly horizontal segment still has its real crossing and visual jump',()=>{
+test('a nearly horizontal segment still has its real crossing',()=>{
  const a={x:0,y:0},b={x:100,y:.005},c={x:50,y:-50},d={x:50,y:50};
  const relation=router.segmentRelation(a,b,c,d);
  assert.equal(relation.cross,1);assert.equal(relation.at.x,50);

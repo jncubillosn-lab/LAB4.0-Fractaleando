@@ -6,7 +6,6 @@ import {SpiralLayout} from './SpiralLayout.js';
 // 04: giro continuo de 02, con radios locales y T=0.
 export class ViewLayouts {
  static MODES=['01','02','04'];
- constructor(){this.last=null;}
  static graphLevels(nodes,edges){
   const ids=new Set(nodes.map(n=>n.id)),adj=new Map(nodes.map(n=>[n.id,[]]));
   for(const e of edges)if(ids.has(e.from)&&ids.has(e.to)&&e.from!==e.to){

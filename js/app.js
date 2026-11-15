@@ -28,7 +28,7 @@ const stage=$('stage'), camera=$('camera'), linesEl=$('lines'), nodesEl=$('nodes
 const loading=createLoadingIndicator({panel:$('loadingIndicator'),stage:$('stageWrap')});
 const bootLoading=loading.begin('Preparando tu lienzo','Cargando la tipografía y los controles…');
 bindPoetryCarousel($('poetryCarousel'));
-const state={nodes:[],edges:[],selected:'p1',linkFrom:null,unlinkFrom:null,linkStyle:'solid',depth:2,zoom:1,tx:0,ty:0,undo:[],pointer:null,idSerial:0,toastTimer:null,renderQueued:false,focusRoot:"p1"};
+const state={nodes:[],edges:[],selected:'p1',linkFrom:null,unlinkFrom:null,linkStyle:'solid',depth:2,zoom:1,tx:0,ty:0,undo:[],idSerial:0,toastTimer:null,renderQueued:false,focusRoot:"p1"};
 const isFirstLevel=n=>Boolean(n&&n.parent==='p1');
 const nextBranchIndex=()=>Math.max(-1,...state.nodes.map(n=>n.branch))+1;
 const textCanvas=document.createElement('canvas');const ctx=textCanvas.getContext('2d');
@@ -38,6 +38,8 @@ const nodeById=id=>graph.nodeById(id);
 const linksOf=id=>graph.linksOf(id);
 function makeNode(id,text,branch,parent=null,width=178){return{id,text,branch,parent,width,x:0,y:0};}
 const {blankSeed,seed}=createSeeds({makeNode});
+// Import-only compatibility: reproduce the metrics of pre-Rajdhani files.
+// Current labels always use nodeGeometry; never reuse these rules to draw.
 function textLines(text,width,fontsize=14){
  const maxWidth=width-28;ctx.font=`${fontsize>=20?'650 ':fontsize>=15?'590 ':''}${fontsize}px Inter,Arial,sans-serif`;
  const out=[];const paragraphs=String(text||' ').split(/\n/);
@@ -56,7 +58,6 @@ const previousTypographyGeometry=n=>nodeGeometry(n,ctx,undefined,{growToWords:fa
 // La profundidad es propiedad del grafo. No existe un máximo de seis generaciones.
 // Model-level operations are separate from drawing and route finding.
 const treeChildren=(id,branch)=>graph.treeChildren(id,branch);
-const depthMap=()=>graph.depthMap();
 const readDepthMap=()=>graph.readDepthMap();
 const maximumDepth=()=>graph.maximumDepth();
 function syncDepth(){const max=maximumDepth(),slider=$('depth');slider.max=String(max);
@@ -64,15 +65,14 @@ function syncDepth(){const max=maximumDepth(),slider=$('depth');slider.max=Strin
  $('depthOut').textContent=state.depth+' / '+max;
  $('scopeInfo').textContent=`${state.nodes.length} conceptos disponibles · ${state.edges.length} conexiones`;
 }
-const rawVisibleNodes=()=>graph.rawVisibleNodes();
 const currentNodes=()=>graph.currentNodes();
 // P1 01 Plano — motor de representación independiente, escrito desde cero.
 // Solo depende de los nodos/vínculos y funciones de medición de la interfaz vigente.
-const ROUTE_CLEAR=9, ROUTE_SEPARATION=6, PORT_STUB=19;
+const ROUTE_CLEAR=9, PORT_STUB=19;
 function sEl(tag,attrs={}){const e=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));return e;}
 function pathPriority(e,levels){const a=levels[e.from]??1000,b=levels[e.to]??1000;return Math.min(a,b)*10+(e.kind==='transversal'?5:0)+(Math.abs(a-b)>1?2:0);}
 const router=new PcbRouter({state,nodeById,clamp,allowBendCrossings:true});
-const {prefSide,assignPorts,allSegments,segmentHitsRect,onSegmentVal,segmentRelation,routeShapeValid,simplify,fastCandidates,findRouteGrid,routeEdge,linePath,intersections}=router;
+const {prefSide,allSegments,segmentHitsRect,routeEdge}=router;
 // P1/01: geometría persistente. Una versión se consolida tras cada modificación.
 // El filtrado de profundidad NO invoca este motor.
 const plane=new PlaneCheckpoint();
@@ -80,10 +80,10 @@ const diag={initialBuilds:0,routeCalculations:0,lastRouteCalculations:0,lastOper
  lastDurationMs:0,checkpoint:0,visible:0,routes:0,pending:0};
 window.P1_PLANO_DIAGNOSTICO=diag; // lectura técnica, no herramienta de interfaz
 const validator=new GeometryValidator({router,rectOverlap});
-const renderer=new SvgRenderer({linesEl,sEl,router,edgeKey:e=>edgeKey(e)});
+const renderer=new SvgRenderer({linesEl,sEl,edgeKey});
 // Registro relacional paralelo al punto de control geométrico.
 const topology=new TopologyRegister({edgeKey});
-const derived=new DerivedViews({state,plane,camera,linesEl,nodesEl,sEl,router,validator,loading,
+const derived=new DerivedViews({state,plane,camera,linesEl,nodesEl,sEl,loading,
  edgeKey,readDepthMap,fit,geometry,toast,referenceTopology:()=>topology.reference,onSelect:selectNode});
 let stagedTopology=null;
 function observeTopology(){
@@ -560,22 +560,9 @@ function addConcept(){
 }
 function deleteSelected(){const n=selected();if(!n||n.id==='p1')return;const childCount=treeChildren(n.id).length;if(childCount&&!confirm(`Este concepto tiene ${childCount} descendientes directos, que quedarán sin padre. ¿Continuar?`))return;saveUndo();if(state.focusRoot===n.id)state.focusRoot=n.parent||'p1';state.unlinkFrom=null;state.nodes=state.nodes.filter(o=>o.id!==n.id);state.edges=state.edges.filter(e=>e.from!==n.id&&e.to!==n.id);for(const q of state.nodes)if(q.parent===n.id)q.parent=null;state.selected=n.parent&&nodeById(n.parent)?n.parent:'p1';updatePanel();schedule();toast('Concepto eliminado. Las relaciones restantes se conservan sin inventar sustituciones.');}
 function centerOn(){
- const root=nodesEl.querySelector('[data-node-id="p1"]');
  const center=derived.mode!=='01'?derived.current?.layout.positions.get('p1'):null;
  const x=center?.x??nodeById('p1')?.x??0,y=center?.y??nodeById('p1')?.y??0;
  state.zoom=1;state.tx=stage.clientWidth/2-x;state.ty=stage.clientHeight/2-y;updateCamera();
-}
-function ensureNodeVisible(id){
- const n=nodeById(id);if(!n)return;
- const g=geometry(n),width=stage.clientWidth,height=stage.clientHeight;
- const cx=n.x*state.zoom+state.tx,cy=n.y*state.zoom+state.ty;
- const hw=g.w*state.zoom/2,hh=g.h*state.zoom/2;
- const padLeft=46,padRight=46,padTop=175,padBottom=110;
- if(cx-hw<padLeft)state.tx+=padLeft-(cx-hw);
- else if(cx+hw>width-padRight)state.tx-=cx+hw-(width-padRight);
- if(cy-hh<padTop)state.ty+=padTop-(cy-hh);
- else if(cy+hh>height-padBottom)state.ty-=cy+hh-(height-padBottom);
- updateCamera();
 }
 function fit(){
  if(!nodesEl.childNodes.length){centerOn();return;}
@@ -603,7 +590,7 @@ stage.addEventListener('pointerdown',e=>{if(e.button!==0)return;panStart={x:e.cl
 stage.addEventListener('pointermove',e=>{if(!panStart)return;state.tx=panStart.tx+e.clientX-panStart.x;state.ty=panStart.ty+e.clientY-panStart.y;updateCamera();});
 for(const kind of ['pointerup','pointercancel'])stage.addEventListener(kind,e=>{panStart=null;if(stage.hasPointerCapture(e.pointerId))stage.releasePointerCapture(e.pointerId);});
 stage.addEventListener('wheel',e=>{e.preventDefault();const p=inFrame(e.clientX,e.clientY);zoomBy(Math.exp(-e.deltaY*.0011),p.x,p.y);},{passive:false});
-$('coreBtn').onclick=()=>centerOn('p1',1);$('zoomFit').onclick=()=>fit();$('zoomIn').onclick=()=>zoomBy(1.2);$('zoomOut').onclick=()=>zoomBy(1/1.2);$('undoBtn').onclick=undo;
+$('coreBtn').onclick=centerOn;$('zoomFit').onclick=fit;$('zoomIn').onclick=()=>zoomBy(1.2);$('zoomOut').onclick=()=>zoomBy(1/1.2);$('undoBtn').onclick=undo;
 $('resetBtn').onclick=()=>{if(!confirm('¿Cargar el ejemplo? Los cambios no guardados se perderán.'))return;init(true);toast('Ejemplo cargado.');};
 $('newBtn').onclick=()=>{if(!confirm('¿Crear un diagrama nuevo con un solo núcleo? Guarda antes el JSON actual si deseas conservarlo.'))return;init(false);toast('Nuevo diagrama: solo el núcleo, listo para editar.');};
 $('addBtn').onclick=()=>addConcept();$('deleteBtn').onclick=deleteSelected;
