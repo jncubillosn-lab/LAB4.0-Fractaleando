@@ -23,19 +23,21 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   assert page.locator('#resetBtn').inner_text()=='Ejemplo'
   for button in ['jsonBtn','loadBtn','svgBtn','pngBtn']:
    assert page.locator('header #'+button).count()==1
-  for button in ['coreBtn','fitBtn']:
-   assert page.locator('.floating .view-tools #'+button).count()==1
-   assert page.locator('#'+button).bounding_box()['y']>page.locator('#zoomFit').bounding_box()['y']
+  assert page.locator('.floating button').count()==4
+  assert page.locator('#fitBtn').count()==0
+  assert page.locator('#coreBtn svg').count()==1
+  assert page.locator('#coreBtn').get_attribute('aria-label')=='Centrar el núcleo J0'
+  assert page.locator('#coreBtn').bounding_box()['y']==page.locator('#zoomFit').bounding_box()['y']
   poem=page.locator('#poetryCarousel');poem.locator('[data-poem-pause]').click()
   assert poem.locator('[data-poem-pause]').get_attribute('aria-pressed')=='true'
-  authors=set()
+  authors=set();start=int(poem.locator('[data-poem-count]').inner_text().split(' / ')[0])-1
   for i in range(17):
-   assert poem.locator('[data-poem-count]').inner_text()==str(i+1)+' / 17'
+   assert poem.locator('[data-poem-count]').inner_text()==str((start+i)%17+1)+' / 17'
    authors.add(poem.locator('[data-poem-author]').inner_text())
    assert poem.locator('[data-poem-source]').get_attribute('href').startswith('https://')
    if poem.locator('[data-poem-original]').get_attribute('lang')!='es':assert poem.locator('[data-poem-translation]').inner_text()
    poem.locator('[data-poem-next]').click()
-  assert len(authors)==17 and poem.locator('[data-poem-count]').inner_text()=='1 / 17'
+  assert len(authors)==17 and poem.locator('[data-poem-count]').inner_text()==str(start+1)+' / 17'
   output=os.environ.get('P1_SCREENSHOTS')
   if output:
    Path(output).mkdir(parents=True,exist_ok=True)
@@ -250,6 +252,6 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   assert compact.locator('.top').evaluate('(el)=>el.scrollWidth<=el.clientWidth')
   if output:compact.screenshot(path=str(Path(output)/'Fractaleando_1_1_0_900px.png'))
   compact.close()
-  print('Interfaz: archivos arriba, encuadre bajo zoom, diecisiete citas con fuente y traducción, pausa y ancho 900 px',flush=True)
+  print('Interfaz: cuatro símbolos de cámara, diecisiete citas desde un inicio aleatorio, pausa y ancho 900 px',flush=True)
   b.close()
  srv.shutdown()

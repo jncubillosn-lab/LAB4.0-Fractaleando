@@ -50,7 +50,7 @@ operación; **Ctrl+Z** fuera del campo de texto ejecuta esa misma acción.
 | **03 Espiral** | Representación espiral derivada de la organización compacta. |
 | **Profundidad de lectura** | Muestra generaciones hasta el nivel elegido. Comienza en el máximo real. |
 | **Todas las capas** | Recupera la visualización completa. |
-| **Centrar lectura** y controles de zoom | Ajustan la cámara para recorrer el diagrama. |
+| **Controles de cámara** | Cuatro símbolos: alejar, acercar, encuadrar todo el diagrama y centrar el núcleo. |
 | **Oscuro** | Alterna la apariencia de la aplicación. |
 
 En Compacto y Espiral puedes seleccionar para seguir relaciones, pero la
@@ -65,8 +65,12 @@ pendientes deben leerse como el estado del resultado mostrado.
 
 ## Guardar y compartir
 
-Las acciones de archivo se encuentran en la barra superior. **Núcleo** y
-**Centrar lectura** están debajo de los tres controles de zoom del lienzo.
+Las acciones de archivo se encuentran en la barra superior. La esquina inferior
+del lienzo reúne los cuatro símbolos de cámara en una sola fila. El círculo con
+el punto central lleva al núcleo; la mira encuadra todo el diagrama.
+
+Las citas de **Otras miradas** comienzan por una elegida al azar en cada apertura.
+Las flechas permiten recorrer las diecisiete citas en su secuencia habitual.
 
 | Acción | Uso |
 | --- | --- |

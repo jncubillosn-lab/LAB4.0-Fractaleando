@@ -603,7 +603,7 @@ stage.addEventListener('pointerdown',e=>{if(e.button!==0)return;panStart={x:e.cl
 stage.addEventListener('pointermove',e=>{if(!panStart)return;state.tx=panStart.tx+e.clientX-panStart.x;state.ty=panStart.ty+e.clientY-panStart.y;updateCamera();});
 for(const kind of ['pointerup','pointercancel'])stage.addEventListener(kind,e=>{panStart=null;if(stage.hasPointerCapture(e.pointerId))stage.releasePointerCapture(e.pointerId);});
 stage.addEventListener('wheel',e=>{e.preventDefault();const p=inFrame(e.clientX,e.clientY);zoomBy(Math.exp(-e.deltaY*.0011),p.x,p.y);},{passive:false});
-$('coreBtn').onclick=()=>centerOn('p1',1);$('fitBtn').onclick=()=>fit();$('zoomFit').onclick=()=>fit();$('zoomIn').onclick=()=>zoomBy(1.2);$('zoomOut').onclick=()=>zoomBy(1/1.2);$('undoBtn').onclick=undo;
+$('coreBtn').onclick=()=>centerOn('p1',1);$('zoomFit').onclick=()=>fit();$('zoomIn').onclick=()=>zoomBy(1.2);$('zoomOut').onclick=()=>zoomBy(1/1.2);$('undoBtn').onclick=undo;
 $('resetBtn').onclick=()=>{if(!confirm('¿Cargar el ejemplo? Los cambios no guardados se perderán.'))return;init(true);toast('Ejemplo cargado.');};
 $('newBtn').onclick=()=>{if(!confirm('¿Crear un diagrama nuevo con un solo núcleo? Guarda antes el JSON actual si deseas conservarlo.'))return;init(false);toast('Nuevo diagrama: solo el núcleo, listo para editar.');};
 $('addBtn').onclick=()=>addConcept();$('deleteBtn').onclick=deleteSelected;
