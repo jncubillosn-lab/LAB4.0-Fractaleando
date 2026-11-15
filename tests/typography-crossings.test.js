@@ -81,7 +81,7 @@ test('01 usa las mismas máscaras que 02/04 y no dibuja puentes semicirculares',
  const routes=new Map([['a|b',{points:[{x:0,y:0},{x:100,y:0}]}],['c|d',{points:[{x:50,y:-50},{x:50,y:50}]}]]);
  const ids=new Set();
  for(const mode of ['01','02','04']){
-  const linesEl=element('g'),renderer=new SvgRenderer({linesEl,sEl:element,router:{circuit45:mode!=='01'},edgeKey:key});
+  const linesEl=element('g'),renderer=new SvgRenderer({linesEl,sEl:element,edgeKey:key});
   const drawn=renderer.draw(edges,routes,{mode});
   const lower=drawn.get('a|b').children[0],upper=drawn.get('c|d').children[0],cut=linesEl.querySelectorAll()[0];
   assert.ok(lower.attrs.mask);assert.ok(!/[QC]/.test(lower.attrs.d));

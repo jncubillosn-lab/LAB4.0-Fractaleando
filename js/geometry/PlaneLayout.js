@@ -9,7 +9,6 @@ export function layoutPlane(visible,geometry){
  const positions=new Map();
  if(byId.has('p1'))positions.set('p1',{x:0,y:-214});
  let branchStart=0;
- const componentBounds=[];
  for(const root of topRoots){
   // Las profundidades definen COLUMNAS, nunca órbitas: 01 sigue siendo plano.
   const bands=new Map();const walked=new Set();
@@ -42,7 +41,6 @@ export function layoutPlane(visible,geometry){
    let yy=top;for(const c of children.get(n.id)||[]){const sub=measure(c);put(c,level+1,yy);yy+=sub+22;}
   }
   for(const c of children.get(root.id)||[]){const h=measure(c);put(c,1,cursor);cursor+=h+24;}
-  componentBounds.push({left:branchStart,right:branchStart+extRight-extLeft,top:-10,bottom:cursor});
   branchStart+=extRight-extLeft+190;
  }
  // Los conceptos huérfanos se conservan sin inventar nuevas relaciones.

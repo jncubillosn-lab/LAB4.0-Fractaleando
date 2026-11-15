@@ -56,7 +56,7 @@ export class PcbRouter {
     }
     for(const [side,group] of Object.entries(sides)){
      group.sort((a,b)=>(side==='top'||side==='bottom'?
-      (mode==='02'?a.target.x-b.target.x:Math.abs(b.target.y-r.y)-Math.abs(a.target.y-r.y)):
+      Math.abs(b.target.y-r.y)-Math.abs(a.target.y-r.y):
       a.target.y-b.target.y)||a.idx-b.idx);
      const length=(side==='top'||side==='bottom'?r.w:r.h);
      for(let k=0;k<group.length;k++){
@@ -80,7 +80,6 @@ export class PcbRouter {
   function segmentHitsRect(a,b,r,pad=ROUTE_CLEAR){
    return segmentEntersRect(a,b,r,pad);
   }
-  function onSegmentVal(z,a,b,eps=0){return z>=Math.min(a,b)-eps&&z<=Math.max(a,b)+eps;}
   function segmentRelation(a,b,c,d){
    if(mode!=='01'||allowBendCrossings)return circuitRelation(a,b,c,d,ROUTE_SEPARATION);
    const ah=segmentAxis(a,b)==='h',bh=segmentAxis(c,d)==='h';
@@ -302,29 +301,11 @@ export class PcbRouter {
    const crosses=routeShapeValid(p,obstacles,own,occupied,true);
    return crosses===null?null:{points:p,crosses};
   }
-  function linePath(points,jumps=[]){
-   const coords=points.map(p=>({x:p.x,y:p.y}));const fmt=n=>Number(n.toFixed(2));
-   let d=`M ${fmt(coords[0].x)} ${fmt(coords[0].y)}`;
-   for(let i=1;i<coords.length;i++){
-    const a=coords[i-1],b=coords[i];
-    const isH=Math.abs(a.y-b.y)<.01;
-    const endMargin=mode==='01'?8:2;
-    const p=jumps.filter(c=>isH?Math.abs(c.y-a.y)<.05&&onSegmentVal(c.x,a.x,b.x,-endMargin):Math.abs(c.x-a.x)<.05&&onSegmentVal(c.y,a.y,b.y,-endMargin))
-     .sort((x,y)=>isH?((x.x-a.x)*Math.sign(b.x-a.x)-(y.x-a.x)*Math.sign(b.x-a.x)):((x.y-a.y)*Math.sign(b.y-a.y)-(y.y-a.y)*Math.sign(b.y-a.y)));
-    for(const c of p){
-     const sign=isH?Math.sign(b.x-a.x):Math.sign(b.y-a.y);
-     const near=p.filter(v=>v!==c).reduce((v,q)=>Math.min(v,Math.hypot(q.x-c.x,q.y-c.y)),Infinity);
-     const r=Math.max(1.25,Math.min(7,near/3.3,(c.clearance??9)-.75,c.maxRadius??Infinity));
-     c.radius=r;
-     if(isH)d+=` L ${fmt(c.x-r*sign)} ${fmt(a.y)} Q ${fmt(c.x)} ${fmt(c.y-r*1.28)} ${fmt(c.x+r*sign)} ${fmt(a.y)}`;
-     else d+=` L ${fmt(a.x)} ${fmt(c.y-r*sign)} Q ${fmt(c.x+r*1.28)} ${fmt(c.y)} ${fmt(a.x)} ${fmt(c.y+r*sign)}`;
-    }
-    d+=` L ${fmt(b.x)} ${fmt(b.y)}`;
-   }
-   return d;
-  }
+  // Plain preview path for the layout benchmark. The application renders
+  // crossings exclusively through CircuitSvg's proportional white masks.
+  function linePath(points){return points.map((p,i)=>(i?'L ':'M ')+Number(p.x.toFixed(2))+' '+Number(p.y.toFixed(2))).join(' ');}
   function intersections(points,occupied){const pointsOut=[];for(const sg of allSegments(points))for(const old of occupied){const rel=segmentRelation(sg.a,sg.b,old.a,old.b);if(rel.cross&&rel.at&&!pointsOut.some(v=>Math.hypot(v.x-rel.at.x,v.y-rel.at.y)<.05))pointsOut.push(rel.at);}return pointsOut;}
-  Object.assign(this,{prefSide,assignPorts,allSegments,segmentHitsRect,onSegmentVal,segmentRelation,routeShapeValid,simplify,fastCandidates,wideCandidates,findRouteGrid,routeEdge,linePath,intersections});
+  Object.assign(this,{prefSide,assignPorts,allSegments,segmentHitsRect,segmentRelation,routeShapeValid,simplify,fastCandidates,wideCandidates,findRouteGrid,routeEdge,linePath,intersections});
   this.clearance=ROUTE_CLEAR;
   this.separation=ROUTE_SEPARATION;
   this.portStub=PORT_STUB;

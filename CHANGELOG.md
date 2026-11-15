@@ -1,5 +1,15 @@
 # Registro de cambios
 
+## 1.2.7 — 15 de noviembre de 2026
+
+- Retira funciones y estados sin consumidores, argumentos obsoletos y
+  dependencias redundantes entre dibujo y enrutamiento.
+- Elimina el antiguo trazado de cruces con saltos curvos y una rama de
+  ordenación inalcanzable; conserva las máscaras blancas y los comparadores.
+- Sustituye un estado de error abandonado: los fallos de vistas derivadas
+  conservan su aviso tras cambiar la profundidad y se limpian al reintentar.
+- Conserva la lectura de archivos antiguos y las referencias geométricas.
+
 ## 1.2.6 — 15 de noviembre de 2026
 
 - Retira las tres barras verticales de la imagen de carga.
