@@ -21,7 +21,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   print('E2E: abriendo sitio construido',flush=True)
   page.goto('http://127.0.0.1:'+str(srv.server_address[1])+'/index.html',wait_until='domcontentloaded')
   build=page.locator('meta[name="application-build"]').get_attribute('content')
-  assert '1.3.4' in page.locator('meta[name="application-version"]').get_attribute('content')
+  assert '1.3.5' in page.locator('meta[name="application-version"]').get_attribute('content')
   page.wait_for_function('[...document.fonts].filter(f=>f.family==="Rajdhani"&&f.status==="loaded").length===2')
   def check_labels(selector):
    labels=page.locator(selector).evaluate_all("""els=>els.map(el=>{
@@ -188,7 +188,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   # El ejemplo público usa el archivo real exportado desde la herramienta.
   # El caso histórico anterior sigue comprobado arriba, con sus firmas intactas.
   page.locator('#resetBtn').click()
-  page.wait_for_function('document.querySelectorAll("#nodes .node").length===200&&window.P1_PLANO_DIAGNOSTICO.routes===201&&document.querySelector("#loadingIndicator").hidden',timeout=30000)
+  page.wait_for_function('document.querySelectorAll("#nodes .node").length===300&&window.P1_PLANO_DIAGNOSTICO.routes===301&&document.querySelector("#loadingIndicator").hidden',timeout=30000)
   assert page.locator('#nodes [data-node-id=p1]').get_attribute('aria-label')=='Fractalear · ideas que se vuelven relaciones'
   assert page.locator('#depth').input_value()==page.locator('#depth').get_attribute('max')
   assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.audit().boxes+window.P1_PLANO_DIAGNOSTICO.audit().invalid')==0
@@ -197,14 +197,14 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    page.locator('[data-view="'+example_mode+'"]').click()
    page.wait_for_function('(mode)=>window.P1_PLANO_DIAGNOSTICO.views().current?.mode===mode',arg=example_mode,timeout=120000)
    example_result=page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current')
-   assert example_result['nodes']==200 and example_result['pending']==0,example_result
-   assert example_result['audit']['drawn']==201 and example_result['audit']['invalid']==0,example_result
+   assert example_result['nodes']==300 and example_result['pending']==0,example_result
+   assert example_result['audit']['drawn']==301 and example_result['audit']['invalid']==0,example_result
    assert example_result['audit']['boxes']==0,example_result
    check_labels('#derivedNodes .node')
    if output:page.screenshot(path=str(Path(output)/('Fractalear_programa_'+example_mode+'.png')))
   assert any('/js/data/examples/fractalear.json?build='+build in url for url in requests),requests
   assert not bad,bad
   assert not errors,errors
-  print('Ejemplo del programa: 200 conceptos y 201 vínculos, sin solapes ni rutas inválidas en las tres representaciones.',flush=True)
+  print('Ejemplo del programa: 300 conceptos y 301 vínculos, sin solapes ni rutas inválidas en las tres representaciones.',flush=True)
   browser.close()
  srv.shutdown()

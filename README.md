@@ -1,9 +1,9 @@
-# Fractalear 1.3.4
+# Fractalear 1.3.5
 
 Una herramienta desarrollada por el LAB 4.0 de la Universidad Nacional para
 construir conceptos, desarrollar sus jerarquías y representar sus relaciones.
 
-**[Abrir Fractalear](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/?v=1.3.4)**
+**[Abrir Fractalear](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/?v=1.3.5)**
 
 **Desarrollo cerrado el 16 de noviembre de 2026 por decisión del responsable.**
 La versión entregada constituye el alcance final. Las propuestas no implementadas
@@ -14,10 +14,12 @@ sin una ruta de funciones futuras.
 
 La página abre en **01 Editor** con un único núcleo: **¿Qué quieres fractalear
 hoy?**. Haz doble clic para editarlo y pulsa **+ Concepto** para desarrollar
-sus hijos. **Nuevo** vuelve al lienzo inicial y **Ejemplo** abre un fractal del propio programa: 200 conceptos y 201 vínculos
+sus hijos. **Nuevo** vuelve al lienzo inicial y **Ejemplo** abre un fractal del propio programa: 300 conceptos y 301 vínculos
 creados con la herramienta para explicar construcción, lectura, cálculo, archivos,
 legibilidad y comprobaciones. Sus desarrollos incluyen módulos de código,
 Workers, cachés, puertos, transporte de la biblioteca, navegación y publicación.
+Los últimos 100 cuadros explican funciones reales de 30 módulos: cada uno incluye
+su nombre, una firma descriptiva abreviada y su responsabilidad.
 **02 Compacto** y **03 Espiral** presentan el mismo grafo en otras distribuciones.
 
 **Guardar** ofrece las condiciones de la biblioteca pública, el nombre y una

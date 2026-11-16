@@ -1,0 +1,909 @@
+{
+  "version": "1.3.5",
+  "source": "js/data/examples/fractalear.json",
+  "functionCount": 100,
+  "moduleCount": 30,
+  "signatureNotation": "Nombres reales; firmas abreviadas con parámetros descriptivos. Consultar las definiciones para la firma exacta.",
+  "functions": [
+    {
+      "nodeId": "n202",
+      "module": "js/core/GraphDocument.js",
+      "scope": "GraphDocument",
+      "name": "nodeById",
+      "signature": "nodeById(id)",
+      "description": "Devuelve el concepto con ese ID",
+      "definitionLine": 12
+    },
+    {
+      "nodeId": "n203",
+      "module": "js/core/GraphDocument.js",
+      "scope": "GraphDocument",
+      "name": "linksOf",
+      "signature": "linksOf(id)",
+      "description": "Reúne los vínculos de un concepto",
+      "definitionLine": 13
+    },
+    {
+      "nodeId": "n204",
+      "module": "js/core/GraphDocument.js",
+      "scope": "GraphDocument",
+      "name": "treeChildren",
+      "signature": "treeChildren(id, rama)",
+      "description": "Obtiene los hijos directos",
+      "definitionLine": 14
+    },
+    {
+      "nodeId": "n205",
+      "module": "js/core/GraphDocument.js",
+      "scope": "GraphDocument",
+      "name": "index",
+      "signature": "index()",
+      "description": "Indexa conceptos e hijos actuales",
+      "definitionLine": 17
+    },
+    {
+      "nodeId": "n206",
+      "module": "js/core/GraphDocument.js",
+      "scope": "GraphDocument",
+      "name": "depthMap",
+      "signature": "depthMap()",
+      "description": "Calcula niveles por parentesco",
+      "definitionLine": 26
+    },
+    {
+      "nodeId": "n207",
+      "module": "js/core/GraphDocument.js",
+      "scope": "GraphDocument",
+      "name": "readDepthMap",
+      "signature": "readDepthMap()",
+      "description": "Asigna niveles de lectura sin perder componentes",
+      "definitionLine": 46
+    },
+    {
+      "nodeId": "n208",
+      "module": "js/core/GraphDocument.js",
+      "scope": "GraphDocument",
+      "name": "maximumDepth",
+      "signature": "maximumDepth()",
+      "description": "Devuelve la generación máxima",
+      "definitionLine": 74
+    },
+    {
+      "nodeId": "n209",
+      "module": "js/core/GraphDocument.js",
+      "scope": "GraphDocument",
+      "name": "rawVisibleNodes",
+      "signature": "rawVisibleNodes()",
+      "description": "Filtra conceptos por profundidad",
+      "definitionLine": 80
+    },
+    {
+      "nodeId": "n210",
+      "module": "js/core/GraphIdentity.js",
+      "scope": "",
+      "name": "edgeKey",
+      "signature": "edgeKey(vínculo)",
+      "description": "Crea la misma clave en ambas direcciones",
+      "definitionLine": 8
+    },
+    {
+      "nodeId": "n211",
+      "module": "js/core/GraphIdentity.js",
+      "scope": "",
+      "name": "nodeSerial",
+      "signature": "nodeSerial(nodos)",
+      "description": "Busca el mayor contador de ID válido",
+      "definitionLine": 14
+    },
+    {
+      "nodeId": "n212",
+      "module": "js/core/GraphIdentity.js",
+      "scope": "",
+      "name": "allocateNodeId",
+      "signature": "allocateNodeId(estado)",
+      "description": "Reserva un ID que no esté ocupado",
+      "definitionLine": 24
+    },
+    {
+      "nodeId": "n213",
+      "module": "js/core/EditorHistory.js",
+      "scope": "",
+      "name": "captureEditorState",
+      "signature": "captureEditorState(estado)",
+      "description": "Serializa datos y contexto para deshacer",
+      "definitionLine": 3
+    },
+    {
+      "nodeId": "n214",
+      "module": "js/core/EditorHistory.js",
+      "scope": "",
+      "name": "restoreEditorState",
+      "signature": "restoreEditorState(estado, copia)",
+      "description": "Restaura selección, foco e identidad",
+      "definitionLine": 9
+    },
+    {
+      "nodeId": "n215",
+      "module": "js/core/PlaneCheckpoint.js",
+      "scope": "PlaneCheckpoint",
+      "name": "reset",
+      "signature": "reset()",
+      "description": "Vacía la geometría y marca que falta calcular",
+      "definitionLine": 10
+    },
+    {
+      "nodeId": "n216",
+      "module": "js/core/PlaneCheckpoint.js",
+      "scope": "PlaneCheckpoint",
+      "name": "snapshot",
+      "signature": "snapshot()",
+      "description": "Devuelve posiciones y rutas listas para guardar",
+      "definitionLine": 15
+    },
+    {
+      "nodeId": "n217",
+      "module": "js/core/WorkerTask.js",
+      "scope": "WorkerTask",
+      "name": "run",
+      "signature": "run(datos, opciones)",
+      "description": "Inicia el Worker y devuelve su promesa",
+      "definitionLine": 32
+    },
+    {
+      "nodeId": "n218",
+      "module": "js/core/WorkerTask.js",
+      "scope": "WorkerTask",
+      "name": "cancel",
+      "signature": "cancel()",
+      "description": "Cancela la tarea y libera sus recursos",
+      "definitionLine": 28
+    },
+    {
+      "nodeId": "n219",
+      "module": "js/core/TopologyRegister.js",
+      "scope": "TopologyRegister",
+      "name": "validShape",
+      "signature": "validShape(registro)",
+      "description": "Comprueba la estructura del registro",
+      "definitionLine": 26
+    },
+    {
+      "nodeId": "n220",
+      "module": "js/core/TopologyRegister.js",
+      "scope": "TopologyRegister",
+      "name": "restore",
+      "signature": "restore(registro)",
+      "description": "Recupera una referencia topológica válida",
+      "definitionLine": 58
+    },
+    {
+      "nodeId": "n221",
+      "module": "js/core/TopologyRegister.js",
+      "scope": "TopologyRegister",
+      "name": "capture",
+      "signature": "capture(geometría)",
+      "description": "Registra puertos, cruces y orden de vínculos",
+      "definitionLine": 65
+    },
+    {
+      "nodeId": "n222",
+      "module": "js/core/TopologyRegister.js",
+      "scope": "TopologyRegister",
+      "name": "compare",
+      "signature": "compare(referencia, candidato)",
+      "description": "Devuelve las diferencias topológicas",
+      "definitionLine": 220
+    },
+    {
+      "nodeId": "n223",
+      "module": "js/core/TopologyRegister.js",
+      "scope": "TopologyRegister",
+      "name": "observe",
+      "signature": "observe(captura, opciones)",
+      "description": "Compara o adopta la referencia según el modo",
+      "definitionLine": 271
+    },
+    {
+      "nodeId": "n224",
+      "module": "js/views/DerivedViews.js",
+      "scope": "DerivedViews",
+      "name": "graphKey",
+      "signature": "graphKey()",
+      "description": "Identifica conceptos, vínculos y estilos",
+      "definitionLine": 48
+    },
+    {
+      "nodeId": "n225",
+      "module": "js/views/DerivedViews.js",
+      "scope": "DerivedViews",
+      "name": "sourceKey",
+      "signature": "sourceKey()",
+      "description": "Identifica las posiciones del Editor",
+      "definitionLine": 46
+    },
+    {
+      "nodeId": "n226",
+      "module": "js/views/DerivedViews.js",
+      "scope": "DerivedViews",
+      "name": "reset",
+      "signature": "reset()",
+      "description": "Cancela cálculos y limpia las vistas derivadas",
+      "definitionLine": 52
+    },
+    {
+      "nodeId": "n227",
+      "module": "js/views/DerivedViews.js",
+      "scope": "DerivedViews",
+      "name": "select",
+      "signature": "select(modo)",
+      "description": "Recupera o calcula la vista solicitada",
+      "definitionLine": 123
+    },
+    {
+      "nodeId": "n228",
+      "module": "js/views/DerivedViews.js",
+      "scope": "DerivedViews",
+      "name": "restoreData",
+      "signature": "restoreData(cachés)",
+      "description": "Prepara las escenas importadas para validarlas",
+      "definitionLine": 324
+    },
+    {
+      "nodeId": "n229",
+      "module": "js/views/DerivedViews.js",
+      "scope": "DerivedViews",
+      "name": "exportData",
+      "signature": "exportData()",
+      "description": "Exporta solo cachés compatibles y aprobadas",
+      "definitionLine": 312
+    },
+    {
+      "nodeId": "n230",
+      "module": "js/app.js",
+      "scope": "",
+      "name": "makeNode",
+      "signature": "makeNode(id, texto, rama)",
+      "description": "Crea los datos iniciales de un concepto",
+      "definitionLine": 48
+    },
+    {
+      "nodeId": "n231",
+      "module": "js/app.js",
+      "scope": "",
+      "name": "addConcept",
+      "signature": "addConcept()",
+      "description": "Añade un hijo y conserva el padre seleccionado",
+      "definitionLine": 562
+    },
+    {
+      "nodeId": "n232",
+      "module": "js/app.js",
+      "scope": "",
+      "name": "selectNode",
+      "signature": "selectNode(id)",
+      "description": "Selecciona o completa la operación de vínculo",
+      "definitionLine": 422
+    },
+    {
+      "nodeId": "n233",
+      "module": "js/app.js",
+      "scope": "",
+      "name": "removeLink",
+      "signature": "removeLink(origen, destino)",
+      "description": "Retira una relación tras confirmarla",
+      "definitionLine": 525
+    },
+    {
+      "nodeId": "n234",
+      "module": "js/app.js",
+      "scope": "",
+      "name": "deleteSelected",
+      "signature": "deleteSelected()",
+      "description": "Elimina el concepto sin inventar padres sustitutos",
+      "definitionLine": 577
+    },
+    {
+      "nodeId": "n235",
+      "module": "js/app.js",
+      "scope": "",
+      "name": "saveUndo",
+      "signature": "saveUndo(incluirGeometría)",
+      "description": "Guarda un paso del historial de edición",
+      "definitionLine": 417
+    },
+    {
+      "nodeId": "n236",
+      "module": "js/app.js",
+      "scope": "",
+      "name": "undo",
+      "signature": "undo()",
+      "description": "Recupera el estado anterior desde el Editor",
+      "definitionLine": 509
+    },
+    {
+      "nodeId": "n237",
+      "module": "js/app.js",
+      "scope": "",
+      "name": "importGraph",
+      "signature": "importGraph(documento)",
+      "description": "Conserva el estado previo antes de abrir",
+      "definitionLine": 659
+    },
+    {
+      "nodeId": "n238",
+      "module": "js/app.js",
+      "scope": "",
+      "name": "applyGraph",
+      "signature": "applyGraph(documento)",
+      "description": "Aplica datos y recupera o reconstruye geometría",
+      "definitionLine": 619
+    },
+    {
+      "nodeId": "n239",
+      "module": "js/app.js",
+      "scope": "",
+      "name": "flushPendingEdits",
+      "signature": "flushPendingEdits()",
+      "description": "Consolida la escritura antes de exportar",
+      "definitionLine": 599
+    },
+    {
+      "nodeId": "n240",
+      "module": "js/app.js",
+      "scope": "",
+      "name": "changeWidth",
+      "signature": "changeWidth(incremento)",
+      "description": "Ajusta el ancho y programa su actualización",
+      "definitionLine": 646
+    },
+    {
+      "nodeId": "n241",
+      "module": "js/app.js",
+      "scope": "",
+      "name": "schedule",
+      "signature": "schedule()",
+      "description": "Agrupa cambios en un próximo fotograma",
+      "definitionLine": 279
+    },
+    {
+      "nodeId": "n242",
+      "module": "js/app.js",
+      "scope": "",
+      "name": "render",
+      "signature": "render()",
+      "description": "Reconcilia la geometría y actualiza el dibujo",
+      "definitionLine": 475
+    },
+    {
+      "nodeId": "n243",
+      "module": "js/app.js",
+      "scope": "",
+      "name": "reconcileCheckpoint",
+      "signature": "reconcileCheckpoint()",
+      "description": "Actualiza cuadros y rutas que cambiaron",
+      "definitionLine": 346
+    },
+    {
+      "nodeId": "n244",
+      "module": "js/app.js",
+      "scope": "",
+      "name": "chooseRoute",
+      "signature": "chooseRoute(vínculo, ocupadas)",
+      "description": "Busca un recorrido seguro entre puertos",
+      "definitionLine": 207
+    },
+    {
+      "nodeId": "n245",
+      "module": "js/app.js",
+      "scope": "",
+      "name": "validateSavedCheckpoint",
+      "signature": "validateSavedCheckpoint(caché)",
+      "description": "Recupera la geometría solo si es compatible",
+      "definitionLine": 310
+    },
+    {
+      "nodeId": "n246",
+      "module": "js/app.js",
+      "scope": "",
+      "name": "fit",
+      "signature": "fit()",
+      "description": "Encuadra el dibujo completo con márgenes",
+      "definitionLine": 480
+    },
+    {
+      "nodeId": "n247",
+      "module": "js/app.js",
+      "scope": "",
+      "name": "centerOn",
+      "signature": "centerOn()",
+      "description": "Centra J0 y restablece el zoom a uno",
+      "definitionLine": 578
+    },
+    {
+      "nodeId": "n248",
+      "module": "js/app.js",
+      "scope": "",
+      "name": "zoomBy",
+      "signature": "zoomBy(factor, punto)",
+      "description": "Cambia la escala alrededor del punto elegido",
+      "definitionLine": 593
+    },
+    {
+      "nodeId": "n249",
+      "module": "js/geometry/FacingPorts.js",
+      "scope": "",
+      "name": "reflectedEntry",
+      "signature": "reflectedEntry(salida, cuadros)",
+      "description": "Refleja la salida para proponer una entrada",
+      "definitionLine": 14
+    },
+    {
+      "nodeId": "n250",
+      "module": "js/geometry/FacingPorts.js",
+      "scope": "",
+      "name": "facingPortPairs",
+      "signature": "facingPortPairs(opciones)",
+      "description": "Propone pares de puertos que se enfrentan",
+      "definitionLine": 18
+    },
+    {
+      "nodeId": "n251",
+      "module": "js/geometry/FacingPorts.js",
+      "scope": "",
+      "name": "routeFacingLink",
+      "signature": "routeFacingLink(opciones)",
+      "description": "Elige una ruta válida entre esos pares",
+      "definitionLine": 56
+    },
+    {
+      "nodeId": "n252",
+      "module": "js/geometry/OrderedPorts.js",
+      "scope": "",
+      "name": "assignOrderedPorts",
+      "signature": "assignOrderedPorts(escena)",
+      "description": "Asigna puertos conservando su orden circular",
+      "definitionLine": 21
+    },
+    {
+      "nodeId": "n253",
+      "module": "js/geometry/OrderedPorts.js",
+      "scope": "",
+      "name": "portAt",
+      "signature": "portAt(cara, posición)",
+      "description": "Crea un puerto con salida libre suficiente",
+      "definitionLine": 7
+    },
+    {
+      "nodeId": "n254",
+      "module": "js/geometry/OrderedPorts.js",
+      "scope": "",
+      "name": "portCycle",
+      "signature": "portCycle(nodo, puertos)",
+      "description": "Obtiene el orden de conexiones alrededor del cuadro",
+      "definitionLine": 73
+    },
+    {
+      "nodeId": "n255",
+      "module": "js/geometry/OrderedPorts.js",
+      "scope": "",
+      "name": "samePortCycle",
+      "signature": "samePortCycle(cicloA, cicloB)",
+      "description": "Compara ciclos admitiendo rotación circular",
+      "definitionLine": 83
+    },
+    {
+      "nodeId": "n256",
+      "module": "js/ui/NodeTypography.js",
+      "scope": "",
+      "name": "loadNodeTypography",
+      "signature": "loadNodeTypography()",
+      "description": "Carga las fuentes locales y sus pesos",
+      "definitionLine": 35
+    },
+    {
+      "nodeId": "n257",
+      "module": "js/ui/NodeTypography.js",
+      "scope": "",
+      "name": "fitNodeLabel",
+      "signature": "fitNodeLabel(texto, cuadro)",
+      "description": "Calcula líneas y tamaño de cuadro sin cortar palabras",
+      "definitionLine": 54
+    },
+    {
+      "nodeId": "n258",
+      "module": "js/ui/NodeTypography.js",
+      "scope": "",
+      "name": "nodeGeometry",
+      "signature": "nodeGeometry(nodo, contexto)",
+      "description": "Mide el cuadro con ambos pesos de letra",
+      "definitionLine": 85
+    },
+    {
+      "nodeId": "n259",
+      "module": "js/ui/NodeTypography.js",
+      "scope": "",
+      "name": "paintNodeLabel",
+      "signature": "paintNodeLabel(elemento, nodo)",
+      "description": "Dibuja las líneas de texto en SVG",
+      "definitionLine": 90
+    },
+    {
+      "nodeId": "n260",
+      "module": "js/ui/CircuitSvg.js",
+      "scope": "",
+      "name": "drawCircuitSvg",
+      "signature": "drawCircuitSvg(escena)",
+      "description": "Dibuja conexiones y máscaras de cruce",
+      "definitionLine": 36
+    },
+    {
+      "nodeId": "n261",
+      "module": "js/ui/CircuitSvg.js",
+      "scope": "",
+      "name": "scaleCrossings",
+      "signature": "scaleCrossings(capa, escala)",
+      "description": "Mantiene los halos proporcionales al hacer zoom",
+      "definitionLine": 18
+    },
+    {
+      "nodeId": "n262",
+      "module": "js/ui/CircuitSvg.js",
+      "scope": "",
+      "name": "emphasizeCrossings",
+      "signature": "emphasizeCrossings(capa, claves)",
+      "description": "Adapta los cruces al recorrido resaltado",
+      "definitionLine": 22
+    },
+    {
+      "nodeId": "n263",
+      "module": "js/ui/CircuitSvg.js",
+      "scope": "",
+      "name": "visibleCrossings",
+      "signature": "visibleCrossings(capa, claves)",
+      "description": "Oculta las máscaras de vínculos no visibles",
+      "definitionLine": 29
+    },
+    {
+      "nodeId": "n264",
+      "module": "js/geometry/GeometryValidator.js",
+      "scope": "GeometryValidator",
+      "name": "validateRoute",
+      "signature": "validateRoute(ruta, cuadros)",
+      "description": "Comprueba continuidad, puertos y obstáculos",
+      "definitionLine": 26
+    },
+    {
+      "nodeId": "n265",
+      "module": "js/geometry/GeometryValidator.js",
+      "scope": "GeometryValidator",
+      "name": "audit",
+      "signature": "audit(cuadros, rutas)",
+      "description": "Devuelve el informe geométrico del conjunto",
+      "definitionLine": 65
+    },
+    {
+      "nodeId": "n266",
+      "module": "js/ui/GraphFiles.js",
+      "scope": "",
+      "name": "downloadBlob",
+      "signature": "downloadBlob(nombre, blob)",
+      "description": "Descarga un archivo y libera su URL temporal",
+      "definitionLine": 10
+    },
+    {
+      "nodeId": "n267",
+      "module": "js/ui/GraphFiles.js",
+      "scope": "",
+      "name": "bindGraphFiles",
+      "signature": "bindGraphFiles(controles)",
+      "description": "Conecta importación, exportación y ejemplo",
+      "definitionLine": 28
+    },
+    {
+      "nodeId": "n268",
+      "module": "js/ui/GraphFiles.js",
+      "scope": "bindGraphFiles",
+      "name": "readExample",
+      "signature": "readExample(url)",
+      "description": "Lee y valida el ejemplo pedido por el usuario",
+      "definitionLine": 61
+    },
+    {
+      "nodeId": "n269",
+      "module": "js/ui/GraphFiles.js",
+      "scope": "bindGraphFiles",
+      "name": "openText",
+      "signature": "openText(texto)",
+      "description": "Valida y abre un JSON recibido como texto",
+      "definitionLine": 77
+    },
+    {
+      "nodeId": "n270",
+      "module": "js/io/GraphFile.js",
+      "scope": "",
+      "name": "parseGraphFile",
+      "signature": "parseGraphFile(texto)",
+      "description": "Devuelve el grafo tras validar su contrato",
+      "definitionLine": 13
+    },
+    {
+      "nodeId": "n271",
+      "module": "js/io/GraphFile.js",
+      "scope": "",
+      "name": "checkpointHasRecords",
+      "signature": "checkpointHasRecords(caché)",
+      "description": "Comprueba la forma de posiciones y rutas",
+      "definitionLine": 53
+    },
+    {
+      "nodeId": "n272",
+      "module": "js/io/PublicLibrary.js",
+      "scope": "",
+      "name": "validLibraryUrl",
+      "signature": "validLibraryUrl(url)",
+      "description": "Comprueba el destino permitido de Apps Script",
+      "definitionLine": 8
+    },
+    {
+      "nodeId": "n273",
+      "module": "js/io/PublicLibrary.js",
+      "scope": "",
+      "name": "createPublicLibrary",
+      "signature": "createPublicLibrary(configuración)",
+      "description": "Construye el cliente sin consultar Google",
+      "definitionLine": 14
+    },
+    {
+      "nodeId": "n274",
+      "module": "js/io/PublicLibrary.js",
+      "scope": "createPublicLibrary",
+      "name": "request",
+      "signature": "request(mensaje)",
+      "description": "Envía JSON y controla espera y reintentos",
+      "definitionLine": 17
+    },
+    {
+      "nodeId": "n275",
+      "module": "cloud/LibraryService.js",
+      "scope": "",
+      "name": "createLibraryService",
+      "signature": "createLibraryService(adaptadores)",
+      "description": "Construye las operaciones de la carpeta fija",
+      "definitionLine": 18
+    },
+    {
+      "nodeId": "n276",
+      "module": "cloud/LibraryService.js",
+      "scope": "createLibraryService",
+      "name": "save",
+      "signature": "save(solicitud)",
+      "description": "Guarda una copia o recupera el mismo reintento",
+      "definitionLine": 27
+    },
+    {
+      "nodeId": "n277",
+      "module": "cloud/LibraryService.js",
+      "scope": "createLibraryService",
+      "name": "list",
+      "signature": "list(solicitud)",
+      "description": "Devuelve metadatos y la página siguiente",
+      "definitionLine": 46
+    },
+    {
+      "nodeId": "n278",
+      "module": "cloud/LibraryService.js",
+      "scope": "createLibraryService",
+      "name": "read",
+      "signature": "read(solicitud)",
+      "description": "Valida la carpeta antes de devolver el JSON",
+      "definitionLine": 52
+    },
+    {
+      "nodeId": "n279",
+      "module": "js/ui/PublicLibrary.js",
+      "scope": "",
+      "name": "bindPublicLibrary",
+      "signature": "bindPublicLibrary(controles)",
+      "description": "Conecta consentimiento, guardado y catálogo",
+      "definitionLine": 10
+    },
+    {
+      "nodeId": "n280",
+      "module": "js/ui/PublicLibrary.js",
+      "scope": "bindPublicLibrary",
+      "name": "open",
+      "signature": "open(paso)",
+      "description": "Prepara y abre el diálogo solicitado",
+      "definitionLine": 43
+    },
+    {
+      "nodeId": "n281",
+      "module": "js/ui/PublicLibrary.js",
+      "scope": "bindPublicLibrary",
+      "name": "showStep",
+      "signature": "showStep(paso)",
+      "description": "Muestra el panel y orienta el foco",
+      "definitionLine": 29
+    },
+    {
+      "nodeId": "n282",
+      "module": "js/ui/PublicLibrary.js",
+      "scope": "bindPublicLibrary",
+      "name": "saveConfirmed",
+      "signature": "saveConfirmed()",
+      "description": "Envía la copia solo desde la confirmación final",
+      "definitionLine": 93
+    },
+    {
+      "nodeId": "n283",
+      "module": "js/ui/PngExport.js",
+      "scope": "",
+      "name": "exportScene",
+      "signature": "exportScene(estado)",
+      "description": "Obtiene una escena lista para exportar",
+      "definitionLine": 6
+    },
+    {
+      "nodeId": "n284",
+      "module": "js/ui/PngExport.js",
+      "scope": "",
+      "name": "pngExportPlan",
+      "signature": "pngExportPlan(cuadros, rutas)",
+      "description": "Calcula dimensiones, escala y márgenes del PNG",
+      "definitionLine": 27
+    },
+    {
+      "nodeId": "n285",
+      "module": "js/ui/DiagramExport.js",
+      "scope": "",
+      "name": "bindDiagramExports",
+      "signature": "bindDiagramExports(controles)",
+      "description": "Conecta los botones de exportación SVG y PNG",
+      "definitionLine": 40
+    },
+    {
+      "nodeId": "n286",
+      "module": "js/ui/LoadingIndicator.js",
+      "scope": "",
+      "name": "createLoadingIndicator",
+      "signature": "createLoadingIndicator(panel)",
+      "description": "Crea el controlador del indicador de actividad",
+      "definitionLine": 9
+    },
+    {
+      "nodeId": "n287",
+      "module": "js/ui/LoadingIndicator.js",
+      "scope": "createLoadingIndicator",
+      "name": "begin",
+      "signature": "begin(título, mensaje)",
+      "description": "Abre una operación de carga independiente",
+      "definitionLine": 21
+    },
+    {
+      "nodeId": "n288",
+      "module": "js/ui/LoadingIndicator.js",
+      "scope": "createLoadingIndicator.begin",
+      "name": "update",
+      "signature": "update(mensaje)",
+      "description": "Actualiza el detalle de esa operación",
+      "definitionLine": 24
+    },
+    {
+      "nodeId": "n289",
+      "module": "js/ui/LoadingIndicator.js",
+      "scope": "createLoadingIndicator.begin",
+      "name": "finish",
+      "signature": "finish()",
+      "description": "Cierra solo la operación que lo llamó",
+      "definitionLine": 25
+    },
+    {
+      "nodeId": "n290",
+      "module": "js/ui/LoadingIndicator.js",
+      "scope": "createLoadingIndicator.begin",
+      "name": "paint",
+      "signature": "paint()",
+      "description": "Espera dos fotogramas para mostrar el indicador",
+      "definitionLine": 26
+    },
+    {
+      "nodeId": "n291",
+      "module": "js/ui/PoetryCarousel.js",
+      "scope": "",
+      "name": "bindPoetryCarousel",
+      "signature": "bindPoetryCarousel(elemento)",
+      "description": "Conecta citas, navegación y pausa de lectura",
+      "definitionLine": 3
+    },
+    {
+      "nodeId": "n292",
+      "module": "js/geometry/ClockPlacement.js",
+      "scope": "",
+      "name": "nextClockIndex",
+      "signature": "nextClockIndex(hijos)",
+      "description": "Obtiene el siguiente paso de la secuencia",
+      "definitionLine": 8
+    },
+    {
+      "nodeId": "n293",
+      "module": "js/geometry/ClockPlacement.js",
+      "scope": "",
+      "name": "clockChildPosition",
+      "signature": "clockChildPosition(escena)",
+      "description": "Elige el candidato libre más cercano",
+      "definitionLine": 21
+    },
+    {
+      "nodeId": "n294",
+      "module": "js/ui/LinkStyles.js",
+      "scope": "",
+      "name": "validLinkStyle",
+      "signature": "validLinkStyle(estilo)",
+      "description": "Comprueba los tres estilos permitidos",
+      "definitionLine": 2
+    },
+    {
+      "nodeId": "n295",
+      "module": "js/ui/LinkStyles.js",
+      "scope": "",
+      "name": "linkStyle",
+      "signature": "linkStyle(vínculo)",
+      "description": "Resuelve el estilo explícito o su valor por defecto",
+      "definitionLine": 3
+    },
+    {
+      "nodeId": "n296",
+      "module": "js/geometry/RayPackingLayout.js",
+      "scope": "RayPackingLayout",
+      "name": "compute",
+      "signature": "compute(escena)",
+      "description": "Agrupa ramas por sectores y espacio disponible",
+      "definitionLine": 40
+    },
+    {
+      "nodeId": "n297",
+      "module": "js/geometry/SpiralLayout.js",
+      "scope": "SpiralLayout",
+      "name": "compute",
+      "signature": "compute(base, opciones)",
+      "description": "Gira la base compacta y evita solapes",
+      "definitionLine": 19
+    },
+    {
+      "nodeId": "n298",
+      "module": "js/geometry/PcbRouter.js",
+      "scope": "PcbRouter",
+      "name": "routeEdge",
+      "signature": "routeEdge(salida, entrada, obstáculos)",
+      "description": "Busca una ruta o devuelve que no se resolvió",
+      "definitionLine": 266
+    },
+    {
+      "nodeId": "n299",
+      "module": "js/geometry/DerivedScene.js",
+      "scope": "",
+      "name": "computeDerivedScene",
+      "signature": "computeDerivedScene(escena)",
+      "description": "Coloca cuadros, enruta y audita con intentos limitados",
+      "definitionLine": 18
+    },
+    {
+      "nodeId": "n300",
+      "module": "js/core/HierarchySelection.js",
+      "scope": "",
+      "name": "hierarchySelection",
+      "signature": "hierarchySelection(estado)",
+      "description": "Devuelve ancestros y vínculos adyacentes a resaltar",
+      "definitionLine": 7
+    },
+    {
+      "nodeId": "n301",
+      "module": "js/ui/HierarchyStroke.js",
+      "scope": "",
+      "name": "hierarchyStrokeProfile",
+      "signature": "hierarchyStrokeProfile(jerarquía)",
+      "description": "Crea la función de grosor acotado por nivel",
+      "definitionLine": 10
+    }
+  ]
+}

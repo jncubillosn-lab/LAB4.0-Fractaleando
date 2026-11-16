@@ -1,9 +1,9 @@
-# Biblioteca pública · Fractalear 1.3.4
+# Biblioteca pública · Fractalear 1.3.5
 
 Servicio autorizado por el propietario y desplegado el 16 de noviembre de 2026.
 La biblioteca está publicada desde 1.3.0. En 1.3.1 se verificó el consentimiento
 y el ciclo real de guardado, listado y apertura en Pages, sin sesión de Google.
-El cierre 1.3.4 conserva ese servicio y el formato JSON.
+El cierre 1.3.5 conserva ese servicio y el formato JSON.
 
 Cuenta responsable: la cuenta propietaria indicada por el usuario.
 Carpeta fija: `1Hktgc57dZubg_Gul5Y1x-eDxuIPJZQqj` («Fractalear LAB 4.0»,
