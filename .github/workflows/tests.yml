@@ -1,7 +1,7 @@
 name: Fractalear - pruebas y publicación
 on:
   push:
-    branches: [main, refactor/p1-modular-estable]
+    branches: [main]
   pull_request:
     branches: [main]
 permissions:

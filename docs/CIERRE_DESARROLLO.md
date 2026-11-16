@@ -30,7 +30,10 @@ operar y conservar la entrega existente; no constituyen un plan de ampliación.
 
 Los documentos anteriores se reúnen en `docs/historico/` con un aviso explícito
 de cierre. Se corrigen los enlaces internos y las referencias de versión, pruebas
-y suites de la documentación vigente.
+y suites de la documentación vigente. Los borradores experimentales de GitHub
+6, 10, 11 y 12 quedan cerrados sin integrar. El flujo de comprobación conserva
+las propuestas a `main` y las publicaciones de `main`; se retira el disparador
+de la antigua rama de desarrollo.
 
 Se retira el comparador experimental de motores ELK, su comando y su dependencia
 de desarrollo. El motor de la aplicación sigue utilizando libavoid. El auxiliar
