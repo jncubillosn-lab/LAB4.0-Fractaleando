@@ -24,6 +24,7 @@ los cálculos en curso; el espacio
 ## Documentación vigente
 
 - [Guía de uso](docs/GUIA_USO.md).
+- [Biblioteca en Drive: integración preparada, pendiente de activación](docs/BIBLIOTECA_DRIVE.md).
 - [Limpieza de código heredado 1.2.7](docs/LIMPIEZA_1_2_7.md).
 - [Interfaz 1.2.6: viñetas fijas del castor](docs/INTERFAZ_1_2_6.md).
 - [Propuesta de almacenamiento compartido en Drive](docs/PROPUESTA_DRIVE.md).

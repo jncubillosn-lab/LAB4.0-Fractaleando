@@ -8,6 +8,7 @@
     "bench:performance": "node scripts/benchmark-performance.mjs",
     "bench:layouts": "node scripts/benchmark-layouts.mjs",
     "build": "node scripts/build-site.mjs",
+    "build:drive": "node scripts/build-drive-service.mjs",
     "check:poetry-links": "node scripts/check-poetry-links.mjs"
   },
   "devDependencies": {

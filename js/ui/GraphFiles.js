@@ -20,10 +20,11 @@ export function downloadFile(filename, data, mime) {
 
 export function bindGraphFiles({fileInput, loadButton, saveButton, snapshot, onImport, toast, beforeSave = () => {}}) {
   let revision = 0;
+  const serialize = () => {beforeSave();return JSON.stringify(snapshot(), null, 2);};
+  const importText = text => {onImport(parseGraphFile(text));toast('Grafo importado.');};
   loadButton.onclick = () => fileInput.click();
   saveButton.onclick = () => {
-    beforeSave();
-    downloadFile('p1-grafo.json', JSON.stringify(snapshot(), null, 2), 'application/json;charset=utf-8');
+    downloadFile('p1-grafo.json', serialize(), 'application/json;charset=utf-8');
     toast('Se exportó el grafo completo, independiente de la vista.');
   };
   fileInput.addEventListener('change', async () => {
@@ -33,8 +34,7 @@ export function bindGraphFiles({fileInput, loadButton, saveButton, snapshot, onI
     try {
       const text = await file.text();
       if (ticket !== revision) return;
-      onImport(parseGraphFile(text));
-      toast('Grafo importado.');
+      importText(text);
     } catch (error) {
       if (ticket === revision) toast('No se pudo importar: ' + error.message);
     } finally {
@@ -42,6 +42,8 @@ export function bindGraphFiles({fileInput, loadButton, saveButton, snapshot, onI
     }
   });
   return {
+    serialize,
+    openText(text) {revision++;fileInput.value = '';importText(text);},
     cancel() {
       revision++;
       fileInput.value = '';
