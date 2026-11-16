@@ -1,45 +1,40 @@
-# Fractalear 1.3
+# Fractalear 1.3.2
 
 Una herramienta desarrollada por el LAB 4.0 de la Universidad Nacional para
 construir conceptos, desarrollar sus jerarquías y representar sus relaciones.
 
-**[Abrir Fractalear](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/?v=1.3.1)**
+**[Abrir Fractalear](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/?v=1.3.2)**
 
-## Comenzar
+**Desarrollo cerrado el 16 de noviembre de 2026 por decisión del responsable.**
+La versión entregada constituye el alcance final. Las propuestas no implementadas
+quedan descartadas; el archivo histórico conserva las decisiones y mediciones,
+sin una ruta de funciones futuras.
 
-La herramienta abre en **01 Editor** con un único núcleo seleccionado:
-**¿Qué quieres fractalear hoy?**. Haz doble clic para editarlo y pulsa
-**+ Concepto** para desarrollar sus hijos. **Nuevo** vuelve a ese lienzo;
-**Ejemplo** permite consultar el ejemplo completo.
+## Usar la herramienta
 
-Usa **02 Compacto** y **03 Espiral** para leer el mismo grafo en otras
-distribuciones. **Exportar JSON** conserva el trabajo editable; SVG y PNG 4K
-permiten compartir su representación.
+La página abre en **01 Editor** con un único núcleo: **¿Qué quieres fractalear
+hoy?**. Haz doble clic para editarlo y pulsa **+ Concepto** para desarrollar
+sus hijos. **Nuevo** vuelve al lienzo inicial y **Ejemplo** abre el caso completo.
+**02 Compacto** y **03 Espiral** presentan el mismo grafo en otras distribuciones.
 
-La barra superior reúne las acciones de archivo. Los controles de encuadre
-se reúnen en cuatro símbolos en una sola fila. Una barra centrada con una tira fija de cuatro viñetas del castor informa
-los cálculos en curso; el espacio
-**Otras miradas** ofrece diecisiete citas poéticas con fuente y versión en español.
+**Guardar** ofrece las condiciones de la biblioteca pública, el nombre y una
+confirmación final. Solo **Sí** en el tercer paso envía el diagrama. **Biblioteca**
+permite abrir una copia compartida, sin iniciar sesión. Para conservar el trabajo
+en privado, usa **Exportar JSON** y **Importar JSON**. **SVG** y **PNG** exportan
+la representación; el PNG mantiene 4096 píxeles en su lado mayor.
 
-## Documentación vigente
+## Documentación de entrega
 
+- [Cierre de desarrollo, alcance y límites](docs/CIERRE_DESARROLLO.md).
 - [Guía de uso](docs/GUIA_USO.md).
-- [Biblioteca pública en Drive: guardar y abrir diagramas](docs/BIBLIOTECA_DRIVE.md).
-- [Limpieza de código heredado 1.2.7](docs/LIMPIEZA_1_2_7.md).
-- [Interfaz 1.2.6: viñetas fijas del castor](docs/INTERFAZ_1_2_6.md).
-- [Propuesta de almacenamiento compartido en Drive](docs/PROPUESTA_DRIVE.md).
-- [Base funcional, decisiones y límites de 1.0.0](docs/VERSION_1_0_0.md).
-- [Mantenimiento, pruebas y publicación](docs/MANTENIMIENTO.md).
-- [Registro de cambios](CHANGELOG.md).
-- [Antecedentes y normas](docs/README.md).
+- [Biblioteca pública y operación de Drive](docs/BIBLIOTECA_DRIVE.md).
+- [Reproducción, pruebas y publicación de la entrega](docs/MANTENIMIENTO.md).
+- [Registro de cambios](CHANGELOG.md) y [dependencias y licencias](THIRD_PARTY.md).
+- [Documentación histórica](docs/historico/README.md).
 
-El cierre funcional conserva los avisos normativos de Compacto y Espiral:
-siguen existiendo casos con diferencias topológicas o separación superior a la
-cota ensayada. Se documentan en la base funcional y siguen visibles.
+## Reproducir la entrega
 
-## Desarrollo y comprobación
-
-Con Node.js 22 y npm disponibles, como en GitHub Actions:
+Con Node.js 22 y npm:
 
 ```sh
 npm ci
@@ -47,8 +42,13 @@ npm test
 npm run build
 ```
 
-La construcción limpia y regenera únicamente `_site/`. GitHub Actions exige
-las 100 pruebas Node y las cuatro suites de Chrome antes de publicar desde
-`main`. Los documentos históricos, las pruebas y los respaldos no se incluyen
-en el sitio generado. Las dependencias y sus licencias se describen en
-[THIRD_PARTY.md](THIRD_PARTY.md).
+GitHub Actions exige las **108 pruebas Node y las cinco suites de Chrome** antes
+de publicar desde `main`. Las pruebas se ejecutan durante la preparación de la
+entrega; no forman parte de la ejecución del sitio. La construcción regenera
+solo `_site/`, con los recursos de la aplicación, sus fuentes y WASM locales.
+Documentos, experimentos, respaldos, pruebas y herramientas de desarrollo quedan
+fuera del sitio publicado.
+
+Los avisos de revisión y las rutas que el motor no resuelva conservan su
+comportamiento. Cerrar el desarrollo no equivale a certificar una solución
+geométrica para cualquier grafo; los límites se registran en el cierre.

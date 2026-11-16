@@ -109,7 +109,7 @@ test('auditor usa coordenadas calculadas y exige J0 en el centro',()=>{
 
 test('worker de distribución devuelve Maps y el mismo resultado que el cálculo directo',async()=>{
  const {Worker}=await import('node:worker_threads');
- const url=new URL('../js/workers/radial-layout.worker.js',import.meta.url).href;
+ const url=new URL('./fixtures/layout-worker.js',import.meta.url).href;
  const worker=new Worker(`const {parentPort}=require('node:worker_threads');global.self={postMessage:r=>parentPort.postMessage(r)};import(${JSON.stringify(url)}).then(()=>parentPort.on('message',data=>self.onmessage({data})));`,{eval:true});
  try{
   const input={mode:'02',...tree(3)};
