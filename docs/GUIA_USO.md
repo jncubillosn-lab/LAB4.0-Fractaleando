@@ -65,6 +65,16 @@ pendientes deben leerse como el estado del resultado mostrado.
 
 ## Guardar y compartir
 
+**Guardar** abre un formulario con un único campo: el nombre del archivo.
+Envía el mismo JSON actual a la biblioteca pública. Cada guardado crea una
+copia nueva; un nombre repetido no sobrescribe la anterior. La herramienta
+confirma cuando el servicio devuelve el identificador del archivo guardado.
+
+**Biblioteca** muestra los diagramas disponibles. Pulsa un nombre para abrirlo;
+se solicitará confirmación antes de sustituir el trabajo actual. Los archivos
+de la biblioteca son públicos para todos los visitantes. Los botones locales
+**Guardar JSON** y **Abrir JSON** siguen disponibles.
+
 Las acciones de archivo se encuentran en la barra superior. La esquina inferior
 del lienzo reúne los cuatro símbolos de cámara en una sola fila. El círculo con
 el punto central lleva al núcleo; la mira encuadra todo el diagrama.

@@ -1,4 +1,4 @@
-# Mantenimiento de Fractalear 1.2
+# Mantenimiento de Fractalear 1.3
 
 [Estado vigente](VERSION_1_0_0.md) · [Guía de uso](GUIA_USO.md) ·
 [Registro de cambios](../CHANGELOG.md).
@@ -27,11 +27,11 @@ son resultados locales excluidos del repositorio.
 
 ## Comprobar cambios
 
-`npm test` ejecuta las 100 pruebas Node en secuencia. También construye el sitio,
+`npm test` ejecuta las 108 pruebas Node en secuencia. También construye el sitio,
 verifica imports y versiones de caché y comprueba que no se publique un archivo
 residual de la construcción anterior.
 
-Las cuatro suites Chrome se ejecutan sobre `_site` en
+Las cinco suites Chrome se ejecutan sobre `_site` en
 [GitHub Actions](../.github/workflows/tests.yml):
 
 | Suite | Cobertura |
@@ -39,6 +39,7 @@ Las cuatro suites Chrome se ejecutan sobre `_site` en
 | `tests/pages_e2e.py` | Inicio, Nuevo, ejemplo PPR, creación, vínculos, estilos, archivos y exportación. |
 | `tests/views_e2e.py` | Las tres vistas, fuente, márgenes, cruces, selección, WASM local y exportaciones. |
 | `tests/topology_guard_e2e.py` | Edición libre en 01, protección en lectura, importación, cancelación y alternativa al Worker. |
+| `tests/library_e2e.py` | Guardado con un solo nombre, JSON idéntico y apertura desde catálogo con servicio simulado. |
 | `tests/integrity_e2e.py` | Exportación durante carga, importar/deshacer/crear, geometría pendiente, duplicados e IDs especiales. |
 
 Para ejecutarlas localmente se necesita Chrome y Playwright 1.56.0. Establecer

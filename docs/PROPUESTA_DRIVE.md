@@ -1,5 +1,9 @@
 # Propuesta · Archivos compartidos en Drive
 
+Documento histórico: la implementación de 1.3.0 se describe en
+[Biblioteca pública en Drive](BIBLIOTECA_DRIVE.md). Lo que sigue conserva el
+estado y las decisiones de la evaluación preliminar del 15 de noviembre.
+
 Estado: diseño preliminar, sin implementación ni despliegue.
 Verificación documental: 15 de noviembre de 2026.
 
