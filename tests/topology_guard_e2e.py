@@ -27,9 +27,10 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   bottom=max(page.locator('#nodes .node').evaluate_all('(els)=>els.map(el=>el.getBoundingClientRect().bottom)'))
   stage=page.locator('#stage').bounding_box();target_y=bottom+100
   assert target_y+box['height']/2<stage['y']+stage['height'],(target_y,stage)
+  checkpoint_before_drag=page.evaluate('window.P1_PLANO_DIAGNOSTICO.checkpoint')
   page.mouse.move(box['x']+box['width']/2,box['y']+box['height']/2);page.mouse.down()
   page.mouse.move(box['x']+box['width']/2,target_y,steps=12);page.mouse.up()
-  page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.checkpoint>=3',timeout=30000)
+  page.wait_for_function('(previous)=>window.P1_PLANO_DIAGNOSTICO.checkpoint>previous',arg=checkpoint_before_drag,timeout=30000)
   after=graph();info=page.evaluate('({pending:window.P1_PLANO_DIAGNOSTICO.pending,affected:window.P1_PLANO_DIAGNOSTICO.lastAffectedRoutes,builds:window.P1_PLANO_DIAGNOSTICO.initialBuilds,audit:window.P1_PLANO_DIAGNOSTICO.audit(),topology:window.P1_PLANO_DIAGNOSTICO.topology()})')
   assert node.get_attribute('transform')!=original
   assert after['edges']==before['edges']

@@ -110,7 +110,11 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.routeCalculations')==before
   assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.topology().crossings')==t['crossings']
   page.locator('[data-node-id="p1"]').evaluate('(e)=>e.dispatchEvent(new MouseEvent("click",{bubbles:true}))')
-  page.locator('#addBtn').click();page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.checkpoint>=2',timeout=30000)
+  # Importar el fixture puede haber avanzado ya la revisión: esperar un número
+  # absoluto lee a veces el estado anterior a añadir el nuevo concepto.
+  checkpoint_before=page.evaluate('window.P1_PLANO_DIAGNOSTICO.checkpoint')
+  page.locator('#addBtn').click()
+  page.wait_for_function('(previous)=>window.P1_PLANO_DIAGNOSTICO.checkpoint>previous&&window.P1_PLANO_DIAGNOSTICO.topology().referenceEdges===218',arg=checkpoint_before,timeout=30000)
   assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.pending')==0
   after=page.evaluate('window.P1_PLANO_DIAGNOSTICO.topology()')
   assert after['valid'] and after['referenceEdges']==218,after
