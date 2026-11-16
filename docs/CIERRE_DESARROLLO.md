@@ -1,4 +1,4 @@
-# Cierre de desarrollo · Fractalear 1.3.3
+# Cierre de desarrollo · Fractalear 1.3.4
 
 Fecha: **16 de noviembre de 2026**. El responsable da por terminado el desarrollo
 y descarta toda ruta futura que no forme parte de esta entrega. No hay funciones
@@ -21,6 +21,15 @@ Las ampliaciones descartadas del archivo histórico siguen descartadas. La
 bytes, estilos y resultados observados en la herramienta.
 Los comentarios del servidor explican las mismas reglas ya desplegadas; no
 requieren cambiar permisos ni volver a publicar el servicio de Google.
+
+La entrega 1.3.4 amplía ese mismo ejemplo a **200 conceptos y 201 vínculos**,
+incluyendo código, integraciones, interfaz y publicación. Conserva las seis
+ramas y las relaciones transversales originales. Se preparó a partir de la
+exportación del Editor, se completó el contenido en el mismo contrato JSON y
+se volvió a abrir en Fractalear para que la aplicación calculase y exportase
+su geometría completa. No se cambian los algoritmos ni el servicio de Google.
+La [evidencia de la ampliación](evidencias/EJEMPLO_PROGRAMA_1_3_4.json) registra
+la revisión de las tres vistas sin presentar los avisos normativos como aprobados.
 
 ## Alcance entregado
 
@@ -84,7 +93,7 @@ por cerrar el desarrollo ni se convierten en tareas futuras.
 La publicación exige las **111 pruebas Node y las cinco suites de Chrome**.
 Incluyen las firmas congeladas de las 217 rutas y del dibujo del caso histórico PPR,
 la identidad de archivos, la geometría, los Workers, las exportaciones y el
-consentimiento del guardado público. La etiqueta `v1.3.3` se crea desde la
+consentimiento del guardado público. La etiqueta `v1.3.4` se crea desde la
 comprobación de la publicación, sin sustituir etiquetas anteriores.
 
 La prueba real de la biblioteca en 1.3.1 guardó y recuperó exactamente **749

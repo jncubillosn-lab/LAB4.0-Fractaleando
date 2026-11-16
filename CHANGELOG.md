@@ -1,5 +1,14 @@
 # Registro de cambios
 
+## 1.3.4 — 16 de noviembre de 2026 · ejemplo técnico de 200 conceptos
+
+- El mismo fractal del programa crece a 200 conceptos y 201 vínculos,
+  conservando seis ramas, los estilos y sus dos relaciones transversales.
+- Explica responsabilidades de código, Workers, cachés, enrutamiento,
+  archivos, consentimiento, Drive, navegación y publicación.
+- Documento vuelto a abrir y exportar desde Fractalear; se revisan sus tres
+  vistas con las mismas comprobaciones, sin cambiar el motor ni sus firmas.
+
 ## 1.3.3 — 16 de noviembre de 2026 · código explicado y ejemplo del programa
 
 - Comentarios de funcionamiento y decisiones en 28 módulos: identidad,
