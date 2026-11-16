@@ -1,3 +1,9 @@
+/**
+ * La identidad pertenece al concepto, no a su texto ni a su posición.
+ * edgeKey trata cada pareja como un vínculo único en ambas direcciones.
+ * El contador se contrasta con los IDs presentes: importar o deshacer no permite
+ * reutilizar por accidente un identificador que sigue dentro del documento.
+ */
 // Identity is independent of labels, geometry and direction of an edge.
 export const edgeKey = edge => [edge.from, edge.to].sort().map(encodeURIComponent).join('|');
 

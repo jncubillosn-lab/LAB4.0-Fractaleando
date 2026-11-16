@@ -1,3 +1,10 @@
+/**
+ * Transporte de la biblioteca; construir el cliente no consulta Google.
+ * save, list y read son operaciones separadas. Un guardado solo se confirma
+ * con una respuesta JSON legible; no se acepta una respuesta opaca como éxito.
+ * Los reintentos conservan el requestId recibido de la interfaz. El cliente
+ * no recibe credenciales del propietario ni selecciona una carpeta de Drive.
+ */
 export function validLibraryUrl(value){
  try{const url=new URL(value);return url.origin==='https://script.google.com'&&/^\/macros\/s\/[a-zA-Z0-9_-]+\/exec$/.test(url.pathname)&&!url.search&&!url.hash;}
  catch{return false;}

@@ -1,3 +1,10 @@
+/**
+ * Flujo de consentimiento y catálogo, separado del transporte de Google.
+ * terms explica el acceso público; name prepara la instantánea; confirm espera
+ * una decisión explícita. Solo el botón Sí llama a saveConfirmed y client.save.
+ * No, Escape, cierre y exportación local no envían el diagrama. Durante el envío
+ * se bloquean dobles activaciones y el reintento mantiene la misma solicitud.
+ */
 import {createPublicLibrary,validLibraryUrl} from '../io/PublicLibrary.js';
 
 export function bindPublicLibrary({config,saveButton,openButton,group,dialog,graphFiles,documentKey,toast,

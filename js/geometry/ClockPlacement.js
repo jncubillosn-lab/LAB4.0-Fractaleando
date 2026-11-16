@@ -1,3 +1,9 @@
+/**
+ * Propone la posición de un hijo sin quitar la selección al padre.
+ * La secuencia avanza 3:30 horas y compara dos direcciones candidatas según
+ * el espacio libre. La búsqueda usa cuadros y segmentos ya existentes para
+ * evitar que cumplir una dirección obligue siempre a alejar el nuevo concepto.
+ */
 // Seven half-hour ticks: 12, 3:30, 7, 10:30, 2, ...
 export const nextClockIndex=children=>Math.max(children.length,...children.map(n=>
  Number.isInteger(n.clockStep)&&n.clockStep>=0?n.clockStep+1:0));

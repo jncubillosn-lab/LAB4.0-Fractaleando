@@ -1,3 +1,10 @@
+/**
+ * Reglas del servicio, independientes del adaptador de Google.
+ * La lista de operaciones permite crear una copia, listar y leer; no hay
+ * borrado ni sobrescritura. La carpeta procede del servidor, nunca del cliente.
+ * Dentro del bloqueo se busca el requestId y se compara el resumen del
+ * contenido antes de crear. Validar el JSON no modifica el texto almacenado.
+ */
 import {parseGraphFile} from '../js/io/GraphFile.js';
 
 const MIME='application/json';

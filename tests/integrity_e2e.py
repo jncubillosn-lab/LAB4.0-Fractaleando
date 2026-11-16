@@ -63,7 +63,8 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   page.evaluate('()=>{window.__resumeRouting();delete window.__resumeRouting}')
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.initialBuilds===1&&document.querySelectorAll("#nodes .node").length===1',timeout=30000)
   assert page.locator('#loadingIndicator').is_hidden()
-  page.locator('#resetBtn').click()
+  # El caso PPR permanece como regresión; Ejemplo ahora enseña el programa.
+  page.locator('#fileInput').set_input_files(str(Path(__file__).parent/'fixtures'/'ppr-document.json'))
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===217',timeout=60000)
   def graph():
    with page.expect_download() as d:page.locator('#jsonBtn').click()

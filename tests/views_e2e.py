@@ -21,7 +21,7 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   print('E2E: abriendo sitio construido',flush=True)
   page.goto('http://127.0.0.1:'+str(srv.server_address[1])+'/index.html',wait_until='domcontentloaded')
   build=page.locator('meta[name="application-build"]').get_attribute('content')
-  assert '1.3.2' in page.locator('meta[name="application-version"]').get_attribute('content')
+  assert '1.3.3' in page.locator('meta[name="application-version"]').get_attribute('content')
   page.wait_for_function('[...document.fonts].filter(f=>f.family==="Rajdhani"&&f.status==="loaded").length===2')
   def check_labels(selector):
    labels=page.locator(selector).evaluate_all("""els=>els.map(el=>{
@@ -42,7 +42,8 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    assert all(l['wholeWords'] for l in labels),[l for l in labels if not l['wholeWords']]
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.initialBuilds===1&&document.querySelectorAll("#nodes .node").length===1',timeout=30000)
   check_labels('#nodes .node')
-  page.locator('#resetBtn').click()
+  # El caso PPR permanece como regresión; Ejemplo ahora enseña el programa.
+  page.locator('#fileInput').set_input_files(str(Path(__file__).parent/'fixtures'/'ppr-document.json'))
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===217',timeout=60000)
   page.locator('#showAllBtn').click()
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO?.routes===217',timeout=60000)
@@ -184,5 +185,26 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
    assert gap<=5,{'zoom':zoom,'white_gap_pixels':gap}
   page.locator('#crossing-probe').evaluate('(el)=>el.remove()')
   print('Cruces rasterizados: halo proporcional estable en cuatro escalas',flush=True)
+  # El ejemplo público usa el archivo real exportado desde la herramienta.
+  # El caso histórico anterior sigue comprobado arriba, con sus firmas intactas.
+  page.locator('#resetBtn').click()
+  page.wait_for_function('document.querySelectorAll("#nodes .node").length===63&&window.P1_PLANO_DIAGNOSTICO.routes===64&&document.querySelector("#loadingIndicator").hidden',timeout=30000)
+  assert page.locator('#nodes [data-node-id=p1]').get_attribute('aria-label')=='Fractalear · ideas que se vuelven relaciones'
+  assert page.locator('#depth').input_value()==page.locator('#depth').get_attribute('max')
+  assert page.evaluate('window.P1_PLANO_DIAGNOSTICO.audit().boxes+window.P1_PLANO_DIAGNOSTICO.audit().invalid')==0
+  check_labels('#nodes .node')
+  for example_mode in ('02','04'):
+   page.locator('[data-view="'+example_mode+'"]').click()
+   page.wait_for_function('(mode)=>window.P1_PLANO_DIAGNOSTICO.views().current?.mode===mode',arg=example_mode,timeout=120000)
+   example_result=page.evaluate('window.P1_PLANO_DIAGNOSTICO.views().current')
+   assert example_result['nodes']==63 and example_result['pending']==0,example_result
+   assert example_result['audit']['drawn']==64 and example_result['audit']['invalid']==0,example_result
+   assert example_result['audit']['boxes']==0,example_result
+   check_labels('#derivedNodes .node')
+   if output:page.screenshot(path=str(Path(output)/('Fractalear_programa_'+example_mode+'.png')))
+  assert any('/js/data/examples/fractalear.json?build='+build in url for url in requests),requests
+  assert not bad,bad
+  assert not errors,errors
+  print('Ejemplo del programa: 63 conceptos y 64 vínculos, sin solapes ni rutas inválidas en las tres representaciones.',flush=True)
   browser.close()
  srv.shutdown()

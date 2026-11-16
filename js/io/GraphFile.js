@@ -1,3 +1,10 @@
+/**
+ * Contrato común de los JSON locales, el ejemplo y la biblioteca.
+ * Primero se valida todo el grafo y después se permite reemplazar el lienzo.
+ * Los IDs, extremos, estilos y parentescos deben ser coherentes. Las cachés
+ * geométricas son opcionales: descartarlas no autoriza borrar conceptos.
+ * Se devuelve el documento validado conservando sus campos y sin renombrarlos.
+ */
 import {validLinkStyle} from '../ui/LinkStyles.js';
 import {edgeKey} from '../core/GraphIdentity.js';
 

@@ -1,8 +1,12 @@
 # Documentación de Fractalear
 
-**Versión final: 1.3.2 · desarrollo cerrado el 16 de noviembre de 2026.**
+**Versión final: 1.3.3 · desarrollo cerrado el 16 de noviembre de 2026.**
 
-[Abrir Fractalear](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/?v=1.3.2).
+[Abrir Fractalear](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/?v=1.3.3).
+
+El botón **Ejemplo** abre ahora el fractal del propio programa, creado con la
+herramienta. El código incluye comentarios de responsabilidad y decisiones en
+las capas que coordinan datos, geometría, presentación, archivos y biblioteca.
 
 ## Referencias de la entrega
 

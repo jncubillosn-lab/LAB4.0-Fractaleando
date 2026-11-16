@@ -1,3 +1,10 @@
+/**
+ * Controlador de Compacto y Espiral, vistas de lectura del mismo documento.
+ * Cada escena se identifica por grafo, geometría de 01, referencia topológica
+ * y versión del algoritmo. Una caché de otra identidad no puede recuperarse.
+ * Cambiar de vista cancela el trabajo anterior. Dibujar todas las rutas no
+ * equivale a aprobar la topología: el informe de revisión se conserva visible.
+ */
 import {RadialLayout} from '../geometry/RadialLayout.js';
 import {ViewLayouts} from '../geometry/ViewLayouts.js';
 import {SvgRenderer} from '../ui/SvgRenderer.js';

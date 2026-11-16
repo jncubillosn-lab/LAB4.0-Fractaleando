@@ -1,5 +1,16 @@
 # Registro de cambios
 
+## 1.3.3 — 16 de noviembre de 2026 · código explicado y ejemplo del programa
+
+- Comentarios de funcionamiento y decisiones en 28 módulos: identidad,
+  geometría, presentación, tareas, archivos y biblioteca.
+- Nuevo ejemplo de Fractalear, construido con sus controles y exportado a JSON:
+  63 conceptos, seis ramas, 64 vínculos y los tres estilos de conexión.
+- Lectura del ejemplo bajo demanda, con el mismo contrato de los archivos;
+  cancelación y protección frente a una edición más reciente.
+- El PPR se conserva como fixture de regresión, sin debilitar las firmas
+  históricas del dibujo ni de sus 217 rutas.
+
 ## 1.3.2 — 16 de noviembre de 2026 · cierre definitivo de desarrollo
 
 - Se cierra el desarrollo por decisión del responsable. Toda propuesta no

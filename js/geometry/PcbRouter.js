@@ -1,3 +1,10 @@
+/**
+ * Busca un recorrido independiente para cada vínculo entre sus dos puertos.
+ * Los cuadros y los tramos ya ocupados son obstáculos; una conexión puede
+ * cruzar otra, pero no compartir un carril para aparentar menos relaciones.
+ * Si se agota la búsqueda devuelve null. El vínculo permanece en el documento
+ * y la interfaz informa de la ruta pendiente; el auditor comprueba el resultado.
+ */
 import {routeSegments,segmentAxis,segmentIntersection as exactIntersection,segmentEntersRect as exactClip,
  fastSegmentIntersection,fastSegmentEntersRect,leavesRect} from './SegmentGeometry.js';
 import {circuitRelation} from './CircuitGeometry.js';
@@ -7,6 +14,8 @@ import {assignOrderedPorts} from './OrderedPorts.js';
 // extracted from the last approved R01 implementation, not a retired engine.
 export class PcbRouter {
  constructor({state,nodeById,clamp,mode='01',deadline=Infinity,allowBendCrossings=false}){
+  // Distancias en unidades del lienzo: margen de cuadros, separación entre
+  // trazos paralelos y tramo inicial del puerto. El zoom solo cambia el dibujo.
   const ROUTE_CLEAR=9, ROUTE_SEPARATION=mode==='01'?6:3, PORT_STUB=19;
   const CROSS_CLEAR=mode==='01'?9:3;
   const segmentIntersection=mode==='01'?fastSegmentIntersection:exactIntersection;
@@ -15,8 +24,8 @@ export class PcbRouter {
   function prefSide(node,other,edge,box,otherBox){
    if(mode==='02'||mode==='04'){
     const dx=other.x-node.x,dy=other.y-node.y;
-    // Compact 02 needs physical face clearance. Keep 04's established lane
-    // policy while its global topology/routing replacement is still pending.
+    // Compacto compara la separación física entre caras. Espiral conserva su
+    // política de carriles para mantener la geometría de esta versión.
     if(mode==='02'&&box&&otherBox){
      const gapX=Math.abs(dx)-(box.w+otherBox.w)/2,gapY=Math.abs(dy)-(box.h+otherBox.h)/2;
      return gapX>gapY?(dx>0?'right':'left'):(dy>0?'bottom':'top');

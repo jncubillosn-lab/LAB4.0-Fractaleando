@@ -1,3 +1,10 @@
+/**
+ * Modelo de lectura del documento compartido por las tres representaciones.
+ * parent define la jerarquía; una conexión transversal no cambia el parentesco.
+ * Los índices se obtienen del estado actual para que editar, importar o deshacer
+ * no reutilice una jerarquía obsoleta. Los huérfanos y ciclos heredados se muestran
+ * sin inventar relaciones para hacerlos encajar en un árbol.
+ */
 // J0/Jn domain, independent from SVG and routing. Build each traversal's
 // index from current data; mutable document arrays must never leave stale caches.
 export class GraphDocument {

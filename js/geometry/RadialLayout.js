@@ -1,3 +1,9 @@
+/**
+ * Adaptador de distribución compacta y auditoría de sus coordenadas reales.
+ * La colocación en rayos y la comprobación son pasos distintos: tener cuadros
+ * sin solapes no elimina las diferencias topológicas o de distancia. signature
+ * permite detectar si el grafo cambió mientras se calculaba otra representación.
+ */
 // Packed radial candidate; no edits to the graph or 01 coordinates.
 // The independent audit retains the historical 2H/sector diagnostics.
 // A compact, physically safe preview does not imply normative acceptance.

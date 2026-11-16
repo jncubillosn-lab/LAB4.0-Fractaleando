@@ -1,3 +1,10 @@
+/**
+ * Construye una escena completa: coloca cuadros, calcula rutas y audita.
+ * Si un corredor no tiene capacidad, solicita espacio local y vuelve a probar
+ * con un presupuesto finito. No promete encontrar el óptimo de cualquier grafo.
+ * La espiral usa la base compacta ya calculada, conservando conceptos y vínculos.
+ * Los biseles se verifican sobre las trayectorias finales que verá el usuario.
+ */
 import {ViewLayouts} from './ViewLayouts.js';
 import {computeAvoidRoutes} from './AvoidRouter.js';
 import {bevelRoutes} from './CircuitRoutes.js';

@@ -20,7 +20,7 @@ await rm(out,{recursive:true,force:true});
 for(const [path,data] of files){
  let content=data;
  if(/\.(?:js|html|css)$/.test(path)){
-  content=data.toString('utf8').replace(/(['"])(\.{1,2}\/[^'"\s?]+\.(?:js|css|wasm|ttf|txt|gif|png|svg))\1/g,(_,q,url)=>`${q}${url}?build=${build}${q}`);
+  content=data.toString('utf8').replace(/(['"])(\.{1,2}\/[^'"\s?]+\.(?:js|css|wasm|ttf|txt|gif|png|svg|json))\1/g,(_,q,url)=>`${q}${url}?build=${build}${q}`);
   if(path==='index.html')content=content.replace('</head>',`<meta name="application-build" content="${build}">\n</head>`);
  }
  await mkdir(dirname(join(out,path)),{recursive:true});await writeFile(join(out,path),content);

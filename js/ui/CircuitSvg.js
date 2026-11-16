@@ -1,3 +1,10 @@
+/**
+ * Dibuja rutas existentes y sus cruces, sin solicitar otro enrutamiento.
+ * La máscara de la línea inferior copia el trazo superior, incluidos giros
+ * y guiones. El ancho de corte es tres veces ese trazo: un grosor antes,
+ * el propio grosor cruzado y otro después. El zoom y la selección reajustan
+ * la máscara para conservar esa lectura y no dejar huecos huérfanos.
+ */
 import {routeCrossings} from '../geometry/CircuitGeometry.js';
 import {hierarchyStrokeProfile} from './HierarchyStroke.js';
 import {linkStyle,linkPattern} from './LinkStyles.js';

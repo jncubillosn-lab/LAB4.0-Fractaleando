@@ -1,3 +1,9 @@
+/**
+ * Distribución inicial cuando no hay una geometría recuperable.
+ * Trabaja con medidas obtenidas en el navegador y devuelve posiciones, sin
+ * pintar ni modificar relaciones. Después, los movimientos del usuario se
+ * resuelven de forma incremental y no vuelven a llamar a esta distribución.
+ */
 // Initial Editor placement. Receives measured dimensions; no DOM, routing
 // or persistent document mutation. Kept separate from edit reconciliation.
 export function layoutPlane(visible,geometry){

@@ -1,3 +1,10 @@
+/**
+ * Fuente fija y cuadros adaptables: las palabras se mantienen completas.
+ * Se miden ambos pesos de Rajdhani para que seleccionar no corte el texto.
+ * La caché pertenece al contexto de medición y tiene un límite de tamaño.
+ * Al cargar la fuente real se eliminan las medidas del tipo de respaldo.
+ * Los mismos bytes de fuente se incorporan a los archivos exportados.
+ */
 export const NODE_FONT='Rajdhani';
 export const NODE_FONT_SIZE=24;
 let embeddedCss='';

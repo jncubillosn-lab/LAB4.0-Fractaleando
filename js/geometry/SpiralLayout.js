@@ -1,3 +1,10 @@
+/**
+ * Transforma las coordenadas compactas en un giro plano de brazos.
+ * W=0.25 es el coeficiente interno de giro, armWidthFactor=0.85 estrecha
+ * la apertura y T=0 mantiene el plano. W no es la expansión biológica de Raup.
+ * Las correcciones locales evitan solapes; no se escala el grafo completo
+ * ni se cambia el parentesco para ocultar un problema de colocación.
+ */
 import {rayRect} from './RayPackingLayout.js';
 import {ownValue} from '../core/GraphIdentity.js';
 
@@ -16,6 +23,8 @@ export class SpiralLayout {
   const lengths=edges.filter(e=>byId.get(e.to)?.parent===e.from).map(e=>{
    const a=base.positions.get(e.from),b=base.positions.get(e.to);return Math.hypot(a.x-b.x,a.y-b.y);
   }).sort((a,b)=>a-b);
+  // La longitud mediana normaliza el giro para distintos tamaños de cuadros;
+  // W no se interpreta como un ángulo fijo por generación ni como expansión biológica.
   const twistScale=lengths.length?lengths[Math.floor(lengths.length/2)]:100,kappa=W/twistScale;
   const polar=new Map([...base.positions].map(([id,p])=>[id,{r:Math.hypot(p.x,p.y),a:Math.atan2(p.y,p.x)}]));
   const positions=new Map([['p1',{x:0,y:0}]]),rects=new Map([['p1',rayRect('p1',{x:0,y:0},metrics.get('p1'))]]);
