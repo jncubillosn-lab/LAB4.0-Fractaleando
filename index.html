@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="application-version" content="fractalear-1.3.0">
+<meta name="application-version" content="fractalear-1.3.1">
 <title>Fractalear · LAB 4.0 · Universidad Nacional</title>
 <link rel="icon" type="image/svg+xml" sizes="any" href="./css/images/favicon.svg">
 <link rel="stylesheet" href="./css/interfaz.css">
@@ -15,7 +15,7 @@
   <nav class="view-nav" aria-label="Representaciones"><button type="button" data-view="01" class="view-tab selected" aria-pressed="true">01 · Editor</button><button type="button" data-view="02" class="view-tab" aria-pressed="false">02 · Compacto</button><button type="button" data-view="04" class="view-tab" aria-pressed="false">03 · Espiral</button></nav>
   <div class="top-actions">
    <div class="session-actions" role="group" aria-label="Diagrama y apariencia"><button class="smallbtn" id="themeBtn" title="Alternar modo oscuro" aria-pressed="false">Oscuro</button><button class="smallbtn" id="undoBtn" title="Deshacer (Ctrl+Z)">Deshacer</button><button class="smallbtn" id="newBtn" title="Nuevo diagrama con un solo núcleo">Nuevo</button><button class="smallbtn" id="resetBtn" title="Consultar el ejemplo completo">Ejemplo</button></div>
-   <div class="file-actions" role="group" aria-label="Archivo"><span id="libraryActions" class="library-actions" hidden><button id="cloudSaveBtn" class="smallbtn">Guardar</button><button id="libraryBtn" class="smallbtn">Biblioteca</button></span><button id="jsonBtn" class="smallbtn">Guardar JSON</button><button id="loadBtn" class="smallbtn">Abrir JSON</button><button id="svgBtn" class="smallbtn" aria-label="Exportar vista SVG" title="Exportar la vista actual como SVG">SVG</button><button id="pngBtn" class="smallbtn" aria-label="Exportar grafo completo PNG 4K" title="Exportar todos los conceptos y vínculos de esta representación en PNG 4K">PNG 4K</button><input type="file" id="fileInput" accept="application/json,.json" hidden></div>
+   <div class="file-actions" role="group" aria-label="Archivo"><span id="libraryActions" class="library-actions" hidden><button id="cloudSaveBtn" class="smallbtn">Guardar</button><button id="libraryBtn" class="smallbtn">Biblioteca</button></span><button id="jsonBtn" class="smallbtn">Exportar JSON</button><button id="loadBtn" class="smallbtn">Importar JSON</button><button id="svgBtn" class="smallbtn" aria-label="Exportar vista SVG" title="Exportar la vista actual como SVG">SVG</button><button id="pngBtn" class="smallbtn" aria-label="Exportar grafo completo PNG 4K" title="Exportar todos los conceptos y vínculos de esta representación en PNG 4K">PNG</button><input type="file" id="fileInput" accept="application/json,.json" hidden></div>
   </div>
  </header>
  <div class="body">
@@ -43,12 +43,35 @@
    <div class="toast" id="toast" role="status"></div>
   </main>
  </div>
- <footer class="foot"><span id="footHint">Edición de conceptos · representación plana</span><span id="viewState">01 · EDITABLE</span><span>Fractalear &nbsp;·&nbsp; LAB 4.0 &nbsp;·&nbsp; v1.3.0</span></footer>
+ <footer class="foot"><span id="footHint">Edición de conceptos · representación plana</span><span id="viewState">01 · EDITABLE</span><span>Fractalear &nbsp;·&nbsp; LAB 4.0 &nbsp;·&nbsp; v1.3.1</span></footer>
 </div>
 <dialog id="libraryDialog" class="library-dialog" aria-labelledby="libraryTitle">
- <div class="library-heading"><h2 id="libraryTitle" data-library-title>Biblioteca pública</h2><button type="button" data-library-close aria-label="Cerrar biblioteca">×</button></div>
- <form><label for="libraryName">Nombre del archivo</label><input id="libraryName" name="name" type="text" required autocomplete="off"><button class="action primary" type="submit">Guardar</button></form>
- <ul data-library-list></ul><button class="action" type="button" data-library-more hidden>Ver más</button>
+ <div class="library-heading"><div><p class="library-step" data-library-step hidden></p><h2 id="libraryTitle" data-library-title>Biblioteca pública</h2></div><button type="button" data-library-close aria-label="Cerrar biblioteca">×</button></div>
+ <section data-library-panel="terms" hidden>
+  <div class="library-warning"><p><strong>Guardar en la biblioteca es opcional y hace público tu archivo.</strong></p><p>Cualquier persona podrá consultarlo, descargarlo y editar una copia. La biblioteca es un espacio de construcción colectiva; las nuevas versiones se guardan como copias, sin sobrescribir tu archivo.</p></div>
+  <p>Evita publicar nombres de personas, datos de contacto u otra información privada, propia o de terceros, tanto en el diagrama como en su nombre.</p>
+  <h3>Tu diagrama se trabaja en tu dispositivo</h3><p>La creación, edición, importación y exportación se realizan en tu navegador. Fractalear no envía el contenido de tu diagrama al LAB ni a la biblioteca hasta que confirmas el guardado público. No necesitas una cuenta.</p>
+  <h3>¿Prefieres conservarlo en privado?</h3><p>Elige <strong>Exportar JSON</strong> para descargarlo en tu dispositivo, sin publicarlo. Después podrás continuar tu trabajo con <strong>Importar JSON</strong>. Esta opción conserva el diagrama completo.</p>
+  <h3>Si necesitas solicitar una eliminación</h3><p>Escribe a <a href="mailto:jeducubillosn@gmail.com">jeducubillosn@gmail.com</a> e indica el nombre del archivo y su fecha aproximada de publicación. Retirarlo de la biblioteca no elimina las copias que otras personas ya hayan descargado.</p>
+  <details class="library-connection"><summary>Sobre las conexiones de la herramienta</summary><p>Consultar la biblioteca o abrir uno de sus trabajos conecta con Google. Al visitar la página, el alojamiento registra la dirección IP por seguridad. Eso es distinto del envío del contenido de tu diagrama, que requiere confirmar el guardado.</p></details>
+  <div class="library-footer"><p class="library-help">Guardar te lleva al nombre del archivo. Aún no se enviará nada.</p><div class="library-buttons"><button class="action" type="button" data-library-export>Exportar JSON</button><button class="action primary" type="button" data-library-continue>Guardar</button></div></div>
+ </section>
+ <form data-library-panel="name" hidden>
+  <p>Se guardará una copia nueva en la biblioteca pública. Solo necesitas darle un nombre.</p>
+  <label for="libraryName">Nombre del archivo</label><input id="libraryName" name="name" type="text" required autocomplete="off" aria-describedby="libraryNameHelp">
+  <p class="library-help" id="libraryNameHelp">El nombre también será público. Evita incluir datos personales. Se añadirá la extensión .json si hace falta.</p>
+  <p>Aunque exista otro archivo con este nombre, se creará una copia nueva.</p>
+  <div class="library-footer"><p class="library-help">Antes de enviar, verás una última confirmación.</p><div class="library-buttons"><button class="action" type="button" data-library-back>Volver</button><button class="action primary" type="submit">Guardar</button></div></div>
+ </form>
+ <section data-library-panel="confirm" hidden>
+  <div class="library-filename"><span>Archivo que vas a publicar</span><p data-library-filename></p></div>
+  <p><strong>Al pulsar «Sí», permites el acceso público a este archivo.</strong></p>
+  <p>Cualquier persona podrá consultarlo, descargarlo y editar una copia. No es un guardado privado.</p>
+  <p>¿Confirmas que quieres compartirlo en la biblioteca pública?</p>
+  <div class="library-footer"><p class="library-help">Si eliges «No», no se enviará nada y volverás al nombre del archivo.</p><div class="library-buttons"><button class="action" type="button" data-library-no>No</button><button class="action primary" type="button" data-library-yes>Sí</button></div></div>
+ </section>
+ <section data-library-panel="done" hidden><p data-library-receipt></p><div class="library-footer library-buttons"><button class="action primary" type="button" data-library-done>Chao, un abracito a la distancia</button></div></section>
+ <section data-library-panel="list" hidden><ul data-library-list></ul><button class="action" type="button" data-library-more hidden>Ver más</button></section>
  <p role="status" aria-live="polite"></p>
 </dialog>
 <script type="module" src="./js/app.js"></script>

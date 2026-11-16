@@ -1,6 +1,6 @@
 # Guía de uso de Fractalear
 
-Referencia: **1.1.0 · 15 de noviembre de 2026**.
+Referencia: **1.3.1 · 16 de noviembre de 2026**.
 
 [Abrir la aplicación](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/) ·
 [Estado y decisiones de la versión](VERSION_1_0_0.md).
@@ -65,15 +65,19 @@ pendientes deben leerse como el estado del resultado mostrado.
 
 ## Guardar y compartir
 
-**Guardar** abre un formulario con un único campo: el nombre del archivo.
-Envía el mismo JSON actual a la biblioteca pública. Cada guardado crea una
+**Guardar** presenta las condiciones de la biblioteca pública y permite elegir
+**Exportar JSON** para conservar una copia local sin publicarla. Si eliges
+continuar, solicita únicamente el nombre y muestra una confirmación final.
+**Solo pulsar «Sí» en esa tercera ventana envía el JSON actual a la biblioteca.**
+«No» vuelve al nombre sin enviar nada; cerrar o pulsar Escape también cancela.
+Cada guardado crea una
 copia nueva; un nombre repetido no sobrescribe la anterior. La herramienta
 confirma cuando el servicio devuelve el identificador del archivo guardado.
 
 **Biblioteca** muestra los diagramas disponibles. Pulsa un nombre para abrirlo;
 se solicitará confirmación antes de sustituir el trabajo actual. Los archivos
 de la biblioteca son públicos para todos los visitantes. Los botones locales
-**Guardar JSON** y **Abrir JSON** siguen disponibles.
+**Exportar JSON** y **Importar JSON** siguen disponibles.
 
 Las acciones de archivo se encuentran en la barra superior. La esquina inferior
 del lienzo reúne los cuatro símbolos de cámara en una sola fila. El círculo con
@@ -84,10 +88,10 @@ Las flechas permiten recorrer las diecisiete citas en su secuencia habitual.
 
 | Acción | Uso |
 | --- | --- |
-| **Guardar JSON** | Conservar el trabajo editable, incluidos sus conceptos, vínculos y estados geométricos disponibles. |
-| **Abrir JSON** | Continuar un archivo guardado; sustituye el grafo mostrado tras validar la entrada. |
+| **Exportar JSON** | Conservar el trabajo editable, incluidos sus conceptos, vínculos y estados geométricos disponibles. |
+| **Importar JSON** | Continuar un archivo guardado; sustituye el grafo mostrado tras validar la entrada. |
 | **SVG** | Obtener la representación vectorial actual, con fuente y estilos incorporados. |
-| **PNG 4K** | Obtener una imagen de toda la representación activa, aunque una parte esté fuera de pantalla u oculta por el filtro. El lado mayor mide 4096 píxeles y se conserva la proporción. |
+| **PNG** | Obtener una imagen de toda la representación activa, aunque una parte esté fuera de pantalla u oculta por el filtro. El lado mayor mide 4096 píxeles y se conserva la proporción. |
 
 Usa JSON para seguir editando. Guarda el trabajo antes de iniciar otro diagrama
 o cargar un ejemplo. SVG y PNG sirven como representaciones visuales.

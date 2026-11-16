@@ -1,4 +1,4 @@
-# Biblioteca pública · Fractalear 1.3.0
+# Biblioteca pública · Fractalear 1.3.1
 
 Servicio autorizado por el propietario y desplegado el 16 de noviembre de 2026.
 La conexión anónima fue comprobada con el candidato bajo el origen real de Pages;
@@ -14,11 +14,18 @@ La URL pública está en `js/data/LibraryConfig.js`; no contiene credenciales.
 
 ## Contrato conservado
 
-Guardar JSON y Guardar en biblioteca usan la misma función de serialización:
+Exportar JSON y Guardar en biblioteca usan la misma función de serialización:
 `JSON.stringify(snapshot(), null, 2)`, después de consolidar la edición pendiente.
 El servicio analiza el archivo para validarlo y guarda el texto recibido intacto.
 No elimina campos, posiciones, rutas ni sangrías. El nombre es el único campo
-que introduce el visitante. La carpeta no se recibe desde el navegador.
+que introduce el visitante. Antes de escribirlo se presentan las condiciones
+de publicación y la alternativa de exportar localmente; después se muestra
+una confirmación explícita. Solo el botón «Sí» del tercer paso llama al servicio.
+Avanzar, elegir «No», cerrar, pulsar Escape o exportar no envía el diagrama.
+El cierre tras un resultado dice «Chao, un abracito a la distancia».
+El aviso incluye el correo para solicitar una eliminación y distingue el
+procesamiento local de las consultas a la biblioteca. No incluye enlaces al
+repositorio ni al alojamiento. La carpeta no se recibe desde el navegador.
 
 Cada guardado deliberado crea un archivo nuevo. Nombres iguales no sobrescriben.
 Los reintentos conservan el identificador de la petición y recuperan la misma

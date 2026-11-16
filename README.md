@@ -3,7 +3,7 @@
 Una herramienta desarrollada por el LAB 4.0 de la Universidad Nacional para
 construir conceptos, desarrollar sus jerarquías y representar sus relaciones.
 
-**[Abrir Fractalear](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/?v=1.3.0)**
+**[Abrir Fractalear](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/?v=1.3.1)**
 
 ## Comenzar
 
@@ -13,7 +13,7 @@ La herramienta abre en **01 Editor** con un único núcleo seleccionado:
 **Ejemplo** permite consultar el ejemplo completo.
 
 Usa **02 Compacto** y **03 Espiral** para leer el mismo grafo en otras
-distribuciones. **Guardar JSON** conserva el trabajo editable; SVG y PNG 4K
+distribuciones. **Exportar JSON** conserva el trabajo editable; SVG y PNG 4K
 permiten compartir su representación.
 
 La barra superior reúne las acciones de archivo. Los controles de encuadre
