@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="application-version" content="fractalear-1.2.7">
+<meta name="application-version" content="fractalear-1.3.0">
 <title>Fractalear · LAB 4.0 · Universidad Nacional</title>
 <link rel="icon" type="image/svg+xml" sizes="any" href="./css/images/favicon.svg">
 <link rel="stylesheet" href="./css/interfaz.css">
@@ -15,7 +15,7 @@
   <nav class="view-nav" aria-label="Representaciones"><button type="button" data-view="01" class="view-tab selected" aria-pressed="true">01 · Editor</button><button type="button" data-view="02" class="view-tab" aria-pressed="false">02 · Compacto</button><button type="button" data-view="04" class="view-tab" aria-pressed="false">03 · Espiral</button></nav>
   <div class="top-actions">
    <div class="session-actions" role="group" aria-label="Diagrama y apariencia"><button class="smallbtn" id="themeBtn" title="Alternar modo oscuro" aria-pressed="false">Oscuro</button><button class="smallbtn" id="undoBtn" title="Deshacer (Ctrl+Z)">Deshacer</button><button class="smallbtn" id="newBtn" title="Nuevo diagrama con un solo núcleo">Nuevo</button><button class="smallbtn" id="resetBtn" title="Consultar el ejemplo completo">Ejemplo</button></div>
-   <div class="file-actions" role="group" aria-label="Archivo"><button id="jsonBtn" class="smallbtn">Guardar JSON</button><button id="loadBtn" class="smallbtn">Abrir JSON</button><button id="svgBtn" class="smallbtn" aria-label="Exportar vista SVG" title="Exportar la vista actual como SVG">SVG</button><button id="pngBtn" class="smallbtn" aria-label="Exportar grafo completo PNG 4K" title="Exportar todos los conceptos y vínculos de esta representación en PNG 4K">PNG 4K</button><input type="file" id="fileInput" accept="application/json,.json" hidden></div>
+   <div class="file-actions" role="group" aria-label="Archivo"><span id="libraryActions" class="library-actions" hidden><button id="cloudSaveBtn" class="smallbtn">Guardar</button><button id="libraryBtn" class="smallbtn">Biblioteca</button></span><button id="jsonBtn" class="smallbtn">Guardar JSON</button><button id="loadBtn" class="smallbtn">Abrir JSON</button><button id="svgBtn" class="smallbtn" aria-label="Exportar vista SVG" title="Exportar la vista actual como SVG">SVG</button><button id="pngBtn" class="smallbtn" aria-label="Exportar grafo completo PNG 4K" title="Exportar todos los conceptos y vínculos de esta representación en PNG 4K">PNG 4K</button><input type="file" id="fileInput" accept="application/json,.json" hidden></div>
   </div>
  </header>
  <div class="body">
@@ -43,8 +43,14 @@
    <div class="toast" id="toast" role="status"></div>
   </main>
  </div>
- <footer class="foot"><span id="footHint">Edición de conceptos · representación plana</span><span id="viewState">01 · EDITABLE</span><span>Fractalear &nbsp;·&nbsp; LAB 4.0 &nbsp;·&nbsp; v1.2.7</span></footer>
+ <footer class="foot"><span id="footHint">Edición de conceptos · representación plana</span><span id="viewState">01 · EDITABLE</span><span>Fractalear &nbsp;·&nbsp; LAB 4.0 &nbsp;·&nbsp; v1.3.0</span></footer>
 </div>
+<dialog id="libraryDialog" class="library-dialog" aria-labelledby="libraryTitle">
+ <div class="library-heading"><h2 id="libraryTitle" data-library-title>Biblioteca pública</h2><button type="button" data-library-close aria-label="Cerrar biblioteca">×</button></div>
+ <form><label for="libraryName">Nombre del archivo</label><input id="libraryName" name="name" type="text" required autocomplete="off"><button class="action primary" type="submit">Guardar</button></form>
+ <ul data-library-list></ul><button class="action" type="button" data-library-more hidden>Ver más</button>
+ <p role="status" aria-live="polite"></p>
+</dialog>
 <script type="module" src="./js/app.js"></script>
 </body>
 </html>

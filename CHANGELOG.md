@@ -1,5 +1,14 @@
 # Registro de cambios
 
+## 1.3.0 — 16 de noviembre de 2026
+
+- Añade un servicio limitado a una carpeta fija, con altas de archivos nuevos,
+  listado paginado y apertura. El visitante introduce únicamente el nombre.
+- Comparte la serialización y apertura actuales: conserva el JSON exacto.
+- Comprueba permisos de carpeta en el servicio y evita duplicados por reintento.
+- Activa el servicio autorizado por el propietario, comprobado anónimamente
+  desde el origen de Pages: guardar, listar y leer con JSON idéntico.
+
 ## 1.2.7 — 15 de noviembre de 2026
 
 - Retira funciones y estados sin consumidores, argumentos obsoletos y

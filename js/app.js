@@ -21,6 +21,8 @@ import {routeFacingLink} from './geometry/FacingPorts.js';
 import {computeInitialRoutes} from './workers/initial-route.worker.js';
 import {createLoadingIndicator} from './ui/LoadingIndicator.js';
 import {bindPoetryCarousel} from './ui/PoetryCarousel.js';
+import {bindPublicLibrary} from './ui/PublicLibrary.js';
+import {libraryConfig} from './data/LibraryConfig.js';
 // P1 application coordinator: preserves the approved HTML, controls and data model.
 const NS='http://www.w3.org/2000/svg';
 const $=id=>document.getElementById(id);
@@ -666,6 +668,8 @@ const graphFiles=bindGraphFiles({
  snapshot:()=>({schema:'p1.graph.v1',nodes:state.nodes,edges:state.edges,planeCheckpoint:saveCheckpoint(),
   topologyRegister:topology.reference,derivedViews:derived.exportData()})
 });
+bindPublicLibrary({config:libraryConfig,saveButton:$('cloudSaveBtn'),openButton:$('libraryBtn'),
+ group:$('libraryActions'),dialog:$('libraryDialog'),graphFiles,documentKey:()=>state.nodes,toast});
 // Exportación sin cambiar el modelo, el zoom ni la posición del lienzo.
 // SVG autónomo: incluye los estilos de los nodos, las líneas y las máscaras.
 const themeButton=$('themeBtn');

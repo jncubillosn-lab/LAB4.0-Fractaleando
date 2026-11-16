@@ -1,9 +1,9 @@
-# Fractalear 1.2
+# Fractalear 1.3
 
 Una herramienta desarrollada por el LAB 4.0 de la Universidad Nacional para
 construir conceptos, desarrollar sus jerarquías y representar sus relaciones.
 
-**[Abrir Fractalear](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/?v=1.2.7)**
+**[Abrir Fractalear](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/?v=1.3.0)**
 
 ## Comenzar
 
@@ -24,6 +24,7 @@ los cálculos en curso; el espacio
 ## Documentación vigente
 
 - [Guía de uso](docs/GUIA_USO.md).
+- [Biblioteca pública en Drive: guardar y abrir diagramas](docs/BIBLIOTECA_DRIVE.md).
 - [Limpieza de código heredado 1.2.7](docs/LIMPIEZA_1_2_7.md).
 - [Interfaz 1.2.6: viñetas fijas del castor](docs/INTERFAZ_1_2_6.md).
 - [Propuesta de almacenamiento compartido en Drive](docs/PROPUESTA_DRIVE.md).
