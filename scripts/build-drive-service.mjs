@@ -12,4 +12,4 @@ const parts=await Promise.all(modules.map(async file=>{
 await mkdir(output,{recursive:true});
 await writeFile(join(output,'Code.gs'),parts.join('\n'));
 await copyFile(join(root,'cloud/appsscript.json'),join(output,'appsscript.json'));
-console.log('Servicio preparado en artifacts/drive-service; sin desplegar.');
+console.log('Servicio generado en artifacts/drive-service; la implementación existente de Google no se modifica.');

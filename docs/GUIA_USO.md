@@ -1,9 +1,9 @@
 # Guía de uso de Fractalear
 
-Referencia: **1.3.1 · 16 de noviembre de 2026**.
+Referencia final: **1.3.2 · 16 de noviembre de 2026 · desarrollo cerrado**.
 
 [Abrir la aplicación](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/) ·
-[Estado y decisiones de la versión](VERSION_1_0_0.md).
+[Alcance y límites del cierre](CIERRE_DESARROLLO.md).
 
 ## Construir en 01 Editor
 
@@ -70,8 +70,7 @@ pendientes deben leerse como el estado del resultado mostrado.
 continuar, solicita únicamente el nombre y muestra una confirmación final.
 **Solo pulsar «Sí» en esa tercera ventana envía el JSON actual a la biblioteca.**
 «No» vuelve al nombre sin enviar nada; cerrar o pulsar Escape también cancela.
-Cada guardado crea una
-copia nueva; un nombre repetido no sobrescribe la anterior. La herramienta
+Cada guardado crea una copia nueva; un nombre repetido no sobrescribe la anterior. La herramienta
 confirma cuando el servicio devuelve el identificador del archivo guardado.
 
 **Biblioteca** muestra los diagramas disponibles. Pulsa un nombre para abrirlo;
@@ -106,7 +105,7 @@ Una ruta pendiente significa que el motor no encontró un recorrido válido dent
 de sus intentos. El PNG no se exporta con conexiones pendientes. **EN REVISIÓN**
 señala comprobaciones normativas aún incumplidas; no implica que los conceptos
 o vínculos hayan desaparecido. Los límites de este corte se describen en
-[la referencia de estado](VERSION_1_0_0.md).
+[la referencia de estado](historico/VERSION_1_0_0.md).
 
 ## Otras miradas
 

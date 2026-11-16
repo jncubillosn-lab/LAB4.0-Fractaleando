@@ -1,8 +1,9 @@
-# Biblioteca pública · Fractalear 1.3.1
+# Biblioteca pública · Fractalear 1.3.2
 
 Servicio autorizado por el propietario y desplegado el 16 de noviembre de 2026.
-La conexión anónima fue comprobada con el candidato bajo el origen real de Pages;
-su activación está incluida en 1.3.0. La publicación exige las pruebas completas.
+La biblioteca está publicada desde 1.3.0. En 1.3.1 se verificó el consentimiento
+y el ciclo real de guardado, listado y apertura en Pages, sin sesión de Google.
+El cierre 1.3.2 conserva ese servicio y el formato JSON.
 
 Cuenta responsable: la cuenta propietaria indicada por el usuario.
 Carpeta fija: `1Hktgc57dZubg_Gul5Y1x-eDxuIPJZQqj` («Fractalear LAB 4.0»,
@@ -36,7 +37,7 @@ La biblioteca no hace llamadas a Google al abrir Fractalear. La consulta es
 paginada y descarga solamente el archivo elegido. Se conserva la importación
 local, su validación y la posibilidad de descargar el JSON actual.
 
-## Preparar el servicio para Apps Script
+## Reproducir el servicio entregado de Apps Script
 
 Ejecutar `npm run build:drive`. Produce dos archivos en
 `artifacts/drive-service`: `Code.gs` y `appsscript.json`. El primero incorpora
@@ -56,10 +57,10 @@ La carpeta puede conservar su acceso restringido. El servicio publica sus
 diagramas mediante sus operaciones limitadas, sin conceder permisos de editor
 de Drive a los visitantes.
 
-## Activación y mantenimiento
+## Operación del servicio existente
 
-1. Para futuras actualizaciones, generar el servicio, revisar el código y
-   actualizar el proyecto de Apps Script con la cuenta propietaria.
+1. El código reproducible del servicio pertenece a esta entrega. Generarlo no
+   modifica ni vuelve a publicar la implementación existente de Google.
 2. Mantener la implementación existente, ejecutada como propietario y con acceso
    «Cualquiera»; si cambia la URL, actualizar la configuración de Pages.
 3. Probar desde Pages, sin sesión Google, guardar, listar y leer. Las peticiones
@@ -71,11 +72,10 @@ de Drive a los visitantes.
 5. Publicar la aplicación únicamente después de verificar la configuración.
    Una URL vacía mantiene ocultos los controles de nube.
 
-Si el despliegue real impide leer la respuesta por restricciones entre dominios,
-resolver el transporte antes de activar la interfaz. Nunca utilizar una respuesta
-opaca como prueba de que el archivo se guardó.
+El cliente exige una respuesta JSON legible para confirmar el guardado. Una
+respuesta opaca o un error de red no se presentan como un guardado confirmado.
 
-## Verificación preparada
+## Verificación de la entrega
 
 - `tests/public-library.test.js`: texto exacto, reintentos, nombres repetidos,
   solicitudes prohibidas, validación, aislamiento de carpeta y cliente sin carga
@@ -89,5 +89,14 @@ La comprobación real creó `Comprobación de conexión de Fractalear.json`, con
 su presencia en el catálogo y recuperó exactamente los 744 bytes originales.
 El navegador no inició sesión en Google ni recibió credenciales. Se conserva
 el archivo de comprobación como una copia más de la biblioteca.
-El [registro de verificación](evidencias/BIBLIOTECA_1_3_0.json) distingue la prueba
-del candidato de la posterior verificación de la página publicada.
+El [registro inicial](evidencias/BIBLIOTECA_1_3_0.json) conserva la prueba del
+candidato. La [verificación publicada de 1.3.1](evidencias/BIBLIOTECA_1_3_1.json)
+confirma el envío solo tras Sí, exportación local sin llamadas, guardado y
+apertura reales, JSON idéntico de 749 bytes y ausencia de errores.
+
+## Solicitudes de retirada
+
+El aviso remite a **jeducubillosn@gmail.com** e indica aportar el nombre y la
+fecha aproximada. Solo el propietario administra los archivos desde su Drive;
+el servicio no ofrece borrado, modificación ni cambios de permisos. Una
+retirada no permite recuperar copias descargadas por otras personas.

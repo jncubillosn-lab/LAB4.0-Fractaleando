@@ -1,5 +1,17 @@
 # Registro de cambios
 
+## 1.3.2 — 16 de noviembre de 2026 · cierre definitivo de desarrollo
+
+- Se cierra el desarrollo por decisión del responsable. Toda propuesta no
+  implementada queda descartada y no constituye una tarea pendiente.
+- Documentación vigente separada del archivo histórico; enlaces internos,
+  referencias de pruebas y estado real de la biblioteca corregidos.
+- Se retiran el comparador experimental ELK, su dependencia y el auxiliar de
+  trazado que solo usaba ese experimento. El Worker de prueba antiguo se aloja
+  en fixtures y deja de publicarse como código de la aplicación.
+- Se conservan el comportamiento, el formato JSON, las referencias geométricas,
+  las pruebas de desarrollo, las licencias y el servicio existente de Drive.
+
 ## 1.3.1 — 16 de noviembre de 2026
 
 - Guardado público en tres pasos: condiciones y exportación local alternativa,
@@ -119,7 +131,7 @@
   original y versión en español cuando corresponde; navegación y pausa.
 - Comprobaciones de concurrencia de carga, error, temporizadores del carrusel,
   distribución de controles y presentación a 900 px. Fuentes y decisiones en
-  [interfaz 1.1.0](docs/INTERFAZ_1_1_0.md).
+  [interfaz 1.1.0](docs/historico/INTERFAZ_1_1_0.md).
 
 ## 1.0.0 — 15 de noviembre de 2026
 
@@ -145,7 +157,7 @@ versión conserva el motor gráfico y sus decisiones numéricas.
   el sitio, conservando intactas las etiquetas existentes.
 
 El cierre no declara resueltos los diagnósticos normativos pendientes de
-Compacto y Espiral. Véase [estado y límites de 1.0.0](docs/VERSION_1_0_0.md).
+Compacto y Espiral. Véase [estado y límites de 1.0.0](docs/historico/VERSION_1_0_0.md).
 
 Los cambios anteriores y sus evidencias se conservan en
-[los antecedentes](docs/README.md#antecedentes-previos-a-10).
+[los antecedentes](docs/historico/INDICE_Y_ALCANCE_INICIAL.md).

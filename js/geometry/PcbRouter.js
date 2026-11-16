@@ -301,11 +301,8 @@ export class PcbRouter {
    const crosses=routeShapeValid(p,obstacles,own,occupied,true);
    return crosses===null?null:{points:p,crosses};
   }
-  // Plain preview path for the layout benchmark. The application renders
-  // crossings exclusively through CircuitSvg's proportional white masks.
-  function linePath(points){return points.map((p,i)=>(i?'L ':'M ')+Number(p.x.toFixed(2))+' '+Number(p.y.toFixed(2))).join(' ');}
   function intersections(points,occupied){const pointsOut=[];for(const sg of allSegments(points))for(const old of occupied){const rel=segmentRelation(sg.a,sg.b,old.a,old.b);if(rel.cross&&rel.at&&!pointsOut.some(v=>Math.hypot(v.x-rel.at.x,v.y-rel.at.y)<.05))pointsOut.push(rel.at);}return pointsOut;}
-  Object.assign(this,{prefSide,assignPorts,allSegments,segmentHitsRect,segmentRelation,routeShapeValid,simplify,fastCandidates,wideCandidates,findRouteGrid,routeEdge,linePath,intersections});
+  Object.assign(this,{prefSide,assignPorts,allSegments,segmentHitsRect,segmentRelation,routeShapeValid,simplify,fastCandidates,wideCandidates,findRouteGrid,routeEdge,intersections});
   this.clearance=ROUTE_CLEAR;
   this.separation=ROUTE_SEPARATION;
   this.portStub=PORT_STUB;
