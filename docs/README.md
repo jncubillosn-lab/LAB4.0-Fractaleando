@@ -2,7 +2,7 @@
 
 **[▶ Abrir la aplicación en GitHub Pages](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/)**
 
-**Versión vigente · 1.3.0 · 16 de noviembre de 2026:**
+**Versión vigente · 1.3.1 · 16 de noviembre de 2026:**
 [biblioteca pública en Drive](BIBLIOTECA_DRIVE.md), [limpieza de código heredado](LIMPIEZA_1_2_7.md), [viñetas fijas del castor](INTERFAZ_1_2_6.md) y [diecisiete citas poéticas](INTERFAZ_1_2_0.md), sobre la
 [base funcional y límites de 1.0.0](VERSION_1_0_0.md).
 Consultar la [guía de uso](GUIA_USO.md), el

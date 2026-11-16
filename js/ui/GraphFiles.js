@@ -23,10 +23,11 @@ export function bindGraphFiles({fileInput, loadButton, saveButton, snapshot, onI
   const serialize = () => {beforeSave();return JSON.stringify(snapshot(), null, 2);};
   const importText = text => {onImport(parseGraphFile(text));toast('Grafo importado.');};
   loadButton.onclick = () => fileInput.click();
-  saveButton.onclick = () => {
+  const exportJson = () => {
     downloadFile('p1-grafo.json', serialize(), 'application/json;charset=utf-8');
     toast('Se exportó el grafo completo, independiente de la vista.');
   };
+  saveButton.onclick = exportJson;
   fileInput.addEventListener('change', async () => {
     const file = fileInput.files?.[0];
     if (!file) return;
@@ -43,6 +44,7 @@ export function bindGraphFiles({fileInput, loadButton, saveButton, snapshot, onI
   });
   return {
     serialize,
+    exportJson,
     openText(text) {revision++;fileInput.value = '';importText(text);},
     cancel() {
       revision++;

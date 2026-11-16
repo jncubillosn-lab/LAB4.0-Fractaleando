@@ -2,7 +2,21 @@
 .library-actions{display:inline-flex}.library-actions[hidden]{display:none}
 .library-dialog{width:min(520px,calc(100% - 40px));max-height:75vh;overflow:auto;border:1px solid var(--hair);border-radius:10px;padding:24px;color:var(--ink);background:var(--paper)}
 .library-dialog::backdrop{background:rgba(0,0,0,.35)}
-.library-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.library-heading h2{font-size:21px;font-weight:500;margin:0}.library-heading button{font-size:25px;min-width:32px}
+.library-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}.library-heading h2{font-size:21px;font-weight:500;margin:0}.library-heading button{font-size:25px;min-width:32px}
+.library-dialog--terms{width:min(640px,calc(100% - 40px));max-height:calc(100dvh - 40px)}
+.library-dialog [hidden]{display:none!important}
+.library-dialog [data-library-panel]{font-size:14px;line-height:1.55}
+.library-dialog p{margin:0}.library-dialog section>p+p{margin-top:14px}
+.library-dialog h3{font-size:14px;font-weight:600;margin:19px 0 4px}
+.library-dialog .library-step{font-size:11px;letter-spacing:.13em;text-transform:uppercase;opacity:.65;margin:0 0 9px}
+.library-warning{background:var(--soft);border-left:3px solid var(--ink);padding:15px 16px;margin-bottom:15px}.library-warning p+p{margin-top:8px}
+.library-dialog a{color:inherit;overflow-wrap:anywhere;text-underline-offset:3px}
+.library-footer{border-top:1px solid var(--hair);margin-top:22px;padding-top:16px}
+.library-buttons{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap}
+.library-dialog .library-help{font-size:12px;line-height:1.55;opacity:.7;margin:0 0 14px}
+.library-dialog .library-connection{font-size:12px;opacity:.7;margin-top:20px}.library-connection summary{cursor:pointer;text-decoration:underline;text-underline-offset:3px}.library-connection p{margin-top:10px}
+.library-filename{background:var(--soft);padding:15px 16px;margin-bottom:22px}.library-filename span{font-size:12px;opacity:.65}.library-filename p{font-weight:600;margin-top:5px;overflow-wrap:anywhere}
+.library-dialog [role="status"]:empty{display:none}.library-dialog .action{white-space:normal}
 .library-dialog form{display:flex;flex-direction:column;gap:12px}.library-dialog form[hidden],.library-dialog ul[hidden]{display:none}
 .library-dialog input{width:100%;border:1px solid var(--ink);border-radius:5px;padding:10px;background:var(--paper)}
 .library-dialog ul{padding:0;list-style:none;margin:0 0 16px}.library-dialog li{padding:10px 0;border-bottom:1px solid var(--hair);display:flex;flex-direction:column;gap:5px}.library-dialog li button{text-align:left;overflow-wrap:anywhere;text-decoration:underline;text-underline-offset:3px}.library-dialog li span{font-size:10px;opacity:.65}.library-dialog [role="status"]{font-size:12px;line-height:1.6;margin:16px 0 0}.library-dialog button:disabled{opacity:.45;cursor:wait}

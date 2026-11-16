@@ -1,5 +1,16 @@
 # Registro de cambios
 
+## 1.3.1 — 16 de noviembre de 2026
+
+- Guardado público en tres pasos: condiciones y exportación local alternativa,
+  nombre y confirmación. Solo «Sí» en el tercer paso envía el archivo.
+- «No», cierre y Escape conservan el diagrama sin enviarlo; los reintentos
+  mantienen la misma solicitud para evitar copias accidentales.
+- Aviso de acceso público, edición de copias, privacidad y solicitud de
+  eliminación por correo. Sin enlace al repositorio en el aviso.
+- Menú: Guardar, Biblioteca, Exportar JSON, Importar JSON, SVG y PNG.
+  Cierre del resultado: «Chao, un abracito a la distancia».
+
 ## 1.3.0 — 16 de noviembre de 2026
 
 - Añade un servicio limitado a una carpeta fija, con altas de archivos nuevos,
