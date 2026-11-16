@@ -1,0 +1,31 @@
+{
+  "version": "1.3.4",
+  "source": "js/data/examples/fractalear.json",
+  "creationMethod": "Ampliación de la exportación real del Editor: conceptos añadidos en la interfaz y en el mismo contrato JSON, importación completa, cálculo de geometría por Fractalear y nueva exportación desde la herramienta.",
+  "bytes": 287261,
+  "sha256": "580c64baa947b1f58b2545633fc41a3886df3c08bccecd3149e0590c32207c4f",
+  "nodes": 200,
+  "edges": 201,
+  "branches": [
+    {"name": "Construir una idea", "nodes": 39},
+    {"name": "Leer el mismo fractal", "nodes": 25},
+    {"name": "Calcular con cuidado", "nodes": 25},
+    {"name": "Guardar con intención", "nodes": 42},
+    {"name": "Cuidar la lectura", "nodes": 37},
+    {"name": "Comprobar el resultado", "nodes": 31}
+  ],
+  "styles": {"solid": 199, "dashed": 1, "dotted": 1},
+  "editor": {"nodes": 200, "drawn": 201, "pending": 0, "boxes": 0, "invalid": 0},
+  "compacto": {"nodes": 200, "drawn": 201, "pending": 0, "boxes": 0, "invalid": 0, "topologyDifferences": 224, "distanceViolations": 119},
+  "espiral": {"nodes": 200, "drawn": 201, "pending": 0, "boxes": 0, "invalid": 0, "topologyDifferences": 333, "distanceViolations": 148},
+  "png": {"width": 4043, "height": 4096, "nodes": 200, "edges": 201},
+  "localBrowserCheck": {
+    "lateEditPreserved": true,
+    "exampleOnlyOnDemand": true,
+    "jsonRoundTrip": true,
+    "legacyWindowsPictureSHA256": "5342d8cb090bad0d0dc1290f820f3c3b0b57c4472ab7e1dd5b1b9015da7a6ae5",
+    "pageErrors": []
+  },
+  "normativeApproval": false,
+  "notes": "Se conservan las seis ramas, los 63 conceptos originales y sus dos vínculos transversales. Los avisos normativos permanecen visibles. El motor, sus firmas de regresión, el esquema JSON y el servicio de Google no cambian."
+}

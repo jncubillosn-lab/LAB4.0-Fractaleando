@@ -1,6 +1,6 @@
 # Guía de uso de Fractalear
 
-Referencia final: **1.3.3 · 16 de noviembre de 2026 · desarrollo cerrado**.
+Referencia final: **1.3.4 · 16 de noviembre de 2026 · desarrollo cerrado**.
 
 [Abrir la aplicación](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/) ·
 [Alcance y límites del cierre](CIERRE_DESARROLLO.md).
@@ -27,9 +27,11 @@ la derecha ni a que los cuadros existentes cambien de posición.
 
 ## Explorar el ejemplo del programa
 
-**Ejemplo** carga 63 conceptos y 64 vínculos construidos usando Fractalear.
+**Ejemplo** carga 200 conceptos y 201 vínculos construidos usando Fractalear.
 Sus seis ramas explican construir, leer, calcular, guardar, cuidar la lectura
-y comprobar resultados. Una pequeña clave aclara los estilos de ese dibujo:
+y comprobar resultados. Sus 200 conceptos también explican responsabilidades de
+código, integración con Google, transporte, navegación y publicación, siempre
+dentro del funcionamiento existente. Una pequeña clave aclara los estilos de ese dibujo:
 continua desarrolla, segmentada colabora y punteada comprueba. Esos significados
 pertenecen al ejemplo; al diseñar tu fractal puedes darles los tuyos.
 

@@ -8,14 +8,24 @@ const source=readFileSync(new URL('../js/data/examples/fractalear.json',import.m
 const example=parseGraphFile(source);
 
 test('el ejemplo creado en la herramienta explica seis partes del programa y conserva sus tres estilos',()=>{
- assert.equal(example.nodes.length,63);assert.equal(example.edges.length,64);
+ assert.equal(example.nodes.length,200);assert.equal(example.edges.length,201);
  assert.equal(example.nodes.find(n=>n.id==='p1').text,'Fractalear · ideas que se vuelven relaciones');
  assert.deepEqual(example.nodes.filter(n=>n.parent==='p1').map(n=>n.text),[
   'Construir una idea','Leer el mismo fractal','Calcular con cuidado','Guardar con intención','Cuidar la lectura','Comprobar el resultado']);
  assert.deepEqual([...new Set(example.edges.map(e=>e.style))].sort(),['dashed','dotted','solid']);
  assert.equal(checkpointHasRecords(example.planeCheckpoint),true);
- assert.equal(example.planeCheckpoint.positions.length,63);
- assert.equal(example.planeCheckpoint.routes.length,64);
+ assert.equal(example.planeCheckpoint.positions.length,200);
+ assert.equal(example.planeCheckpoint.routes.length,201);
+ // El ejemplo documenta piezas técnicas reales, además del uso básico.
+ for(const text of ['GraphDocument consulta la jerarquía','WorkerTask descarta respuestas tardías',
+  'LibraryService aplica las reglas','CircuitSvg dibuja las tres vistas',
+  'GitHub Pages sirve el sitio estático'])assert.ok(example.nodes.some(n=>n.text===text),text);
+ const byId=new Map(example.nodes.map(n=>[n.id,n]));
+ for(const node of example.nodes)if(node.parent){
+  assert.ok(byId.has(node.parent));
+  assert.ok(example.edges.some(e=>e.from===node.parent&&e.to===node.id));
+ }
+ assert.equal(example.edges.filter(e=>e.style==='solid').length,199);
  assert.equal(example.planeCheckpoint.routes.filter(route=>route.points===null).length,0);
 });
 
