@@ -1,4 +1,4 @@
-# Reproducción y operación de Fractalear 1.3.2
+# Reproducción y operación de Fractalear 1.3.3
 
 [Estado final](CIERRE_DESARROLLO.md) · [Guía de uso](GUIA_USO.md) ·
 [Registro de cambios](../CHANGELOG.md).
@@ -29,7 +29,7 @@ son resultados locales excluidos del repositorio.
 
 ## Comprobar la entrega
 
-`npm test` ejecuta las 108 pruebas Node en secuencia. También construye el sitio,
+`npm test` ejecuta las 111 pruebas Node en secuencia. También construye el sitio,
 verifica imports y versiones de caché y comprueba que no se publique un archivo
 residual de la construcción anterior.
 
@@ -38,8 +38,8 @@ Las cinco suites Chrome se ejecutan sobre `_site` en
 
 | Suite | Cobertura |
 | --- | --- |
-| `tests/pages_e2e.py` | Inicio, Nuevo, ejemplo PPR, creación, vínculos, estilos, archivos y exportación. |
-| `tests/views_e2e.py` | Las tres vistas, fuente, márgenes, cruces, selección, WASM local y exportaciones. |
+| `tests/pages_e2e.py` | Inicio, Nuevo, caso PPR de regresión, creación, vínculos, estilos, archivos y exportación. |
+| `tests/views_e2e.py` | Las tres vistas del caso histórico y del nuevo ejemplo, fuente, márgenes, cruces, selección, WASM local y exportaciones. |
 | `tests/topology_guard_e2e.py` | Edición libre en 01, protección en lectura, importación, cancelación y alternativa al Worker. |
 | `tests/library_e2e.py` | Solo Sí en el tercer paso envía; exportar, No y Escape no envían; reintento con la misma solicitud, JSON idéntico y apertura desde catálogo. |
 | `tests/integrity_e2e.py` | Exportación durante carga, importar/deshacer/crear, geometría pendiente, duplicados e IDs especiales. |
@@ -60,6 +60,13 @@ la cita. Una página con HTTP 200 pero vacía o con un bloqueo tampoco se acepta
 El control no forma parte del arranque, de `npm test` ni del despliegue: los sitios
 externos pueden tener caídas temporales. Revisar las fuentes fallidas antes de
 sustituir un enlace y actualizar también la tabla documental del carrusel.
+
+El ejemplo público está en `js/data/examples/fractalear.json` y se abre por el
+lector compartido de archivos. El caso PPR de 210 conceptos permanece como
+`tests/fixtures/ppr-document.json`: las pruebas lo importan desde archivo y
+conservan sus firmas de regresión. No es un segundo ejemplo oculto del producto.
+`tests/program-example.test.js` cubre el contenido, su lectura diferida y la
+cancelación o sustitución de una descarga pendiente.
 
 ## Límites entre módulos
 
@@ -90,7 +97,7 @@ en las tres vistas. Las optimizaciones deben mantener los criterios de aceptaci�
 
 ## Reproducir la publicación cerrada
 
-El corte final es `v1.3.2`. Paquete, metadatos, interfaz, documentación y nombre
+El corte final es `v1.3.3`. Paquete, metadatos, interfaz, documentación y nombre
 del artefacto de CI identifican esa misma entrega. Las firmas del algoritmo
 geométrico conservan sus versiones de compatibilidad.
 

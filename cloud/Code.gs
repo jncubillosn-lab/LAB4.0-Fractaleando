@@ -1,3 +1,10 @@
+/**
+ * Adaptador de Apps Script, ejecutado con la cuenta propietaria del servicio.
+ * Google concede un permiso amplio; el código limita el acceso a la carpeta
+ * fija y comprueba pertenencia antes de leer bytes de un archivo.
+ * Los visitantes reciben solo los datos públicos de la operación, sin tokens.
+ * Los comentarios de esta entrega no cambian el comportamiento ya desplegado.
+ */
 // This service must be deployed by the owner of the designated folder.
 const LIBRARY_FOLDER_ID='1Hktgc57dZubg_Gul5Y1x-eDxuIPJZQqj';
 const LIBRARY_FILE_FIELDS='id,name,createdTime,size,appProperties';

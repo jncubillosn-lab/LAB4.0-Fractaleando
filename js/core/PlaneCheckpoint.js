@@ -1,3 +1,9 @@
+/**
+ * Punto de control de la geometría del Editor, independiente de la topología.
+ * positions, rects y routes sirven para editar localmente sin redistribuir todo.
+ * La instantánea serializa solo posiciones y rutas, nunca elementos DOM ni
+ * índices temporales. ready=false impide exportar una caché a medio calcular.
+ */
 // Mutable, revisioned geometry of the active diagram, independent of UI DOM.
 export class PlaneCheckpoint {
  constructor(){this.reset();}

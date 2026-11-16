@@ -1,3 +1,8 @@
+/**
+ * Traduce una selección en conceptos y vínculos que deben resaltarse.
+ * La ascendencia se sigue por parent; la adyacencia incluye vínculos libres.
+ * Así un enlace transversal se ilumina sin convertirlo en un padre inventado.
+ */
 // Selection follows actual ancestry, never a shortcut through a transversal.
 export function hierarchySelection({nodes,edges,selectedId,levels={}}){
  const byId=new Map(nodes.map(n=>[n.id,n])),nodeIds=new Set(),edgeKeys=new Set();

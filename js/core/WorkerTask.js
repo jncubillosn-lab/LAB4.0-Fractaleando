@@ -1,3 +1,9 @@
+/**
+ * Propietario del ciclo de vida de un cálculo: Worker, promesa y temporizador.
+ * Sustituir una tarea cancela y resuelve la anterior; los mensajes tardíos
+ * no pueden pintar resultados sobre el diagrama nuevo. finish se ejecuta una
+ * sola vez y libera eventos y recursos tanto al terminar como al fallar.
+ */
 function cancelledError() {
   const error = new Error('Cálculo cancelado.');
   error.name = 'AbortError';

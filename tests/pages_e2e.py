@@ -65,7 +65,8 @@ with http.server.ThreadingHTTPServer(('127.0.0.1',0),Quiet) as srv:
   assert page.locator('#undoBtn').is_disabled()
   print('Inicio y Nuevo: un solo J0 editable, sin vínculos; primera rama creada desde el núcleo',flush=True)
   page.evaluate('window.__exampleStarted=performance.now();window.__exampleMeasures=window.__textMeasures;window.__exampleAttempts=window.P1_PLANO_DIAGNOSTICO.routeCalculations')
-  page.locator('#resetBtn').click()
+  # El caso PPR permanece como regresión; Ejemplo ahora enseña el programa.
+  page.locator('#fileInput').set_input_files(str(Path(__file__).parent/'fixtures'/'ppr-document.json'))
   page.wait_for_function('window.P1_PLANO_DIAGNOSTICO.routes===217',timeout=30000)
   assert page.locator(".loading-illustration").evaluate("(img)=>img.naturalWidth===768&&img.naturalHeight===224&&getComputedStyle(img).animationName===\"none\"")
   assert page.locator('link[rel="icon"]').get_attribute('href').split('?')[0].endswith('/favicon.svg')

@@ -12,7 +12,7 @@ test('Pages publica imports, workers y WASM con una misma identidad de caché',(
  for(const file of ['index.html','js/app.js','js/views/DerivedViews.js','js/workers/derived-scene.worker.js','js/geometry/AvoidRouter.js','js/ui/NodeTypography.js',
   'js/io/GraphFile.js','js/ui/GraphFiles.js','js/ui/DiagramExport.js']){
   const text=readFileSync('_site/'+file,'utf8');
-  const refs=[...text.matchAll(/(['"])(\.{1,2}\/[^'"\s]+\.(?:js|css|wasm|ttf|txt|gif|png|svg)(?:\?[^'"]*)?)\1/g)].map(m=>m[2]);
+  const refs=[...text.matchAll(/(['"])(\.{1,2}\/[^'"\s]+\.(?:js|css|wasm|ttf|txt|gif|png|svg|json)(?:\?[^'"]*)?)\1/g)].map(m=>m[2]);
   assert.ok(refs.length,file);for(const ref of refs)assert.ok(ref.endsWith('?build='+build),ref);
  }
  assert.ok(existsSync('_site/js/vendor/libavoid.wasm'));assert.ok(existsSync('_site/js/vendor/LICENSE-libavoid.txt'));
@@ -23,4 +23,5 @@ test('Pages publica imports, workers y WASM con una misma identidad de caché',(
  assert.equal(strip.toString('ascii',1,4),'PNG');assert.equal(strip.readUInt32BE(16),768);assert.equal(strip.readUInt32BE(20),224);
  assert.equal(strip[24],1);assert.equal(strip[25],0);assert.ok(strip.length<=12000);
  assert.equal(existsSync('_site/css/images/loading.gif'),false);
+ assert.deepEqual(readFileSync('_site/js/data/examples/fractalear.json'),readFileSync('js/data/examples/fractalear.json'));
 });

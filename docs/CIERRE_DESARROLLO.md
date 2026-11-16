@@ -1,9 +1,26 @@
-# Cierre de desarrollo · Fractalear 1.3.2
+# Cierre de desarrollo · Fractalear 1.3.3
 
 Fecha: **16 de noviembre de 2026**. El responsable da por terminado el desarrollo
 y descarta toda ruta futura que no forme parte de esta entrega. No hay funciones
 planificadas, etapas abiertas ni una lista de trabajo pendiente. El archivo
 histórico conserva trazabilidad y no autoriza continuar sus propuestas.
+
+## Documentación en código y ejemplo del programa
+
+Por solicitud posterior del responsable, la entrega 1.3.3 añade comentarios de
+funcionamiento en 28 módulos y sustituye el ejemplo público por un fractal del
+programa. Se creó con los controles reales del Editor y se exportó como JSON;
+contiene 63 conceptos, 64 vínculos y los tres estilos de conexión. Se recorrieron
+las tres vistas sin rutas pendientes ni inválidas. Sus avisos topológicos y de
+distancia siguen visibles; el ejemplo no se presenta como una validación total.
+
+El nuevo archivo se lee al pulsar Ejemplo y conserva la disposición creada.
+El PPR anterior pasa a ser únicamente un dato de regresión en las pruebas.
+Las ampliaciones descartadas del archivo histórico siguen descartadas. La
+[procedencia del ejemplo](evidencias/EJEMPLO_PROGRAMA_1_3_3.json) registra sus
+bytes, estilos y resultados observados en la herramienta.
+Los comentarios del servidor explican las mismas reglas ya desplegadas; no
+requieren cambiar permisos ni volver a publicar el servicio de Google.
 
 ## Alcance entregado
 
@@ -64,10 +81,10 @@ por cerrar el desarrollo ni se convierten en tareas futuras.
 
 ## Comprobación y referencia final
 
-La publicación exige las **108 pruebas Node y las cinco suites de Chrome**.
-Incluyen las firmas congeladas de las 217 rutas y del dibujo del ejemplo,
+La publicación exige las **111 pruebas Node y las cinco suites de Chrome**.
+Incluyen las firmas congeladas de las 217 rutas y del dibujo del caso histórico PPR,
 la identidad de archivos, la geometría, los Workers, las exportaciones y el
-consentimiento del guardado público. La etiqueta `v1.3.2` se crea desde la
+consentimiento del guardado público. La etiqueta `v1.3.3` se crea desde la
 comprobación de la publicación, sin sustituir etiquetas anteriores.
 
 La prueba real de la biblioteca en 1.3.1 guardó y recuperó exactamente **749

@@ -1,9 +1,9 @@
-# Fractalear 1.3.2
+# Fractalear 1.3.3
 
 Una herramienta desarrollada por el LAB 4.0 de la Universidad Nacional para
 construir conceptos, desarrollar sus jerarquías y representar sus relaciones.
 
-**[Abrir Fractalear](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/?v=1.3.2)**
+**[Abrir Fractalear](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/?v=1.3.3)**
 
 **Desarrollo cerrado el 16 de noviembre de 2026 por decisión del responsable.**
 La versión entregada constituye el alcance final. Las propuestas no implementadas
@@ -14,7 +14,9 @@ sin una ruta de funciones futuras.
 
 La página abre en **01 Editor** con un único núcleo: **¿Qué quieres fractalear
 hoy?**. Haz doble clic para editarlo y pulsa **+ Concepto** para desarrollar
-sus hijos. **Nuevo** vuelve al lienzo inicial y **Ejemplo** abre el caso completo.
+sus hijos. **Nuevo** vuelve al lienzo inicial y **Ejemplo** abre un fractal del propio programa: 63 conceptos y 64 vínculos
+creados con la herramienta para explicar construcción, lectura, cálculo, archivos,
+legibilidad y comprobaciones.
 **02 Compacto** y **03 Espiral** presentan el mismo grafo en otras distribuciones.
 
 **Guardar** ofrece las condiciones de la biblioteca pública, el nombre y una
@@ -22,6 +24,11 @@ confirmación final. Solo **Sí** en el tercer paso envía el diagrama. **Biblio
 permite abrir una copia compartida, sin iniciar sesión. Para conservar el trabajo
 en privado, usa **Exportar JSON** y **Importar JSON**. **SVG** y **PNG** exportan
 la representación; el PNG mantiene 4096 píxeles en su lado mayor.
+
+El funcionamiento también se explica mediante comentarios en los módulos: el
+recorrido comienza en [app.js](js/app.js) y cada capa documenta su responsabilidad
+y las decisiones que protegen el documento. El ejemplo utiliza el mismo
+[JSON exportable](js/data/examples/fractalear.json) que los trabajos del usuario.
 
 ## Documentación de entrega
 
@@ -42,7 +49,7 @@ npm test
 npm run build
 ```
 
-GitHub Actions exige las **108 pruebas Node y las cinco suites de Chrome** antes
+GitHub Actions exige las **111 pruebas Node y las cinco suites de Chrome** antes
 de publicar desde `main`. Las pruebas se ejecutan durante la preparación de la
 entrega; no forman parte de la ejecución del sitio. La construcción regenera
 solo `_site/`, con los recursos de la aplicación, sus fuentes y WASM locales.

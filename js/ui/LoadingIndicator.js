@@ -1,3 +1,9 @@
+/**
+ * Cada operación recibe su propio cierre y sus mensajes de progreso.
+ * Terminar una operación antigua no puede ocultar la carga de una nueva.
+ * La imagen es fija y la barra indica trabajo en curso; no simula un porcentaje
+ * de avance que el motor no puede medir.
+ */
 // Each operation owns its handle. A cancelled/late calculation cannot hide
 // another operation's indicator. The bar is indeterminate: no guessed percent.
 export function createLoadingIndicator({panel,stage,requestFrame=fn=>requestAnimationFrame(fn)}) {

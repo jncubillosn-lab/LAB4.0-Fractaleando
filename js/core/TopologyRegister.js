@@ -1,3 +1,10 @@
+/**
+ * Describe relaciones del dibujo: orden de puertos y secuencias de cruces.
+ * No representa distancias ni obliga al Editor a mantener una posición fija.
+ * capture obtiene una referencia; compare informa diferencias contra ella.
+ * Una rotación del inicio de un orden circular no es una reflexión. Esa
+ * distinción evita rechazar cambios equivalentes o aprobar un orden invertido.
+ */
 // Registro topológico independiente de la geometría métrica de P1.
 // Conserva órdenes y cruces, no coordenadas ni distancias absolutas.
 // No modifica rutas ni cuadros: describe, compara y valida puntos de control.

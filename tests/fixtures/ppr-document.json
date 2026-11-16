@@ -1,0 +1,2963 @@
+{
+  "schema": "p1.graph.v1",
+  "nodes": [
+    {
+      "id": "p1",
+      "text": "YO",
+      "branch": -1,
+      "parent": null,
+      "width": 108,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b0",
+      "text": "Barreras para las tecnologías rurales",
+      "branch": 0,
+      "parent": "p1",
+      "width": 225,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f0",
+      "text": "Fabricación de prototipos",
+      "branch": 1,
+      "parent": "p1",
+      "width": 210,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t0",
+      "text": "Optimización de recursos",
+      "branch": 2,
+      "parent": "p1",
+      "width": 220,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b1",
+      "text": "Tecnologías conocidas",
+      "branch": 0,
+      "parent": "b0",
+      "width": 183,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b11",
+      "text": "Procesos",
+      "branch": 0,
+      "parent": "b1",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b12",
+      "text": "Equipos",
+      "branch": 0,
+      "parent": "b1",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b13",
+      "text": "Tradición territorial",
+      "branch": 0,
+      "parent": "b1",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b14",
+      "text": "Accesibilidad",
+      "branch": 0,
+      "parent": "b1",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b2",
+      "text": "Interconexión",
+      "branch": 0,
+      "parent": "b0",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b21",
+      "text": "Servicios básicos",
+      "branch": 0,
+      "parent": "b2",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b22",
+      "text": "Vías de transporte",
+      "branch": 0,
+      "parent": "b2",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b211",
+      "text": "Internet",
+      "branch": 0,
+      "parent": "b21",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b212",
+      "text": "Acueducto",
+      "branch": 0,
+      "parent": "b21",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b213",
+      "text": "Generar capacidad",
+      "branch": 0,
+      "parent": "b21",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b214",
+      "text": "Energía",
+      "branch": 0,
+      "parent": "b21",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b3",
+      "text": "Seguridad",
+      "branch": 0,
+      "parent": "b0",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b31",
+      "text": "Zonas de conflicto",
+      "branch": 0,
+      "parent": "b3",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b32",
+      "text": "Narco-crimen",
+      "branch": 0,
+      "parent": "b3",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b4",
+      "text": "Recursos",
+      "branch": 0,
+      "parent": "b0",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b41",
+      "text": "Dinero",
+      "branch": 0,
+      "parent": "b4",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b42",
+      "text": "Capacidad técnica",
+      "branch": 0,
+      "parent": "b4",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b5",
+      "text": "Legal",
+      "branch": 0,
+      "parent": "b0",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b51",
+      "text": "Seguridad jurídica",
+      "branch": 0,
+      "parent": "b5",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b52",
+      "text": "Uso de espacios",
+      "branch": 0,
+      "parent": "b5",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b53",
+      "text": "Ambiental",
+      "branch": 0,
+      "parent": "b5",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b6",
+      "text": "Autopercepción",
+      "branch": 0,
+      "parent": "b0",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b61",
+      "text": "Marginación",
+      "branch": 0,
+      "parent": "b6",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b62",
+      "text": "Capacidad creadora",
+      "branch": 0,
+      "parent": "b6",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b621",
+      "text": "Afirmación",
+      "branch": 0,
+      "parent": "b62",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b622",
+      "text": "Negación",
+      "branch": 0,
+      "parent": "b62",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b623",
+      "text": "Tradición territorial",
+      "branch": 0,
+      "parent": "b62",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b6231",
+      "text": "Productiva",
+      "branch": 0,
+      "parent": "b623",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b6232",
+      "text": "Generar capacidad",
+      "branch": 0,
+      "parent": "b623",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f1",
+      "text": "Funcionalidad",
+      "branch": 1,
+      "parent": "f0",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f11",
+      "text": "Problemas",
+      "branch": 1,
+      "parent": "f1",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f12",
+      "text": "Validación de capacidad",
+      "branch": 1,
+      "parent": "f1",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f13",
+      "text": "Soluciones",
+      "branch": 1,
+      "parent": "f1",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f111",
+      "text": "Contextos",
+      "branch": 1,
+      "parent": "f11",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f112",
+      "text": "Herramientas",
+      "branch": 1,
+      "parent": "f11",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f113",
+      "text": "Materiales",
+      "branch": 1,
+      "parent": "f11",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f114",
+      "text": "Técnicas",
+      "branch": 1,
+      "parent": "f11",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f131",
+      "text": "Oportunidades",
+      "branch": 1,
+      "parent": "f13",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f132",
+      "text": "Problemas",
+      "branch": 1,
+      "parent": "f13",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f2",
+      "text": "Reducir el dolor",
+      "branch": 1,
+      "parent": "f0",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f21",
+      "text": "Brújula moral",
+      "branch": 1,
+      "parent": "f2",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f22",
+      "text": "Expresión de cuidado",
+      "branch": 1,
+      "parent": "f2",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f23",
+      "text": "Vínculo social",
+      "branch": 1,
+      "parent": "f2",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f24",
+      "text": "Relevancia",
+      "branch": 1,
+      "parent": "f2",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f25",
+      "text": "Sentido de vida",
+      "branch": 1,
+      "parent": "f2",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f221",
+      "text": "Visibilizar dificultades",
+      "branch": 1,
+      "parent": "f22",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f222",
+      "text": "Dar libertad",
+      "branch": 1,
+      "parent": "f22",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f231",
+      "text": "Trabajo",
+      "branch": 1,
+      "parent": "f23",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f232",
+      "text": "Mejora de condiciones",
+      "branch": 1,
+      "parent": "f23",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f2321",
+      "text": "Optimizar",
+      "branch": 1,
+      "parent": "f232",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f2322",
+      "text": "Generar capacidad",
+      "branch": 1,
+      "parent": "f232",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f241",
+      "text": "Grupal",
+      "branch": 1,
+      "parent": "f24",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f242",
+      "text": "Individual",
+      "branch": 1,
+      "parent": "f24",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f251",
+      "text": "Intrascendencia",
+      "branch": 1,
+      "parent": "f25",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f3",
+      "text": "Armar cosas",
+      "branch": 1,
+      "parent": "f0",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f31",
+      "text": "Sensaciones",
+      "branch": 1,
+      "parent": "f3",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f32",
+      "text": "Proceso de ideación",
+      "branch": 1,
+      "parent": "f3",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f311",
+      "text": "Táctil",
+      "branch": 1,
+      "parent": "f31",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f312",
+      "text": "Visual",
+      "branch": 1,
+      "parent": "f31",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f313",
+      "text": "Gusto",
+      "branch": 1,
+      "parent": "f31",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f321",
+      "text": "Principios funcionales",
+      "branch": 1,
+      "parent": "f32",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f322",
+      "text": "Proceso de ideación",
+      "branch": 1,
+      "parent": "f32",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f323",
+      "text": "Problema previo",
+      "branch": 1,
+      "parent": "f32",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f4",
+      "text": "Idea propia",
+      "branch": 1,
+      "parent": "f0",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f41",
+      "text": "Validación de la mirada",
+      "branch": 1,
+      "parent": "f4",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f42",
+      "text": "Expresión artística",
+      "branch": 1,
+      "parent": "f4",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f43",
+      "text": "Validación personal",
+      "branch": 1,
+      "parent": "f4",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "f44",
+      "text": "Orgullo",
+      "branch": 1,
+      "parent": "f4",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t1",
+      "text": "Patrones",
+      "branch": 2,
+      "parent": "t0",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t11",
+      "text": "Dinámica de contexto",
+      "branch": 2,
+      "parent": "t1",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t111",
+      "text": "Análisis",
+      "branch": 2,
+      "parent": "t11",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t1111",
+      "text": "Lindes",
+      "branch": 2,
+      "parent": "t111",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t1112",
+      "text": "Bases",
+      "branch": 2,
+      "parent": "t111",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t112",
+      "text": "Alteraciones",
+      "branch": 2,
+      "parent": "t11",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t12",
+      "text": "Límites",
+      "branch": 2,
+      "parent": "t1",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t121",
+      "text": "Regeneración local",
+      "branch": 2,
+      "parent": "t12",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t13",
+      "text": "Ritmos",
+      "branch": 2,
+      "parent": "t1",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t131",
+      "text": "Multiescala",
+      "branch": 2,
+      "parent": "t13",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t132",
+      "text": "Punto de acceso",
+      "branch": 2,
+      "parent": "t13",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t2",
+      "text": "Tipos de modelos",
+      "branch": 2,
+      "parent": "t0",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t21",
+      "text": "Ecosistema",
+      "branch": 2,
+      "parent": "t2",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t22",
+      "text": "Rural",
+      "branch": 2,
+      "parent": "t2",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t23",
+      "text": "Ciclo",
+      "branch": 2,
+      "parent": "t2",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t3",
+      "text": "Tiempo de evolución",
+      "branch": 2,
+      "parent": "t0",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t31",
+      "text": "Biomasa local",
+      "branch": 2,
+      "parent": "t3",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t32",
+      "text": "Reglas",
+      "branch": 2,
+      "parent": "t3",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t33",
+      "text": "Sistemas",
+      "branch": 2,
+      "parent": "t3",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t34",
+      "text": "Región",
+      "branch": 2,
+      "parent": "t3",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t35",
+      "text": "Escenarios",
+      "branch": 2,
+      "parent": "t3",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t36",
+      "text": "Procesos",
+      "branch": 2,
+      "parent": "t3",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t37",
+      "text": "Persona",
+      "branch": 2,
+      "parent": "t3",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t4",
+      "text": "Especialización",
+      "branch": 2,
+      "parent": "t0",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t41",
+      "text": "Individuos",
+      "branch": 2,
+      "parent": "t4",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t42",
+      "text": "Métodos",
+      "branch": 2,
+      "parent": "t4",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t43",
+      "text": "Público",
+      "branch": 2,
+      "parent": "t4",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t5",
+      "text": "Redistribución",
+      "branch": 2,
+      "parent": "t0",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t51",
+      "text": "Explotación primaria",
+      "branch": 2,
+      "parent": "t5",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t511",
+      "text": "Capacidad de recuperación",
+      "branch": 2,
+      "parent": "t51",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t52",
+      "text": "Monitoreo",
+      "branch": 2,
+      "parent": "t5",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t521",
+      "text": "Cálculo",
+      "branch": 2,
+      "parent": "t52",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t522",
+      "text": "Catálogo",
+      "branch": 2,
+      "parent": "t52",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t53",
+      "text": "Redes de proveedores",
+      "branch": 2,
+      "parent": "t5",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t531",
+      "text": "Uso",
+      "branch": 2,
+      "parent": "t53",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t532",
+      "text": "Público",
+      "branch": 2,
+      "parent": "t53",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t54",
+      "text": "Recursos del entorno",
+      "branch": 2,
+      "parent": "t5",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t541",
+      "text": "Texturas",
+      "branch": 2,
+      "parent": "t54",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t542",
+      "text": "Biomas",
+      "branch": 2,
+      "parent": "t54",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t6",
+      "text": "Potencialidad",
+      "branch": 2,
+      "parent": "t0",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t61",
+      "text": "Viabilidad de capacidad",
+      "branch": 2,
+      "parent": "t6",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t611",
+      "text": "Optimización",
+      "branch": 2,
+      "parent": "t61",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t62",
+      "text": "Polímeros",
+      "branch": 2,
+      "parent": "t6",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t63",
+      "text": "Materiales",
+      "branch": 2,
+      "parent": "t6",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t64",
+      "text": "Gestión",
+      "branch": 2,
+      "parent": "t6",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "t65",
+      "text": "Información",
+      "branch": 2,
+      "parent": "t6",
+      "width": 178,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "b7",
+      "text": "Contexto territorial del estudio",
+      "branch": 0,
+      "parent": "b0",
+      "width": 230.4,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 1 y planteamiento del problema · p. 1, 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "b71",
+      "text": "Municipios DNP 3, 4 y 5",
+      "branch": 0,
+      "parent": "b7",
+      "width": 192.60000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 1 y planteamiento del problema · p. 1, 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "b72",
+      "text": "Rural y rural disperso",
+      "branch": 0,
+      "parent": "b7",
+      "width": 188.4,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 1 y planteamiento del problema · p. 1, 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "b73",
+      "text": "Capacidades existentes",
+      "branch": 0,
+      "parent": "b7",
+      "width": 188.4,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 1 y planteamiento del problema · p. 1, 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "b74",
+      "text": "Brechas concretas",
+      "branch": 0,
+      "parent": "b7",
+      "width": 170,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 1 y planteamiento del problema · p. 1, 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "b8",
+      "text": "Restricciones estructurales",
+      "branch": 0,
+      "parent": "b0",
+      "width": 209.4,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 1 y planteamiento del problema · p. 1, 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "b81",
+      "text": "Acceso a conocimientos técnicos",
+      "branch": 0,
+      "parent": "b8",
+      "width": 226.20000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 1 y planteamiento del problema · p. 1, 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "b82",
+      "text": "Disponibilidad de repuestos",
+      "branch": 0,
+      "parent": "b8",
+      "width": 209.4,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 1 y planteamiento del problema · p. 1, 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "b83",
+      "text": "Infraestructura existente",
+      "branch": 0,
+      "parent": "b8",
+      "width": 201,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 1 y planteamiento del problema · p. 1, 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "b84",
+      "text": "Operación y mantenimiento",
+      "branch": 0,
+      "parent": "b8",
+      "width": 201,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 1 y planteamiento del problema · p. 1, 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "b9",
+      "text": "Condiciones habilitantes",
+      "branch": 0,
+      "parent": "b0",
+      "width": 196.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 1 y planteamiento del problema · p. 1, 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "b91",
+      "text": "Redes de apoyo",
+      "branch": 0,
+      "parent": "b9",
+      "width": 170,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 1 y planteamiento del problema · p. 1, 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "b92",
+      "text": "Capacidades institucionales",
+      "branch": 0,
+      "parent": "b9",
+      "width": 209.4,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 1 y planteamiento del problema · p. 1, 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "b93",
+      "text": "Organización comunitaria",
+      "branch": 0,
+      "parent": "b9",
+      "width": 196.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 1 y planteamiento del problema · p. 1, 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "b94",
+      "text": "Acceso a insumos",
+      "branch": 0,
+      "parent": "b9",
+      "width": 170,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 1 y planteamiento del problema · p. 1, 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "b421",
+      "text": "Conocimientos prácticos",
+      "branch": 0,
+      "parent": "b42",
+      "width": 192.60000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 2: capacidad técnica situada · p. 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "b422",
+      "text": "Experiencias productivas",
+      "branch": 0,
+      "parent": "b42",
+      "width": 196.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 2: capacidad técnica situada · p. 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "b423",
+      "text": "Habilidades locales",
+      "branch": 0,
+      "parent": "b42",
+      "width": 175.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 2: capacidad técnica situada · p. 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "f5",
+      "text": "Medio de producción tecnológica propio",
+      "branch": 1,
+      "parent": "f0",
+      "width": 255,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 3: medio de producción tecnológica propio · p. 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "f51",
+      "text": "Control local de funciones críticas",
+      "branch": 1,
+      "parent": "f5",
+      "width": 243,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 3: medio de producción tecnológica propio · p. 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "f52",
+      "text": "Diseñar y fabricar",
+      "branch": 1,
+      "parent": "f5",
+      "width": 171.60000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 3: medio de producción tecnológica propio · p. 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "f53",
+      "text": "Modificar y reparar",
+      "branch": 1,
+      "parent": "f5",
+      "width": 175.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 3: medio de producción tecnológica propio · p. 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "f54",
+      "text": "Documentación y organización",
+      "branch": 1,
+      "parent": "f5",
+      "width": 213.60000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 3: medio de producción tecnológica propio · p. 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "f6",
+      "text": "Herramientas de prototipado",
+      "branch": 1,
+      "parent": "f0",
+      "width": 209.4,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 4: herramientas de prototipado · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "f61",
+      "text": "Hardware y software",
+      "branch": 1,
+      "parent": "f6",
+      "width": 175.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 4: herramientas de prototipado · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "f62",
+      "text": "Instrumentos de medición",
+      "branch": 1,
+      "parent": "f6",
+      "width": 196.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 4: herramientas de prototipado · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "f63",
+      "text": "Manuales y métodos",
+      "branch": 1,
+      "parent": "f6",
+      "width": 171.60000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 4: herramientas de prototipado · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "f64",
+      "text": "Sistema mínimo de recursos",
+      "branch": 1,
+      "parent": "f6",
+      "width": 205.2,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 4: herramientas de prototipado · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "f641",
+      "text": "Energía y seguridad",
+      "branch": 1,
+      "parent": "f64",
+      "width": 175.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 4: herramientas de prototipado · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "f642",
+      "text": "Insumos y procedimientos",
+      "branch": 1,
+      "parent": "f64",
+      "width": 196.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 4: herramientas de prototipado · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "f7",
+      "text": "Prototipado situado",
+      "branch": 1,
+      "parent": "f0",
+      "width": 175.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definiciones 5 y 6: prototipado y prototipo funcional · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "f71",
+      "text": "Explorar alternativas",
+      "branch": 1,
+      "parent": "f7",
+      "width": 184.2,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definiciones 5 y 6: prototipado y prototipo funcional · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "f72",
+      "text": "Pruebas y experimentación",
+      "branch": 1,
+      "parent": "f7",
+      "width": 201,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definiciones 5 y 6: prototipado y prototipo funcional · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "f73",
+      "text": "Documentar y ajustar",
+      "branch": 1,
+      "parent": "f7",
+      "width": 180,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definiciones 5 y 6: prototipado y prototipo funcional · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "f74",
+      "text": "Aprendizaje iterativo",
+      "branch": 1,
+      "parent": "f7",
+      "width": 184.2,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definiciones 5 y 6: prototipado y prototipo funcional · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "f8",
+      "text": "Prototipo funcional",
+      "branch": 1,
+      "parent": "f0",
+      "width": 175.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definiciones 5 y 6: prototipado y prototipo funcional · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "f81",
+      "text": "Funciones mínimas comprobables",
+      "branch": 1,
+      "parent": "f8",
+      "width": 222,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definiciones 5 y 6: prototipado y prototipo funcional · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "f82",
+      "text": "Prueba en contexto real",
+      "branch": 1,
+      "parent": "f8",
+      "width": 192.60000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definiciones 5 y 6: prototipado y prototipo funcional · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "f83",
+      "text": "Evidencia de utilidad y límites",
+      "branch": 1,
+      "parent": "f8",
+      "width": 226.20000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definiciones 5 y 6: prototipado y prototipo funcional · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "f84",
+      "text": "Seguridad y operación",
+      "branch": 1,
+      "parent": "f8",
+      "width": 184.2,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definiciones 5 y 6: prototipado y prototipo funcional · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "f9",
+      "text": "Validación comunitaria",
+      "branch": 1,
+      "parent": "f0",
+      "width": 188.4,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 8: validación comunitaria y apropiación · p. 6–7",
+      "origin": "PPR"
+    },
+    {
+      "id": "f91",
+      "text": "Pertinencia y utilidad local",
+      "branch": 1,
+      "parent": "f9",
+      "width": 213.60000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 8: validación comunitaria y apropiación · p. 6–7",
+      "origin": "PPR"
+    },
+    {
+      "id": "f92",
+      "text": "Aceptabilidad",
+      "branch": 1,
+      "parent": "f9",
+      "width": 170,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 8: validación comunitaria y apropiación · p. 6–7",
+      "origin": "PPR"
+    },
+    {
+      "id": "f93",
+      "text": "Decisión comunitaria sobre ajustes",
+      "branch": 1,
+      "parent": "f9",
+      "width": 238.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 8: validación comunitaria y apropiación · p. 6–7",
+      "origin": "PPR"
+    },
+    {
+      "id": "f94",
+      "text": "Apropiación tecnológica",
+      "branch": 1,
+      "parent": "f9",
+      "width": 192.60000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 8: validación comunitaria y apropiación · p. 6–7",
+      "origin": "PPR"
+    },
+    {
+      "id": "f10",
+      "text": "Asimilación tecnológica",
+      "branch": 1,
+      "parent": "f0",
+      "width": 192.60000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 11: asimilación tecnológica · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "f101",
+      "text": "Uso recurrente",
+      "branch": 1,
+      "parent": "f10",
+      "width": 170,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 11: asimilación tecnológica · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "f102",
+      "text": "Operación sin acompañamiento",
+      "branch": 1,
+      "parent": "f10",
+      "width": 213.60000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 11: asimilación tecnológica · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "f103",
+      "text": "Resolución de fallas básicas",
+      "branch": 1,
+      "parent": "f10",
+      "width": 213.60000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 11: asimilación tecnológica · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "f104",
+      "text": "Transferencia de conocimiento",
+      "branch": 1,
+      "parent": "f10",
+      "width": 217.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 11: asimilación tecnológica · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "f105",
+      "text": "Seguimiento a 12 y 24 meses",
+      "branch": 1,
+      "parent": "f10",
+      "width": 209.4,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 11: asimilación tecnológica · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "f15",
+      "text": "Autonomía tecnológica comunitaria",
+      "branch": 1,
+      "parent": "f0",
+      "width": 234.6,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 13: autonomía tecnológica comunitaria · p. 8",
+      "origin": "PPR"
+    },
+    {
+      "id": "f151",
+      "text": "Decisiones informadas",
+      "branch": 1,
+      "parent": "f15",
+      "width": 184.2,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 13: autonomía tecnológica comunitaria · p. 8",
+      "origin": "PPR"
+    },
+    {
+      "id": "f152",
+      "text": "Diagnosticar y mantener",
+      "branch": 1,
+      "parent": "f15",
+      "width": 192.60000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 13: autonomía tecnológica comunitaria · p. 8",
+      "origin": "PPR"
+    },
+    {
+      "id": "f153",
+      "text": "Sin dependencia permanente",
+      "branch": 1,
+      "parent": "f15",
+      "width": 205.2,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 13: autonomía tecnológica comunitaria · p. 8",
+      "origin": "PPR"
+    },
+    {
+      "id": "f16",
+      "text": "Replicabilidad autónoma",
+      "branch": 1,
+      "parent": "f0",
+      "width": 192.60000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 14: replicabilidad autónoma · p. 8",
+      "origin": "PPR"
+    },
+    {
+      "id": "f161",
+      "text": "Adaptación a nuevas necesidades",
+      "branch": 1,
+      "parent": "f16",
+      "width": 226.20000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 14: replicabilidad autónoma · p. 8",
+      "origin": "PPR"
+    },
+    {
+      "id": "f162",
+      "text": "Documentación transferible",
+      "branch": 1,
+      "parent": "f16",
+      "width": 205.2,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 14: replicabilidad autónoma · p. 8",
+      "origin": "PPR"
+    },
+    {
+      "id": "f163",
+      "text": "Recursos alcanzables localmente",
+      "branch": 1,
+      "parent": "f16",
+      "width": 226.20000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 14: replicabilidad autónoma · p. 8",
+      "origin": "PPR"
+    },
+    {
+      "id": "f17",
+      "text": "Método fractal",
+      "branch": 1,
+      "parent": "f0",
+      "width": 170,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 12: método fractal · p. 7–8",
+      "origin": "PPR"
+    },
+    {
+      "id": "f171",
+      "text": "Territorio, comunidad y necesidad",
+      "branch": 1,
+      "parent": "f17",
+      "width": 234.6,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 12: método fractal · p. 7–8",
+      "origin": "PPR"
+    },
+    {
+      "id": "f172",
+      "text": "Sistema y subsistema",
+      "branch": 1,
+      "parent": "f17",
+      "width": 180,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 12: método fractal · p. 7–8",
+      "origin": "PPR"
+    },
+    {
+      "id": "f173",
+      "text": "Componente, herramienta y acción",
+      "branch": 1,
+      "parent": "f17",
+      "width": 230.4,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 12: método fractal · p. 7–8",
+      "origin": "PPR"
+    },
+    {
+      "id": "t7",
+      "text": "Innovación frugal",
+      "branch": 2,
+      "parent": "t0",
+      "width": 170,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 7: innovación frugal · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "t71",
+      "text": "Problema local como origen",
+      "branch": 2,
+      "parent": "t7",
+      "width": 205.2,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 7: innovación frugal · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "t72",
+      "text": "Recursos disponibles",
+      "branch": 2,
+      "parent": "t7",
+      "width": 180,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 7: innovación frugal · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "t73",
+      "text": "Adaptación y experimentación",
+      "branch": 2,
+      "parent": "t7",
+      "width": 213.60000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 7: innovación frugal · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "t74",
+      "text": "Funciones esenciales",
+      "branch": 2,
+      "parent": "t7",
+      "width": 180,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 7: innovación frugal · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "t75",
+      "text": "Robustez y uso simple",
+      "branch": 2,
+      "parent": "t7",
+      "width": 184.2,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 7: innovación frugal · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "t76",
+      "text": "Escalamiento si es pertinente",
+      "branch": 2,
+      "parent": "t7",
+      "width": 217.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 7: innovación frugal · p. 6",
+      "origin": "PPR"
+    },
+    {
+      "id": "t8",
+      "text": "Selección multicriterio contextual",
+      "branch": 2,
+      "parent": "t0",
+      "width": 238.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 10: selección multicriterio contextual · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "t81",
+      "text": "Pertinencia territorial",
+      "branch": 2,
+      "parent": "t8",
+      "width": 192.60000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 10: selección multicriterio contextual · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "t82",
+      "text": "Desempeño técnico",
+      "branch": 2,
+      "parent": "t8",
+      "width": 170,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 10: selección multicriterio contextual · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "t83",
+      "text": "Costo total de operación",
+      "branch": 2,
+      "parent": "t8",
+      "width": 196.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 10: selección multicriterio contextual · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "t84",
+      "text": "Curva de aprendizaje",
+      "branch": 2,
+      "parent": "t8",
+      "width": 180,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 10: selección multicriterio contextual · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "t85",
+      "text": "Interoperabilidad y adaptación",
+      "branch": 2,
+      "parent": "t8",
+      "width": 222,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 10: selección multicriterio contextual · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "t86",
+      "text": "Seguridad e impacto ambiental",
+      "branch": 2,
+      "parent": "t8",
+      "width": 217.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 10: selección multicriterio contextual · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "t87",
+      "text": "Criterios y pesos justificados",
+      "branch": 2,
+      "parent": "t8",
+      "width": 222,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 10: selección multicriterio contextual · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "t9",
+      "text": "Sostenibilidad operativa",
+      "branch": 2,
+      "parent": "t0",
+      "width": 196.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 9: reparabilidad, mantenibilidad y sostenibilidad · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "t91",
+      "text": "Reparabilidad",
+      "branch": 2,
+      "parent": "t9",
+      "width": 170,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 9: reparabilidad, mantenibilidad y sostenibilidad · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "t911",
+      "text": "Diagnóstico comprensible",
+      "branch": 2,
+      "parent": "t91",
+      "width": 196.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 9: reparabilidad, mantenibilidad y sostenibilidad · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "t912",
+      "text": "Repuestos accesibles",
+      "branch": 2,
+      "parent": "t91",
+      "width": 180,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 9: reparabilidad, mantenibilidad y sostenibilidad · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "t92",
+      "text": "Mantenimiento preventivo",
+      "branch": 2,
+      "parent": "t9",
+      "width": 196.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 9: reparabilidad, mantenibilidad y sostenibilidad · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "t93",
+      "text": "Costos recurrentes",
+      "branch": 2,
+      "parent": "t9",
+      "width": 171.60000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 9: reparabilidad, mantenibilidad y sostenibilidad · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "t94",
+      "text": "Protocolos y responsables",
+      "branch": 2,
+      "parent": "t9",
+      "width": 201,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 9: reparabilidad, mantenibilidad y sostenibilidad · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "t95",
+      "text": "Relevo de saberes",
+      "branch": 2,
+      "parent": "t9",
+      "width": 170,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 9: reparabilidad, mantenibilidad y sostenibilidad · p. 7",
+      "origin": "PPR"
+    },
+    {
+      "id": "t10",
+      "text": "Capacidad técnica situada",
+      "branch": 2,
+      "parent": "t0",
+      "width": 201,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 2: capacidad técnica situada · p. 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "t101",
+      "text": "Recursos del territorio",
+      "branch": 2,
+      "parent": "t10",
+      "width": 192.60000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 2: capacidad técnica situada · p. 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "t102",
+      "text": "Personas y oficios",
+      "branch": 2,
+      "parent": "t10",
+      "width": 171.60000000000002,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 2: capacidad técnica situada · p. 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "t103",
+      "text": "Condiciones institucionales",
+      "branch": 2,
+      "parent": "t10",
+      "width": 209.4,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 2: capacidad técnica situada · p. 5",
+      "origin": "PPR"
+    },
+    {
+      "id": "t104",
+      "text": "Actores que validan",
+      "branch": 2,
+      "parent": "t10",
+      "width": 175.8,
+      "x": 0,
+      "y": 0,
+      "source": "Compilación PPR · Definición 2: capacidad técnica situada · p. 5",
+      "origin": "PPR"
+    }
+  ],
+  "edges": [
+    {
+      "from": "p1",
+      "to": "b0"
+    },
+    {
+      "from": "p1",
+      "to": "f0"
+    },
+    {
+      "from": "p1",
+      "to": "t0"
+    },
+    {
+      "from": "b0",
+      "to": "b1"
+    },
+    {
+      "from": "b1",
+      "to": "b11"
+    },
+    {
+      "from": "b1",
+      "to": "b12"
+    },
+    {
+      "from": "b1",
+      "to": "b13"
+    },
+    {
+      "from": "b1",
+      "to": "b14"
+    },
+    {
+      "from": "b0",
+      "to": "b2"
+    },
+    {
+      "from": "b2",
+      "to": "b21"
+    },
+    {
+      "from": "b2",
+      "to": "b22"
+    },
+    {
+      "from": "b21",
+      "to": "b211"
+    },
+    {
+      "from": "b21",
+      "to": "b212"
+    },
+    {
+      "from": "b21",
+      "to": "b213"
+    },
+    {
+      "from": "b21",
+      "to": "b214"
+    },
+    {
+      "from": "b0",
+      "to": "b3"
+    },
+    {
+      "from": "b3",
+      "to": "b31"
+    },
+    {
+      "from": "b3",
+      "to": "b32"
+    },
+    {
+      "from": "b0",
+      "to": "b4"
+    },
+    {
+      "from": "b4",
+      "to": "b41"
+    },
+    {
+      "from": "b4",
+      "to": "b42"
+    },
+    {
+      "from": "b0",
+      "to": "b5"
+    },
+    {
+      "from": "b5",
+      "to": "b51"
+    },
+    {
+      "from": "b5",
+      "to": "b52"
+    },
+    {
+      "from": "b5",
+      "to": "b53"
+    },
+    {
+      "from": "b0",
+      "to": "b6"
+    },
+    {
+      "from": "b6",
+      "to": "b61"
+    },
+    {
+      "from": "b6",
+      "to": "b62"
+    },
+    {
+      "from": "b62",
+      "to": "b621"
+    },
+    {
+      "from": "b62",
+      "to": "b622"
+    },
+    {
+      "from": "b62",
+      "to": "b623"
+    },
+    {
+      "from": "b623",
+      "to": "b6231"
+    },
+    {
+      "from": "b623",
+      "to": "b6232"
+    },
+    {
+      "from": "f0",
+      "to": "f1"
+    },
+    {
+      "from": "f1",
+      "to": "f11"
+    },
+    {
+      "from": "f1",
+      "to": "f12"
+    },
+    {
+      "from": "f1",
+      "to": "f13"
+    },
+    {
+      "from": "f11",
+      "to": "f111"
+    },
+    {
+      "from": "f11",
+      "to": "f112"
+    },
+    {
+      "from": "f11",
+      "to": "f113"
+    },
+    {
+      "from": "f11",
+      "to": "f114"
+    },
+    {
+      "from": "f13",
+      "to": "f131"
+    },
+    {
+      "from": "f13",
+      "to": "f132"
+    },
+    {
+      "from": "f0",
+      "to": "f2"
+    },
+    {
+      "from": "f2",
+      "to": "f21"
+    },
+    {
+      "from": "f2",
+      "to": "f22"
+    },
+    {
+      "from": "f2",
+      "to": "f23"
+    },
+    {
+      "from": "f2",
+      "to": "f24"
+    },
+    {
+      "from": "f2",
+      "to": "f25"
+    },
+    {
+      "from": "f22",
+      "to": "f221"
+    },
+    {
+      "from": "f22",
+      "to": "f222"
+    },
+    {
+      "from": "f23",
+      "to": "f231"
+    },
+    {
+      "from": "f23",
+      "to": "f232"
+    },
+    {
+      "from": "f232",
+      "to": "f2321"
+    },
+    {
+      "from": "f232",
+      "to": "f2322"
+    },
+    {
+      "from": "f24",
+      "to": "f241"
+    },
+    {
+      "from": "f24",
+      "to": "f242"
+    },
+    {
+      "from": "f25",
+      "to": "f251"
+    },
+    {
+      "from": "f0",
+      "to": "f3"
+    },
+    {
+      "from": "f3",
+      "to": "f31"
+    },
+    {
+      "from": "f3",
+      "to": "f32"
+    },
+    {
+      "from": "f31",
+      "to": "f311"
+    },
+    {
+      "from": "f31",
+      "to": "f312"
+    },
+    {
+      "from": "f31",
+      "to": "f313"
+    },
+    {
+      "from": "f32",
+      "to": "f321"
+    },
+    {
+      "from": "f32",
+      "to": "f322"
+    },
+    {
+      "from": "f32",
+      "to": "f323"
+    },
+    {
+      "from": "f0",
+      "to": "f4"
+    },
+    {
+      "from": "f4",
+      "to": "f41"
+    },
+    {
+      "from": "f4",
+      "to": "f42"
+    },
+    {
+      "from": "f4",
+      "to": "f43"
+    },
+    {
+      "from": "f4",
+      "to": "f44"
+    },
+    {
+      "from": "t0",
+      "to": "t1"
+    },
+    {
+      "from": "t1",
+      "to": "t11"
+    },
+    {
+      "from": "t11",
+      "to": "t111"
+    },
+    {
+      "from": "t111",
+      "to": "t1111"
+    },
+    {
+      "from": "t111",
+      "to": "t1112"
+    },
+    {
+      "from": "t11",
+      "to": "t112"
+    },
+    {
+      "from": "t1",
+      "to": "t12"
+    },
+    {
+      "from": "t12",
+      "to": "t121"
+    },
+    {
+      "from": "t1",
+      "to": "t13"
+    },
+    {
+      "from": "t13",
+      "to": "t131"
+    },
+    {
+      "from": "t13",
+      "to": "t132"
+    },
+    {
+      "from": "t0",
+      "to": "t2"
+    },
+    {
+      "from": "t2",
+      "to": "t21"
+    },
+    {
+      "from": "t2",
+      "to": "t22"
+    },
+    {
+      "from": "t2",
+      "to": "t23"
+    },
+    {
+      "from": "t0",
+      "to": "t3"
+    },
+    {
+      "from": "t3",
+      "to": "t31"
+    },
+    {
+      "from": "t3",
+      "to": "t32"
+    },
+    {
+      "from": "t3",
+      "to": "t33"
+    },
+    {
+      "from": "t3",
+      "to": "t34"
+    },
+    {
+      "from": "t3",
+      "to": "t35"
+    },
+    {
+      "from": "t3",
+      "to": "t36"
+    },
+    {
+      "from": "t3",
+      "to": "t37"
+    },
+    {
+      "from": "t0",
+      "to": "t4"
+    },
+    {
+      "from": "t4",
+      "to": "t41"
+    },
+    {
+      "from": "t4",
+      "to": "t42"
+    },
+    {
+      "from": "t4",
+      "to": "t43"
+    },
+    {
+      "from": "t0",
+      "to": "t5"
+    },
+    {
+      "from": "t5",
+      "to": "t51"
+    },
+    {
+      "from": "t51",
+      "to": "t511"
+    },
+    {
+      "from": "t5",
+      "to": "t52"
+    },
+    {
+      "from": "t52",
+      "to": "t521"
+    },
+    {
+      "from": "t52",
+      "to": "t522"
+    },
+    {
+      "from": "t5",
+      "to": "t53"
+    },
+    {
+      "from": "t53",
+      "to": "t531"
+    },
+    {
+      "from": "t53",
+      "to": "t532"
+    },
+    {
+      "from": "t5",
+      "to": "t54"
+    },
+    {
+      "from": "t54",
+      "to": "t541"
+    },
+    {
+      "from": "t54",
+      "to": "t542"
+    },
+    {
+      "from": "t0",
+      "to": "t6"
+    },
+    {
+      "from": "t6",
+      "to": "t61"
+    },
+    {
+      "from": "t61",
+      "to": "t611"
+    },
+    {
+      "from": "t6",
+      "to": "t62"
+    },
+    {
+      "from": "t6",
+      "to": "t63"
+    },
+    {
+      "from": "t6",
+      "to": "t64"
+    },
+    {
+      "from": "t6",
+      "to": "t65"
+    },
+    {
+      "from": "b0",
+      "to": "b7"
+    },
+    {
+      "from": "b7",
+      "to": "b71"
+    },
+    {
+      "from": "b7",
+      "to": "b72"
+    },
+    {
+      "from": "b7",
+      "to": "b73"
+    },
+    {
+      "from": "b7",
+      "to": "b74"
+    },
+    {
+      "from": "b0",
+      "to": "b8"
+    },
+    {
+      "from": "b8",
+      "to": "b81"
+    },
+    {
+      "from": "b8",
+      "to": "b82"
+    },
+    {
+      "from": "b8",
+      "to": "b83"
+    },
+    {
+      "from": "b8",
+      "to": "b84"
+    },
+    {
+      "from": "b0",
+      "to": "b9"
+    },
+    {
+      "from": "b9",
+      "to": "b91"
+    },
+    {
+      "from": "b9",
+      "to": "b92"
+    },
+    {
+      "from": "b9",
+      "to": "b93"
+    },
+    {
+      "from": "b9",
+      "to": "b94"
+    },
+    {
+      "from": "b42",
+      "to": "b421"
+    },
+    {
+      "from": "b42",
+      "to": "b422"
+    },
+    {
+      "from": "b42",
+      "to": "b423"
+    },
+    {
+      "from": "f0",
+      "to": "f5"
+    },
+    {
+      "from": "f5",
+      "to": "f51"
+    },
+    {
+      "from": "f5",
+      "to": "f52"
+    },
+    {
+      "from": "f5",
+      "to": "f53"
+    },
+    {
+      "from": "f5",
+      "to": "f54"
+    },
+    {
+      "from": "f0",
+      "to": "f6"
+    },
+    {
+      "from": "f6",
+      "to": "f61"
+    },
+    {
+      "from": "f6",
+      "to": "f62"
+    },
+    {
+      "from": "f6",
+      "to": "f63"
+    },
+    {
+      "from": "f6",
+      "to": "f64"
+    },
+    {
+      "from": "f64",
+      "to": "f641"
+    },
+    {
+      "from": "f64",
+      "to": "f642"
+    },
+    {
+      "from": "f0",
+      "to": "f7"
+    },
+    {
+      "from": "f7",
+      "to": "f71"
+    },
+    {
+      "from": "f7",
+      "to": "f72"
+    },
+    {
+      "from": "f7",
+      "to": "f73"
+    },
+    {
+      "from": "f7",
+      "to": "f74"
+    },
+    {
+      "from": "f0",
+      "to": "f8"
+    },
+    {
+      "from": "f8",
+      "to": "f81"
+    },
+    {
+      "from": "f8",
+      "to": "f82"
+    },
+    {
+      "from": "f8",
+      "to": "f83"
+    },
+    {
+      "from": "f8",
+      "to": "f84"
+    },
+    {
+      "from": "f0",
+      "to": "f9"
+    },
+    {
+      "from": "f9",
+      "to": "f91"
+    },
+    {
+      "from": "f9",
+      "to": "f92"
+    },
+    {
+      "from": "f9",
+      "to": "f93"
+    },
+    {
+      "from": "f9",
+      "to": "f94"
+    },
+    {
+      "from": "f0",
+      "to": "f10"
+    },
+    {
+      "from": "f10",
+      "to": "f101"
+    },
+    {
+      "from": "f10",
+      "to": "f102"
+    },
+    {
+      "from": "f10",
+      "to": "f103"
+    },
+    {
+      "from": "f10",
+      "to": "f104"
+    },
+    {
+      "from": "f10",
+      "to": "f105"
+    },
+    {
+      "from": "f0",
+      "to": "f15"
+    },
+    {
+      "from": "f15",
+      "to": "f151"
+    },
+    {
+      "from": "f15",
+      "to": "f152"
+    },
+    {
+      "from": "f15",
+      "to": "f153"
+    },
+    {
+      "from": "f0",
+      "to": "f16"
+    },
+    {
+      "from": "f16",
+      "to": "f161"
+    },
+    {
+      "from": "f16",
+      "to": "f162"
+    },
+    {
+      "from": "f16",
+      "to": "f163"
+    },
+    {
+      "from": "f0",
+      "to": "f17"
+    },
+    {
+      "from": "f17",
+      "to": "f171"
+    },
+    {
+      "from": "f17",
+      "to": "f172"
+    },
+    {
+      "from": "f17",
+      "to": "f173"
+    },
+    {
+      "from": "t0",
+      "to": "t7"
+    },
+    {
+      "from": "t7",
+      "to": "t71"
+    },
+    {
+      "from": "t7",
+      "to": "t72"
+    },
+    {
+      "from": "t7",
+      "to": "t73"
+    },
+    {
+      "from": "t7",
+      "to": "t74"
+    },
+    {
+      "from": "t7",
+      "to": "t75"
+    },
+    {
+      "from": "t7",
+      "to": "t76"
+    },
+    {
+      "from": "t0",
+      "to": "t8"
+    },
+    {
+      "from": "t8",
+      "to": "t81"
+    },
+    {
+      "from": "t8",
+      "to": "t82"
+    },
+    {
+      "from": "t8",
+      "to": "t83"
+    },
+    {
+      "from": "t8",
+      "to": "t84"
+    },
+    {
+      "from": "t8",
+      "to": "t85"
+    },
+    {
+      "from": "t8",
+      "to": "t86"
+    },
+    {
+      "from": "t8",
+      "to": "t87"
+    },
+    {
+      "from": "t0",
+      "to": "t9"
+    },
+    {
+      "from": "t9",
+      "to": "t91"
+    },
+    {
+      "from": "t91",
+      "to": "t911"
+    },
+    {
+      "from": "t91",
+      "to": "t912"
+    },
+    {
+      "from": "t9",
+      "to": "t92"
+    },
+    {
+      "from": "t9",
+      "to": "t93"
+    },
+    {
+      "from": "t9",
+      "to": "t94"
+    },
+    {
+      "from": "t9",
+      "to": "t95"
+    },
+    {
+      "from": "t0",
+      "to": "t10"
+    },
+    {
+      "from": "t10",
+      "to": "t101"
+    },
+    {
+      "from": "t10",
+      "to": "t102"
+    },
+    {
+      "from": "t10",
+      "to": "t103"
+    },
+    {
+      "from": "t10",
+      "to": "t104"
+    },
+    {
+      "from": "b42",
+      "to": "t10",
+      "kind": "transversal",
+      "rationale": "Definición 2: la capacidad situada integra competencias y condiciones del territorio."
+    },
+    {
+      "from": "b9",
+      "to": "t8",
+      "kind": "transversal",
+      "rationale": "Definición 10: la elección considera condiciones habilitantes."
+    },
+    {
+      "from": "f6",
+      "to": "t8",
+      "kind": "transversal",
+      "rationale": "Definiciones 4 y 10: las herramientas son el objeto de priorización."
+    },
+    {
+      "from": "f8",
+      "to": "f9",
+      "kind": "transversal",
+      "rationale": "Definiciones 6 y 8: el prototipo se valida con quienes lo utilizan."
+    },
+    {
+      "from": "f9",
+      "to": "f10",
+      "kind": "transversal",
+      "rationale": "Definiciones 8 y 11: apropiación y asimilación deben evidenciarse en uso."
+    },
+    {
+      "from": "f5",
+      "to": "f15",
+      "kind": "transversal",
+      "rationale": "Definiciones 3 y 13: medio propio y control comunitario."
+    },
+    {
+      "from": "f16",
+      "to": "t76",
+      "kind": "transversal",
+      "rationale": "Definiciones 7 y 14: réplica y escalamiento solo cuando resultan pertinentes."
+    },
+    {
+      "from": "f72",
+      "to": "f83",
+      "kind": "transversal",
+      "rationale": "Definiciones 5 y 6: las pruebas producen evidencia de funcionamiento."
+    }
+  ]
+}

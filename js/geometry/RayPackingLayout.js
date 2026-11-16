@@ -1,3 +1,9 @@
+/**
+ * Agrupa las ramas alrededor de J0 usando las medidas reales de los cuadros.
+ * El espacio se asigna según el contenido y la capacidad de conexión, sin
+ * imponer una distancia idéntica a todos los términos. La salida es geometría
+ * candidata; los auditores deciden qué condiciones cumple.
+ */
 import {orderRoots} from '../core/RootOrder.js';
 import {ownValue} from '../core/GraphIdentity.js';
 
@@ -7,8 +13,9 @@ const gap=(a,b)=>Math.hypot(Math.max(0,Math.abs(a.x-b.x)-(a.w+b.w)/2),Math.max(0
 export const rayRect=(id,p,m)=>({id,...p,w:m.w,h:m.h,routingClearance:m.routingClearance,
  l:p.x-m.w/2,r:p.x+m.w/2,t:p.y-m.h/2,b:p.y+m.h/2});
 
-// One ray is a direction, not a ring for a whole generation. Intersecting the
-// ray with expanded boxes gives the nearest free radius analytically.
+// Cada obstáculo bloquea un intervalo sobre el rayo. Al combinar esos intervalos
+// se obtiene el primer radio libre, sin poner toda una generación en un anillo
+// ni aumentar por igual la separación de todos los cuadros.
 export function firstFreeRadius(angle,minimum,size,rects,clearance=24,except=null,origin={x:0,y:0},pairClearance=null){
  const vx=Math.cos(angle),vy=Math.sin(angle),blocked=[];
  for(const r of rects.values()){

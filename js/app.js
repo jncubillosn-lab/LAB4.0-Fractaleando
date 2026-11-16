@@ -1,3 +1,11 @@
+/**
+ * Punto de encuentro entre los controles y los módulos de Fractalear.
+ * Recorrido de una edición: evento → documento → geometría local → SVG.
+ * El documento contiene conceptos y vínculos; plane conserva sus coordenadas
+ * y rutas, y topology mantiene la referencia relacional para las vistas de lectura.
+ * Este archivo coordina esas capas: no sustituye al modelo, al auditor ni al
+ * renderizador. Exportar consolida primero la edición pendiente.
+ */
 import {GraphDocument} from './core/GraphDocument.js';
 import {createSeeds} from './data/seeds.js';
 import {PlaneCheckpoint} from './core/PlaneCheckpoint.js';
@@ -23,7 +31,6 @@ import {createLoadingIndicator} from './ui/LoadingIndicator.js';
 import {bindPoetryCarousel} from './ui/PoetryCarousel.js';
 import {bindPublicLibrary} from './ui/PublicLibrary.js';
 import {libraryConfig} from './data/LibraryConfig.js';
-// P1 application coordinator: preserves the approved HTML, controls and data model.
 const NS='http://www.w3.org/2000/svg';
 const $=id=>document.getElementById(id);
 const stage=$('stage'), camera=$('camera'), linesEl=$('lines'), nodesEl=$('nodes');
@@ -39,7 +46,7 @@ const graph=new GraphDocument(state);
 const nodeById=id=>graph.nodeById(id);
 const linksOf=id=>graph.linksOf(id);
 function makeNode(id,text,branch,parent=null,width=178){return{id,text,branch,parent,width,x:0,y:0};}
-const {blankSeed,seed}=createSeeds({makeNode});
+const {blankSeed}=createSeeds({makeNode});
 // Import-only compatibility: reproduce the metrics of pre-Rajdhani files.
 // Current labels always use nodeGeometry; never reuse these rules to draw.
 function textLines(text,width,fontsize=14){
@@ -252,6 +259,8 @@ function cancelInitialBuild(){
  initialLoading?.finish();initialLoading=null;
 }
 function graphFingerprint(){return JSON.stringify({nodes:state.nodes.map(n=>[n.id,n.text,n.parent,n.branch,n.width,n.x,n.y]),edges:state.edges});}
+// Mide el texto antes de enviar datos al Worker. El token y la huella del
+// grafo impiden confirmar rutas calculadas para una edición que ya cambió.
 function makeInitialCheckpoint(){
  if(initialBuilding)return false;
  initialLoading=loading.begin('Preparando el diagrama','Distribuyendo conceptos y calculando conexiones…');
@@ -331,6 +340,9 @@ function validateSavedCheckpoint(payload,measure=geometry){
  return true;
 }
 function saveCheckpoint(){return plane.snapshot();}
+// Compara medidas y posiciones con el último punto de control. Recalcula las
+// conexiones incidentes o invadidas por un cuadro que cambió; las demás se conservan.
+// Si el texto agranda un cuadro hasta provocar un solape, busca una posición libre.
 function reconcileCheckpoint(){
  if(!plane.ready){makeInitialCheckpoint();return plane.ready;}
  const start=performance.now(),calcsBefore=diag.routeCalculations;
@@ -545,6 +557,8 @@ function selectNode(id){
  state.selected=id;updatePanel();
  if(changingEdges)schedule();else syncSelectionStyles();
 }
+// Crear cambia los datos; el render posterior actualiza solo la geometría
+// afectada. Mantener state.selected permite añadir varios hijos del mismo padre.
 function addConcept(){
  const n=selected()||nodeById('p1');if(!n)return;
  const newArm=n.id==='p1';
@@ -593,8 +607,21 @@ stage.addEventListener('pointermove',e=>{if(!panStart)return;state.tx=panStart.t
 for(const kind of ['pointerup','pointercancel'])stage.addEventListener(kind,e=>{panStart=null;if(stage.hasPointerCapture(e.pointerId))stage.releasePointerCapture(e.pointerId);});
 stage.addEventListener('wheel',e=>{e.preventDefault();const p=inFrame(e.clientX,e.clientY);zoomBy(Math.exp(-e.deltaY*.0011),p.x,p.y);},{passive:false});
 $('coreBtn').onclick=centerOn;$('zoomFit').onclick=fit;$('zoomIn').onclick=()=>zoomBy(1.2);$('zoomOut').onclick=()=>zoomBy(1/1.2);$('undoBtn').onclick=undo;
-$('resetBtn').onclick=()=>{if(!confirm('¿Cargar el ejemplo? Los cambios no guardados se perderán.'))return;init(true);toast('Ejemplo cargado.');};
-$('newBtn').onclick=()=>{if(!confirm('¿Crear un diagrama nuevo con un solo núcleo? Guarda antes el JSON actual si deseas conservarlo.'))return;init(false);toast('Nuevo diagrama: solo el núcleo, listo para editar.');};
+$('resetBtn').onclick=async()=>{
+ if(!confirm('¿Cargar el ejemplo? Los cambios no guardados se perderán.'))return;
+ flushPendingEdits();
+ const before=graphFingerprint();
+ const operation=loading.begin('Abriendo el ejemplo','Leyendo el fractal de Fractalear…');
+ try{
+  const data=await graphFiles.readExample(new URL('./data/examples/fractalear.json',import.meta.url));
+  if(!data)return; // Una cancelación o un archivo inválido conservan el trabajo actual.
+  if(graphFingerprint()!==before){toast('El diagrama cambió durante la lectura. Se conservó tu edición; vuelve a abrir el ejemplo si lo deseas.');return;}
+  applyGraph(data);
+  state.undo=[];$('undoBtn').disabled=true;
+  toast('Ejemplo de Fractalear cargado.');
+ }finally{operation.finish();}
+};
+$('newBtn').onclick=()=>{if(!confirm('¿Crear un diagrama nuevo con un solo núcleo? Guarda antes el JSON actual si deseas conservarlo.'))return;init();toast('Nuevo diagrama: solo el núcleo, listo para editar.');};
 $('addBtn').onclick=()=>addConcept();$('deleteBtn').onclick=deleteSelected;
 function setLinkStyle(style){
  if(!validLinkStyle(style))return;
@@ -622,6 +649,8 @@ $('depth').addEventListener('input',e=>{state.depth=Number(e.target.value);sched
 // El filtro es solo visibilidad: conserva coordenadas, zoom y cámara.
 $('showAllBtn').onclick=()=>{state.depth=maximumDepth();scheduleVisibility();};
 window.addEventListener('keydown',e=>{const target=e.target.tagName.toLowerCase();if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){if(target!=='textarea'&&target!=='input'){e.preventDefault();undo();}}if(e.key==='Escape'&&(state.linkFrom||state.unlinkFrom)){state.linkFrom=null;state.unlinkFrom=null;updatePanel();}});
+// La escritura diferida ahorra cálculos durante el tecleo, pero nunca debe
+// dejar una exportación o un cambio de vista con el texto anterior.
 function flushPendingEdits(){
  if(plane.ready&&(state.renderQueued||geometryTypingTimer)){
   cancelPendingTyping();render();
@@ -632,6 +661,8 @@ function importGraph(data){
  saveUndo(true);
  applyGraph(data);
 }
+// El contrato conceptual ya fue validado. La geometría se recupera solo si
+// sus rutas y medidas son compatibles; si no, se reconstruye sin borrar el grafo.
 function applyGraph(data,editorState=null){
  cancelPendingTyping();
  cancelInitialBuild();
@@ -687,7 +718,9 @@ themeButton.onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'
 bindDiagramExports({
  svgButton:$('svgBtn'),pngButton:$('pngBtn'),stage,camera,linesEl,nodesEl,plane,derived,state,diag,toast,sEl,loading,beforeExport:flushPendingEdits
 });
-function init(useDemo=false){
+// Nuevo y el arranque comparten este único origen vacío. Ejemplo usa el lector
+// de JSON para conservar la disposición construida con la propia herramienta.
+function init(){
  graphFiles.cancel();
  cancelPendingTyping();
  cancelInitialBuild();
@@ -697,7 +730,7 @@ function init(useDemo=false){
  stagedTopology=null;
  linesEl.replaceChildren();
  nodesEl.replaceChildren();
- const demo=useDemo?seed():blankSeed();
+ const demo=blankSeed();
  state.nodes=demo.nodes;
  state.edges=demo.edges;
  state.selected='p1';

@@ -1,3 +1,9 @@
+/**
+ * Prepara SVG y PNG desde una escena terminada, independiente del encuadre.
+ * Consolida las ediciones pendientes y conserva la identidad de la vista
+ * durante la codificación asíncrona. Una escena incompleta no se convierte
+ * en una imagen vacía anunciada como correcta; los avisos acompañan el dibujo.
+ */
 import {loadNodeTypography,exportedNodeFonts} from './NodeTypography.js';
 import {scaleCrossings} from './CircuitSvg.js';
 import {pngExportPlan,completeGraphClone,svgStyleTag,exportScene} from './PngExport.js';

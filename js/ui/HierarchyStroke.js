@@ -1,3 +1,9 @@
+/**
+ * Asigna grosor usando toda la jerarquía, no solo las capas visibles.
+ * El mínimo sigue siendo 1.35 y el máximo 3.15; la profundidad no produce
+ * un núcleo ilimitadamente grueso. Un vínculo transversal mantiene su estilo
+ * sin adquirir una relación padre-hijo que no existe en el documento.
+ */
 // Stable across depth filters: derive the scale from the complete hierarchy.
 // A single-level graph keeps the existing minimum; extra depth never adds
 // unbounded thickness. Transversals do not acquire a false parent hierarchy.

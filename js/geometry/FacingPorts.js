@@ -1,3 +1,9 @@
+/**
+ * Elige conjuntamente una salida y una entrada enfrentadas entre cuadros.
+ * Prioriza el intervalo común de las caras para permitir una recta cuando
+ * hay espacio. Los puertos pertenecen al recorrido y pueden cambiar al mover
+ * un concepto en el Editor; no son anclas que prohíban editar posiciones.
+ */
 const opposite={top:'bottom',bottom:'top',left:'right',right:'left'};
 const normal={top:[0,-1],bottom:[0,1],left:[-1,0],right:[1,0]};
 const horizontalFace=side=>side==='top'||side==='bottom';

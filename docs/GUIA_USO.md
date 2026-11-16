@@ -1,6 +1,6 @@
 # Guía de uso de Fractalear
 
-Referencia final: **1.3.2 · 16 de noviembre de 2026 · desarrollo cerrado**.
+Referencia final: **1.3.3 · 16 de noviembre de 2026 · desarrollo cerrado**.
 
 [Abrir la aplicación](https://jncubillosn-lab.github.io/LAB4.0-Fractaleando/) ·
 [Alcance y límites del cierre](CIERRE_DESARROLLO.md).
@@ -9,7 +9,7 @@ Referencia final: **1.3.2 · 16 de noviembre de 2026 · desarrollo cerrado**.
 
 1. Al abrir la herramienta aparece un solo núcleo con el texto **¿Qué quieres
    fractalear hoy?**. **Nuevo** vuelve a ese punto de partida, sin ramas ni
-   vínculos predefinidos. Usa **Ejemplo** para consultar el ejemplo completo.
+   vínculos predefinidos. Usa **Ejemplo** para consultar un fractal del propio programa.
 2. Haz clic en un cuadro para seleccionarlo. Cambia su texto en **Contenido**;
    un doble clic en el cuadro lleva a ese campo.
 3. Pulsa **+ Concepto** para crear un hijo del seleccionado. La selección se
@@ -24,6 +24,19 @@ Referencia final: **1.3.2 · 16 de noviembre de 2026 · desarrollo cerrado**.
 Los nuevos hijos se distribuyen en distintas direcciones, eligiendo entre dos
 candidatos según el espacio. Su aparición no obliga a que todos crezcan hacia
 la derecha ni a que los cuadros existentes cambien de posición.
+
+## Explorar el ejemplo del programa
+
+**Ejemplo** carga 63 conceptos y 64 vínculos construidos usando Fractalear.
+Sus seis ramas explican construir, leer, calcular, guardar, cuidar la lectura
+y comprobar resultados. Una pequeña clave aclara los estilos de ese dibujo:
+continua desarrolla, segmentada colabora y punteada comprueba. Esos significados
+pertenecen al ejemplo; al diseñar tu fractal puedes darles los tuyos.
+
+Puedes recorrerlo en las tres vistas, seleccionar sus relaciones y exportarlo
+como cualquier otro trabajo. El archivo se lee solo al pulsar el botón;
+**Nuevo** y el inicio conservan un único núcleo vacío. La disposición del Editor
+procede del JSON creado con la herramienta y sus cachés se validan al abrirlo.
 
 ## Crear una relación entre conceptos existentes
 

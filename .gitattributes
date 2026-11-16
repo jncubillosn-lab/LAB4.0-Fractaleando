@@ -1,0 +1,2 @@
+# Los ejemplos son documentos exportados: conservar sus bytes al copiarlos.
+js/data/examples/*.json -text

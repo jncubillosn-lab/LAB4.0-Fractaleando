@@ -1,3 +1,9 @@
+/**
+ * Auditor independiente: verifica el recorrido que realmente se dibujará.
+ * Comprueba continuidad, salida y llegada por la cara correcta, obstáculos
+ * y puertos repetidos. No hereda exenciones del generador de rutas: una
+ * trayectoria propuesta por el motor todavía puede ser rechazada aquí.
+ */
 import {segmentAxis,segmentEntersRect,leavesRect,segmentIntersection} from './SegmentGeometry.js';
 import {circuitAxis} from './CircuitGeometry.js';
 import {portClearOfCorners} from './PortPolicy.js';
