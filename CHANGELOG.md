@@ -1,5 +1,15 @@
 # Registro de cambios
 
+## 1.3.5 — 16 de noviembre de 2026 · cien funciones explicadas en el fractal
+
+- Cien cuadros nuevos documentan funciones y métodos reales de 30 módulos,
+  conectados con sus responsabilidades en el ejemplo existente.
+- El ejemplo conserva su contenido anterior y llega a 300 conceptos y
+  301 vínculos, con las mismas seis ramas y relaciones transversales.
+- Catálogo de símbolos y líneas de definición comprobado durante desarrollo;
+  firmas descriptivas abreviadas para la lectura del fractal.
+- Se conserva el motor, el formato JSON y el servicio existente de Google.
+
 ## 1.3.4 — 16 de noviembre de 2026 · ejemplo técnico de 200 conceptos
 
 - El mismo fractal del programa crece a 200 conceptos y 201 vínculos,

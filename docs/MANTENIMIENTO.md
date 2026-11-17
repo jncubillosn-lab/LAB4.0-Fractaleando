@@ -1,4 +1,4 @@
-# Reproducción y operación de Fractalear 1.3.4
+# Reproducción y operación de Fractalear 1.3.5
 
 [Estado final](CIERRE_DESARROLLO.md) · [Guía de uso](GUIA_USO.md) ·
 [Registro de cambios](../CHANGELOG.md).
@@ -97,7 +97,7 @@ en las tres vistas. Las optimizaciones deben mantener los criterios de aceptaci�
 
 ## Reproducir la publicación cerrada
 
-El corte final es `v1.3.4`. Paquete, metadatos, interfaz, documentación y nombre
+El corte final es `v1.3.5`. Paquete, metadatos, interfaz, documentación y nombre
 del artefacto de CI identifican esa misma entrega. Las firmas del algoritmo
 geométrico conservan sus versiones de compatibilidad.
 
