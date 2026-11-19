@@ -60,3 +60,5 @@ fuera del sitio publicado.
 Los avisos de revisión y las rutas que el motor no resuelva conservan su
 comportamiento. Cerrar el desarrollo no equivale a certificar una solución
 geométrica para cualquier grafo; los límites se registran en el cierre.
+
+**Archivo de no consulta:** los registros antiguos se envían a la rama `archivo/no-consulta-2026-11-18`, carpeta `registros/no-consulta/AAAA-MM-DD/`, con la etiqueta `HISTÓRICO | NO CONSULTAR | NO VIGENTE`. No deben consultarse como instrucciones de trabajo. Procedimiento completo en [AGENTS.md](AGENTS.md).
