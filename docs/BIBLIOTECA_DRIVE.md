@@ -85,14 +85,10 @@ respuesta opaca o un error de red no se presentan como un guardado confirmado.
   de nombre, ninguna selección de archivo o carpeta, guardado idéntico a la
   descarga local y apertura desde catálogo con el lector actual.
 
-La comprobación real creó `Comprobación de conexión de Fractalear.json`, confirmó
-su presencia en el catálogo y recuperó exactamente los 744 bytes originales.
-El navegador no inició sesión en Google ni recibió credenciales. Se conserva
-el archivo de comprobación como una copia más de la biblioteca.
-El [registro inicial](evidencias/BIBLIOTECA_1_3_0.json) conserva la prueba del
-candidato. La [verificación publicada de 1.3.1](evidencias/BIBLIOTECA_1_3_1.json)
-confirma el envío solo tras Sí, exportación local sin llamadas, guardado y
-apertura reales, JSON idéntico de 749 bytes y ausencia de errores.
+La biblioteca debe conservar la confirmación explícita antes del envío y
+la igualdad entre JSON guardado y JSON recuperado. Las suites de validación
+verifican que un visitante no requiera una sesión de Google y que una
+exportación local no envíe datos al servicio.
 
 ## Solicitudes de retirada
 
