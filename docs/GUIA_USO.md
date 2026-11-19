@@ -124,8 +124,7 @@ Desaparece al terminar o cancelar. Las vistas ya calculadas reutilizan su caché
 Una ruta pendiente significa que el motor no encontró un recorrido válido dentro
 de sus intentos. El PNG no se exporta con conexiones pendientes. **EN REVISIÓN**
 señala comprobaciones normativas aún incumplidas; no implica que los conceptos
-o vínculos hayan desaparecido. Los límites de este corte se describen en
-[la referencia de estado](historico/VERSION_1_0_0.md).
+o vínculos hayan desaparecido. Los límites vigentes se describen en el [cierre de desarrollo](CIERRE_DESARROLLO.md).
 
 ## Otras miradas
 

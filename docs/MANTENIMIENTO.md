@@ -1,7 +1,6 @@
 # Reproducción y operación de Fractalear 1.3.5
 
-[Estado final](CIERRE_DESARROLLO.md) · [Guía de uso](GUIA_USO.md) ·
-[Registro de cambios](../CHANGELOG.md).
+[Estado final](CIERRE_DESARROLLO.md) · [Guía de uso](GUIA_USO.md).
 
 El desarrollo está cerrado. Estas instrucciones reproducen la entrega existente
 y documentan su operación, sin abrir una ruta de ampliaciones.

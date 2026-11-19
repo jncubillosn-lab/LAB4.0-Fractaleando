@@ -7,8 +7,7 @@ construir conceptos, desarrollar sus jerarquías y representar sus relaciones.
 
 **Desarrollo cerrado el 16 de noviembre de 2026 por decisión del responsable.**
 La versión entregada constituye el alcance final. Las propuestas no implementadas
-quedan descartadas; el archivo histórico conserva las decisiones y mediciones,
-sin una ruta de funciones futuras.
+quedan descartadas y no deben recuperarse como obligaciones del proyecto.
 
 ## Usar la herramienta
 
@@ -39,8 +38,7 @@ y las decisiones que protegen el documento. El ejemplo utiliza el mismo
 - [Guía de uso](docs/GUIA_USO.md).
 - [Biblioteca pública y operación de Drive](docs/BIBLIOTECA_DRIVE.md).
 - [Reproducción, pruebas y publicación de la entrega](docs/MANTENIMIENTO.md).
-- [Registro de cambios](CHANGELOG.md) y [dependencias y licencias](THIRD_PARTY.md).
-- [Documentación histórica](docs/historico/README.md).
+- [Dependencias y licencias](THIRD_PARTY.md).
 
 ## Reproducir la entrega
 
